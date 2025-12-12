@@ -21,19 +21,41 @@ def one_hot_encode_sequence(sequence):
 
 class PDB_Dataset(Dataset):
     
-    def __init__(self, datadir, split='train'):
+    def __init__(self, datadir, split='train', fold="1"): # Roos: fold hardcoded to 1 for now
         """
         Args:
             datadir (str): Path to the directory where HDF5 files are located.
             split (str): Dataset split, one of 'train', 'valid', 'test'.
         """
         # Define the HDF5 file paths for the dataset split
-        self.hdf5_path = os.path.join(datadir, f'{split}.hdf5')
+        self.hdf5_path = os.path.join(datadir, f'{split}_fold{fold}.hdf5')
 
         print(f"Loading dataset from {self.hdf5_path}...")
 
         # Open the HDF5 file and load the pdb_strings dataset directly
         with h5py.File(self.hdf5_path, 'r') as f5:
+            #####################################################################
+            group = f5['BA-55224']
+
+            for name, dataset in group.items():
+            
+                # Skip if it's a nested group, only print datasets
+                if not isinstance(dataset, h5py.Dataset):
+                    print(f"Skipping: {name} is a nested group.")
+                    for sub_name, sub_dataset in dataset.items():
+                        print(f"  - {sub_name}: shape {sub_dataset.shape}, dtype {sub_dataset.dtype}")
+                        print(sub_dataset)
+                    continue
+
+                print(f"\n[DATASET: {name}]")
+                print(f"  Shape: {dataset.shape}")
+                print(f"  Data Type: {dataset.dtype}")
+                print(dataset)
+
+            ####################################################################
+
+            # for key in f5.values():
+            #     print(f"- {key}")
             self.pdb_strings = f5['pdb_strings'][:]  # Load the pdb_strings array directly
             self.pdb_names = f5['pdb_names'][:]  # Load the pdb_names array
             print(f"Loaded {len(self.pdb_strings)} pdb strings and names from {split} split.")

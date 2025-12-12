@@ -12,7 +12,7 @@ import pytorch_lightning as pl
 if __name__ == "__main__":
 	
     # Setup working directory and importing
-    desired_directory = '/gpfs/home4/dfruhbus/MHC-Diff/'
+    desired_directory = '/home/rhutter/MHC-Diff/'
     os.chdir(desired_directory)
     sys.path.insert(0, desired_directory)
     from model.lightning_module import Structure_Prediction_Model

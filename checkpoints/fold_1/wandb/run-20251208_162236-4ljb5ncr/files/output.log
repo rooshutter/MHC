@@ -1,0 +1,164 @@
+GPU available: True (cuda), used: True
+TPU available: False, using: 0 TPU cores
+IPU available: False, using: 0 IPUs
+HPU available: False, using: 0 HPUs
+/home/rhutter/.conda/envs/mhcdiff/lib/python3.10/site-packages/pytorch_lightning/callbacks/model_checkpoint.py:604: UserWarning: Checkpoint directory checkpoints/fold_1/checkpoints exists and is not empty.
+  rank_zero_warn(f"Checkpoint directory {dirpath} exists and is not empty.")
+Loading dataset from /scratch-shared/roos/preprocessed/train_fold1.hdf5...
+
+[DATASET: affinity]
+  Shape: ()
+  Data Type: float64
+<HDF5 dataset "affinity": shape (), type "<f8">
+
+[DATASET: affinity_gt_mask]
+  Shape: ()
+  Data Type: bool
+<HDF5 dataset "affinity_gt_mask": shape (), type "|b1">
+
+[DATASET: affinity_lt_mask]
+  Shape: ()
+  Data Type: bool
+<HDF5 dataset "affinity_lt_mask": shape (), type "|b1">
+
+[DATASET: class]
+  Shape: ()
+  Data Type: int64
+<HDF5 dataset "class": shape (), type "<i8">
+Skipping: peptide is a nested group.
+  - aatype: shape (9,), dtype int64
+<HDF5 dataset "aatype": shape (9,), type "<i8">
+  - all_atom_mask: shape (9, 37), dtype float32
+<HDF5 dataset "all_atom_mask": shape (9, 37), type "<f4">
+  - all_atom_positions: shape (9, 37, 3), dtype float32
+<HDF5 dataset "all_atom_positions": shape (9, 37, 3), type "<f4">
+  - alt_torsion_angles_sin_cos: shape (9, 7, 2), dtype float32
+<HDF5 dataset "alt_torsion_angles_sin_cos": shape (9, 7, 2), type "<f4">
+  - atom14_alt_gt_exists: shape (9, 14), dtype float32
+<HDF5 dataset "atom14_alt_gt_exists": shape (9, 14), type "<f4">
+  - atom14_alt_gt_positions: shape (9, 14, 3), dtype float32
+<HDF5 dataset "atom14_alt_gt_positions": shape (9, 14, 3), type "<f4">
+  - atom14_atom_exists: shape (9, 14), dtype bool
+<HDF5 dataset "atom14_atom_exists": shape (9, 14), type "|b1">
+  - atom14_atom_is_ambiguous: shape (9, 14), dtype float32
+<HDF5 dataset "atom14_atom_is_ambiguous": shape (9, 14), type "<f4">
+  - atom14_gt_exists: shape (9, 14), dtype float32
+<HDF5 dataset "atom14_gt_exists": shape (9, 14), type "<f4">
+  - atom14_gt_positions: shape (9, 14, 3), dtype float32
+<HDF5 dataset "atom14_gt_positions": shape (9, 14, 3), type "<f4">
+  - atom37_atom_exists: shape (9, 37), dtype float32
+<HDF5 dataset "atom37_atom_exists": shape (9, 37), type "<f4">
+  - backbone_rigid_mask: shape (9,), dtype float32
+<HDF5 dataset "backbone_rigid_mask": shape (9,), type "<f4">
+  - backbone_rigid_tensor: shape (9, 4, 4), dtype float32
+<HDF5 dataset "backbone_rigid_tensor": shape (9, 4, 4), type "<f4">
+  - blosum62: shape (9, 20), dtype float32
+<HDF5 dataset "blosum62": shape (9, 20), type "<f4">
+  - residue_numbers: shape (9,), dtype int64
+<HDF5 dataset "residue_numbers": shape (9,), type "<i8">
+  - residx_atom14_to_atom37: shape (9, 14), dtype int64
+<HDF5 dataset "residx_atom14_to_atom37": shape (9, 14), type "<i8">
+  - residx_atom37_to_atom14: shape (9, 37), dtype int64
+<HDF5 dataset "residx_atom37_to_atom14": shape (9, 37), type "<i8">
+  - rigidgroups_alt_gt_frames: shape (9, 8, 4, 4), dtype float32
+<HDF5 dataset "rigidgroups_alt_gt_frames": shape (9, 8, 4, 4), type "<f4">
+  - rigidgroups_group_exists: shape (9, 8), dtype float32
+<HDF5 dataset "rigidgroups_group_exists": shape (9, 8), type "<f4">
+  - rigidgroups_group_is_ambiguous: shape (9, 8), dtype float32
+<HDF5 dataset "rigidgroups_group_is_ambiguous": shape (9, 8), type "<f4">
+  - rigidgroups_gt_exists: shape (9, 8), dtype float32
+<HDF5 dataset "rigidgroups_gt_exists": shape (9, 8), type "<f4">
+  - rigidgroups_gt_frames: shape (9, 8, 4, 4), dtype float32
+<HDF5 dataset "rigidgroups_gt_frames": shape (9, 8, 4, 4), type "<f4">
+  - sequence_onehot: shape (9, 22), dtype float32
+<HDF5 dataset "sequence_onehot": shape (9, 22), type "<f4">
+  - torsion_angles_mask: shape (9, 7), dtype float32
+<HDF5 dataset "torsion_angles_mask": shape (9, 7), type "<f4">
+  - torsion_angles_sin_cos: shape (9, 7, 2), dtype float32
+<HDF5 dataset "torsion_angles_sin_cos": shape (9, 7, 2), type "<f4">
+Skipping: protein is a nested group.
+  - aatype: shape (180,), dtype int64
+<HDF5 dataset "aatype": shape (180,), type "<i8">
+  - all_atom_mask: shape (180, 37), dtype float32
+<HDF5 dataset "all_atom_mask": shape (180, 37), type "<f4">
+  - all_atom_positions: shape (180, 37, 3), dtype float32
+<HDF5 dataset "all_atom_positions": shape (180, 37, 3), type "<f4">
+  - allele_name: shape (), dtype |S11
+<HDF5 dataset "allele_name": shape (), type "|S11">
+  - alt_torsion_angles_sin_cos: shape (180, 7, 2), dtype float32
+<HDF5 dataset "alt_torsion_angles_sin_cos": shape (180, 7, 2), type "<f4">
+  - atom14_alt_gt_exists: shape (180, 14), dtype float32
+<HDF5 dataset "atom14_alt_gt_exists": shape (180, 14), type "<f4">
+  - atom14_alt_gt_positions: shape (180, 14, 3), dtype float32
+<HDF5 dataset "atom14_alt_gt_positions": shape (180, 14, 3), type "<f4">
+  - atom14_atom_exists: shape (180, 14), dtype bool
+<HDF5 dataset "atom14_atom_exists": shape (180, 14), type "|b1">
+  - atom14_atom_is_ambiguous: shape (180, 14), dtype float32
+<HDF5 dataset "atom14_atom_is_ambiguous": shape (180, 14), type "<f4">
+  - atom14_gt_exists: shape (180, 14), dtype float32
+<HDF5 dataset "atom14_gt_exists": shape (180, 14), type "<f4">
+  - atom14_gt_positions: shape (180, 14, 3), dtype float32
+<HDF5 dataset "atom14_gt_positions": shape (180, 14, 3), type "<f4">
+  - atom37_atom_exists: shape (180, 37), dtype float32
+<HDF5 dataset "atom37_atom_exists": shape (180, 37), type "<f4">
+  - backbone_rigid_mask: shape (180,), dtype float32
+<HDF5 dataset "backbone_rigid_mask": shape (180,), type "<f4">
+  - backbone_rigid_tensor: shape (180, 4, 4), dtype float32
+<HDF5 dataset "backbone_rigid_tensor": shape (180, 4, 4), type "<f4">
+  - blosum62: shape (180, 20), dtype float32
+<HDF5 dataset "blosum62": shape (180, 20), type "<f4">
+  - cross_residues_mask: shape (180,), dtype bool
+<HDF5 dataset "cross_residues_mask": shape (180,), type "|b1">
+  - proximities: shape (180, 180, 1), dtype float32
+<HDF5 dataset "proximities": shape (180, 180, 1), type "<f4">
+  - residue_numbers: shape (180,), dtype int64
+<HDF5 dataset "residue_numbers": shape (180,), type "<i8">
+  - residx_atom14_to_atom37: shape (180, 14), dtype int64
+<HDF5 dataset "residx_atom14_to_atom37": shape (180, 14), type "<i8">
+  - residx_atom37_to_atom14: shape (180, 37), dtype int64
+<HDF5 dataset "residx_atom37_to_atom14": shape (180, 37), type "<i8">
+  - rigidgroups_alt_gt_frames: shape (180, 8, 4, 4), dtype float32
+<HDF5 dataset "rigidgroups_alt_gt_frames": shape (180, 8, 4, 4), type "<f4">
+  - rigidgroups_group_exists: shape (180, 8), dtype float32
+<HDF5 dataset "rigidgroups_group_exists": shape (180, 8), type "<f4">
+  - rigidgroups_group_is_ambiguous: shape (180, 8), dtype float32
+<HDF5 dataset "rigidgroups_group_is_ambiguous": shape (180, 8), type "<f4">
+  - rigidgroups_gt_exists: shape (180, 8), dtype float32
+<HDF5 dataset "rigidgroups_gt_exists": shape (180, 8), type "<f4">
+  - rigidgroups_gt_frames: shape (180, 8, 4, 4), dtype float32
+<HDF5 dataset "rigidgroups_gt_frames": shape (180, 8, 4, 4), type "<f4">
+  - self_residues_mask: shape (180,), dtype bool
+<HDF5 dataset "self_residues_mask": shape (180,), type "|b1">
+  - sequence_onehot: shape (180, 22), dtype float32
+<HDF5 dataset "sequence_onehot": shape (180, 22), type "<f4">
+  - torsion_angles_mask: shape (180, 7), dtype float32
+<HDF5 dataset "torsion_angles_mask": shape (180, 7), type "<f4">
+  - torsion_angles_sin_cos: shape (180, 7, 2), dtype float32
+<HDF5 dataset "torsion_angles_sin_cos": shape (180, 7, 2), type "<f4">
+Traceback (most recent call last):
+  File "/gpfs/home3/rhutter/MHC-Diff/train.py", line 84, in <module>
+    trainer.fit(model)
+  File "/home/rhutter/.conda/envs/mhcdiff/lib/python3.10/site-packages/pytorch_lightning/trainer/trainer.py", line 603, in fit
+    call._call_and_handle_interrupt(
+  File "/home/rhutter/.conda/envs/mhcdiff/lib/python3.10/site-packages/pytorch_lightning/trainer/call.py", line 38, in _call_and_handle_interrupt
+    return trainer_fn(*args, **kwargs)
+  File "/home/rhutter/.conda/envs/mhcdiff/lib/python3.10/site-packages/pytorch_lightning/trainer/trainer.py", line 645, in _fit_impl
+    self._run(model, ckpt_path=self.ckpt_path)
+  File "/home/rhutter/.conda/envs/mhcdiff/lib/python3.10/site-packages/pytorch_lightning/trainer/trainer.py", line 1037, in _run
+    self._call_setup_hook()  # allow user to setup lightning_module in accelerator environment
+  File "/home/rhutter/.conda/envs/mhcdiff/lib/python3.10/site-packages/pytorch_lightning/trainer/trainer.py", line 1286, in _call_setup_hook
+    self._call_lightning_module_hook("setup", stage=fn)
+  File "/home/rhutter/.conda/envs/mhcdiff/lib/python3.10/site-packages/pytorch_lightning/trainer/trainer.py", line 1342, in _call_lightning_module_hook
+    output = fn(*args, **kwargs)
+  File "/home/rhutter/MHC-Diff/model/lightning_module.py", line 113, in setup
+    self.train_dataset = PDB_Dataset(self.data_dir, 'train')
+  File "/home/rhutter/MHC-Diff/dataset_8k_xray.py", line 59, in __init__
+    self.pdb_strings = f5['pdb_strings'][:]  # Load the pdb_strings array directly
+  File "h5py/_objects.pyx", line 54, in h5py._objects.with_phil.wrapper
+  File "h5py/_objects.pyx", line 55, in h5py._objects.with_phil.wrapper
+  File "/home/rhutter/.conda/envs/mhcdiff/lib/python3.10/site-packages/h5py/_hl/group.py", line 367, in __getitem__
+    oid = h5o.open(self.id, self._e(name), lapl=self._lapl)
+  File "h5py/_objects.pyx", line 54, in h5py._objects.with_phil.wrapper
+  File "h5py/_objects.pyx", line 55, in h5py._objects.with_phil.wrapper
+  File "h5py/h5o.pyx", line 255, in h5py.h5o.open
+KeyError: "Unable to synchronously open object (object 'pdb_strings' doesn't exist)"

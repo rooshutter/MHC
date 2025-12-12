@@ -1,0 +1,52 @@
+GPU available: True (cuda), used: True
+TPU available: False, using: 0 TPU cores
+IPU available: False, using: 0 IPUs
+HPU available: False, using: 0 HPUs
+/home/rhutter/.conda/envs/mhcdiff/lib/python3.10/site-packages/pytorch_lightning/callbacks/model_checkpoint.py:604: UserWarning: Checkpoint directory checkpoints/fold_1/checkpoints exists and is not empty.
+  rank_zero_warn(f"Checkpoint directory {dirpath} exists and is not empty.")
+Loading dataset from /scratch-shared/roos/preprocessed/train_fold1.hdf5...
+
+[DATASET: affinity]
+  Shape: ()
+  Data Type: float64
+
+[DATASET: affinity_gt_mask]
+  Shape: ()
+  Data Type: bool
+
+[DATASET: affinity_lt_mask]
+  Shape: ()
+  Data Type: bool
+
+[DATASET: class]
+  Shape: ()
+  Data Type: int64
+Skipping: peptide is a nested group.
+Skipping: protein is a nested group.
+Traceback (most recent call last):
+  File "/gpfs/home3/rhutter/MHC-Diff/train.py", line 84, in <module>
+    trainer.fit(model)
+  File "/home/rhutter/.conda/envs/mhcdiff/lib/python3.10/site-packages/pytorch_lightning/trainer/trainer.py", line 603, in fit
+    call._call_and_handle_interrupt(
+  File "/home/rhutter/.conda/envs/mhcdiff/lib/python3.10/site-packages/pytorch_lightning/trainer/call.py", line 38, in _call_and_handle_interrupt
+    return trainer_fn(*args, **kwargs)
+  File "/home/rhutter/.conda/envs/mhcdiff/lib/python3.10/site-packages/pytorch_lightning/trainer/trainer.py", line 645, in _fit_impl
+    self._run(model, ckpt_path=self.ckpt_path)
+  File "/home/rhutter/.conda/envs/mhcdiff/lib/python3.10/site-packages/pytorch_lightning/trainer/trainer.py", line 1037, in _run
+    self._call_setup_hook()  # allow user to setup lightning_module in accelerator environment
+  File "/home/rhutter/.conda/envs/mhcdiff/lib/python3.10/site-packages/pytorch_lightning/trainer/trainer.py", line 1286, in _call_setup_hook
+    self._call_lightning_module_hook("setup", stage=fn)
+  File "/home/rhutter/.conda/envs/mhcdiff/lib/python3.10/site-packages/pytorch_lightning/trainer/trainer.py", line 1342, in _call_lightning_module_hook
+    output = fn(*args, **kwargs)
+  File "/home/rhutter/MHC-Diff/model/lightning_module.py", line 113, in setup
+    self.train_dataset = PDB_Dataset(self.data_dir, 'train')
+  File "/home/rhutter/MHC-Diff/dataset_8k_xray.py", line 55, in __init__
+    self.pdb_strings = f5['pdb_strings'][:]  # Load the pdb_strings array directly
+  File "h5py/_objects.pyx", line 54, in h5py._objects.with_phil.wrapper
+  File "h5py/_objects.pyx", line 55, in h5py._objects.with_phil.wrapper
+  File "/home/rhutter/.conda/envs/mhcdiff/lib/python3.10/site-packages/h5py/_hl/group.py", line 367, in __getitem__
+    oid = h5o.open(self.id, self._e(name), lapl=self._lapl)
+  File "h5py/_objects.pyx", line 54, in h5py._objects.with_phil.wrapper
+  File "h5py/_objects.pyx", line 55, in h5py._objects.with_phil.wrapper
+  File "h5py/h5o.pyx", line 255, in h5py.h5o.open
+KeyError: "Unable to synchronously open object (object 'pdb_strings' doesn't exist)"

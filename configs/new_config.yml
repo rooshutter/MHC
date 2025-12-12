@@ -2,7 +2,7 @@
 logdir: "./checkpoints/fold_1/"
 project: 'Structur_prediction_Experiments'
 run_name: 'pmhc_8K_xray_aligned_egnn_1_test_2'
-entity: 'neuro-ai-scientist'
+entity: 'roos-hutter-university-of-amsterdam' #'neuro-ai-scientist'
 
 # Training
 num_epochs: 1000 # TODO: early stopping?? -> prevent overfitting
@@ -19,7 +19,7 @@ task_params:
   confidence_score: False
 
 # Dataset
-data_dir: "/gpfs/home4/dfruhbus/MHC-Diff/data/pmhc_xray_8K_aligned/folds/fold_1/"
+data_dir: "/scratch-shared/roos/preprocessed/" #"/home/rhutter/MHC-Diff/data/pmhc_xray_8K_aligned/folds/fold_1/"
 dataset: 'pmhc_8K_xray'
 dataset_params:
   num_atoms: 20
