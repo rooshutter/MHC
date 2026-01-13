@@ -5,7 +5,7 @@
 #SBATCH --job-name=Run
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=9
-#SBATCH --time=00:30:00
+#SBATCH --time=02:00:00
 #SBATCH --output=outputs/slurm_output_%A.out
 
 #gpu_a100
@@ -18,6 +18,11 @@ source $(conda info --base)/etc/profile.d/conda.sh
 
 source activate mhcdiff
 
-wandb login
+# wandb login
 
-srun python -u train.py --config /home/rhutter/MHC-Diff/configs/new_config.yml
+# srun python -u train.py --config /home/rhutter/MHC-Diff/configs/new_config.yml
+# srun python -u test.py --config /home/rhutter/MHC-Diff/configs/new_config.yml
+
+
+srun python -u train.py --config /home/rhutter/MHC-Diff/configs/flow_config.yml
+# srun python -u test.py --config /home/rhutter/MHC-Diff/configs/flow_config.yml

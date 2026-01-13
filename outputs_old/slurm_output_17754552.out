@@ -1,0 +1,2507 @@
+============================================================================================== 
+Warning! Mixing Conda and module environments may lead to corruption of the
+user environment. 
+We do not recommend users mixing those two environments unless absolutely
+necessary. Note that 
+SURF does not provide any support for Conda environment.
+For more information, please refer to our software policy page:
+https://servicedesk.surf.nl/wiki/display/WIKI/Software+policy+Snellius#SoftwarepolicySnellius-UseofAnacondaandMinicondaenvironmentsonSnellius 
+
+Remember that many packages have already been installed on the system and can
+be loaded using 
+the 'module load <package__name>' command. If you are uncertain if a package is
+already available 
+on the system, please use 'module avail' or 'module spider' to search for it.
+============================================================================================== 
+/home/rhutter/.conda/envs/mhcdiff/lib/python3.10/site-packages/lightning_lite/__init__.py:29: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
+  __import__("pkg_resources").declare_namespace(__name__)
+GPU available: True (cuda), used: True
+TPU available: False, using: 0 TPU cores
+IPU available: False, using: 0 IPUs
+HPU available: False, using: 0 HPUs
+Loading dataset from /scratch-shared/roos/preprocessed/train_fold1.hdf5...
+Loaded 6239 entries from train split.
+Loading dataset from /scratch-shared/roos/preprocessed/valid_fold1.hdf5...
+Loaded 700 entries from valid split.
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+
+  | Name       | Type                | Params
+---------------------------------------------------
+0 | neural_net | NN_Model            | 182 K 
+1 | model      | Flow_Matching_Model | 182 K 
+---------------------------------------------------
+182 K     Trainable params
+202       Non-trainable params
+182 K     Total params
+0.729     Total estimated model params size (MB)
+SLURM auto-requeueing enabled. Setting signal handlers.
+/home/rhutter/.conda/envs/mhcdiff/lib/python3.10/site-packages/torch/utils/data/dataloader.py:554: UserWarning: This DataLoader will create 18 worker processes in total. Our suggested max number of worker in current system is 9, which is smaller than what this DataLoader is going to create. Please be aware that excessive worker creation might get DataLoader running slow or even freeze, lower the worker number to avoid potential slowness/freeze if necessary.
+  warnings.warn(_create_warning_msg(
+Sanity Checking: 0it [00:00, ?it/s]Sanity Checking:   0%|          | 0/2 [00:00<?, ?it/s]Sanity Checking DataLoader 0:   0%|          | 0/2 [00:00<?, ?it/s]noise_scaling: 1
+t shape: torch.Size([32, 1])
+molecule['x'] shape: torch.Size([288, 3])
+z_x_mol shape: torch.Size([288, 3])
+z_t_mol_x shape: torch.Size([288, 3])
+xh_mol[:,self.x_dim:]): torch.Size([288, 20])
+z_t_mol shape: torch.Size([288, 23])
+z_t_mol shape: torch.Size([288, 23])
+z_t_pro shape: torch.Size([5760, 23])
+v_target_mol shape: torch.Size([288, 23])
+t shape: torch.Size([32, 1])
+/home/rhutter/.conda/envs/mhcdiff/lib/python3.10/site-packages/pytorch_lightning/utilities/data.py:85: UserWarning: Trying to infer the `batch_size` from an ambiguous collection. The batch size we found is 32. To avoid any miscalculations, use `self.log(..., batch_size=batch_size)`.
+  warning_cache.warn(
+Sanity Checking DataLoader 0:  50%|█████     | 1/2 [00:01<00:01,  1.00s/it]noise_scaling: 1
+t shape: torch.Size([32, 1])
+molecule['x'] shape: torch.Size([288, 3])
+z_x_mol shape: torch.Size([288, 3])
+z_t_mol_x shape: torch.Size([288, 3])
+xh_mol[:,self.x_dim:]): torch.Size([288, 20])
+z_t_mol shape: torch.Size([288, 23])
+z_t_mol shape: torch.Size([288, 23])
+z_t_pro shape: torch.Size([5760, 23])
+v_target_mol shape: torch.Size([288, 23])
+t shape: torch.Size([32, 1])
+Sanity Checking DataLoader 0: 100%|██████████| 2/2 [00:01<00:00,  1.96it/s]                                                                           Training: 0it [00:00, ?it/s]Training:   0%|          | 0/217 [00:00<?, ?it/s]Epoch 0:   0%|          | 0/217 [00:00<?, ?it/s] noise_scaling: 1
+t shape: torch.Size([32, 1])
+molecule['x'] shape: torch.Size([288, 3])
+z_x_mol shape: torch.Size([288, 3])
+z_t_mol_x shape: torch.Size([288, 3])
+xh_mol[:,self.x_dim:]): torch.Size([288, 20])
+z_t_mol shape: torch.Size([288, 23])
+z_t_mol shape: torch.Size([288, 23])
+z_t_pro shape: torch.Size([5760, 23])
+v_target_mol shape: torch.Size([288, 23])
+t shape: torch.Size([32, 1])
+Epoch 0:   0%|          | 1/217 [00:01<03:42,  1.03s/it]Epoch 0:   0%|          | 1/217 [00:01<03:42,  1.03s/it, loss=2.51, v_num=1.78e+7]noise_scaling: 1
+t shape: torch.Size([32, 1])
+molecule['x'] shape: torch.Size([288, 3])
+z_x_mol shape: torch.Size([288, 3])
+z_t_mol_x shape: torch.Size([288, 3])
+xh_mol[:,self.x_dim:]): torch.Size([288, 20])
+z_t_mol shape: torch.Size([288, 23])
+z_t_mol shape: torch.Size([288, 23])
+z_t_pro shape: torch.Size([5760, 23])
+v_target_mol shape: torch.Size([288, 23])
+t shape: torch.Size([32, 1])
+Epoch 0:   1%|          | 2/217 [00:01<01:56,  1.85it/s, loss=2.51, v_num=1.78e+7]Epoch 0:   1%|          | 2/217 [00:01<01:56,  1.85it/s, loss=2.54, v_num=1.78e+7]noise_scaling: 1
+t shape: torch.Size([32, 1])
+molecule['x'] shape: torch.Size([288, 3])
+z_x_mol shape: torch.Size([288, 3])
+z_t_mol_x shape: torch.Size([288, 3])
+xh_mol[:,self.x_dim:]): torch.Size([288, 20])
+z_t_mol shape: torch.Size([288, 23])
+z_t_mol shape: torch.Size([288, 23])
+z_t_pro shape: torch.Size([5760, 23])
+v_target_mol shape: torch.Size([288, 23])
+t shape: torch.Size([32, 1])
+Epoch 0:   1%|▏         | 3/217 [00:01<01:21,  2.63it/s, loss=2.54, v_num=1.78e+7]Epoch 0:   1%|▏         | 3/217 [00:01<01:21,  2.63it/s, loss=2.56, v_num=1.78e+7]noise_scaling: 1
+t shape: torch.Size([32, 1])
+molecule['x'] shape: torch.Size([288, 3])
+z_x_mol shape: torch.Size([288, 3])
+z_t_mol_x shape: torch.Size([288, 3])
+xh_mol[:,self.x_dim:]): torch.Size([288, 20])
+z_t_mol shape: torch.Size([288, 23])
+z_t_mol shape: torch.Size([288, 23])
+z_t_pro shape: torch.Size([5760, 23])
+v_target_mol shape: torch.Size([288, 23])
+t shape: torch.Size([32, 1])
+Epoch 0:   2%|▏         | 4/217 [00:01<01:03,  3.33it/s, loss=2.56, v_num=1.78e+7]Epoch 0:   2%|▏         | 4/217 [00:01<01:04,  3.33it/s, loss=2.57, v_num=1.78e+7]noise_scaling: 1
+t shape: torch.Size([32, 1])
+molecule['x'] shape: torch.Size([288, 3])
+z_x_mol shape: torch.Size([288, 3])
+z_t_mol_x shape: torch.Size([288, 3])
+xh_mol[:,self.x_dim:]): torch.Size([288, 20])
+z_t_mol shape: torch.Size([288, 23])
+z_t_mol shape: torch.Size([288, 23])
+z_t_pro shape: torch.Size([5760, 23])
+v_target_mol shape: torch.Size([288, 23])
+t shape: torch.Size([32, 1])
+Epoch 0:   2%|▏         | 5/217 [00:01<00:52,  4.01it/s, loss=2.57, v_num=1.78e+7]Epoch 0:   2%|▏         | 5/217 [00:01<00:52,  4.01it/s, loss=2.57, v_num=1.78e+7]noise_scaling: 1
+t shape: torch.Size([32, 1])
+molecule['x'] shape: torch.Size([288, 3])
+z_x_mol shape: torch.Size([288, 3])
+z_t_mol_x shape: torch.Size([288, 3])
+xh_mol[:,self.x_dim:]): torch.Size([288, 20])
+z_t_mol shape: torch.Size([288, 23])
+z_t_mol shape: torch.Size([288, 23])
+z_t_pro shape: torch.Size([5760, 23])
+v_target_mol shape: torch.Size([288, 23])
+t shape: torch.Size([32, 1])
+Epoch 0:   3%|▎         | 6/217 [00:01<00:45,  4.64it/s, loss=2.57, v_num=1.78e+7]Epoch 0:   3%|▎         | 6/217 [00:01<00:45,  4.63it/s, loss=2.56, v_num=1.78e+7]noise_scaling: 1
+t shape: torch.Size([32, 1])
+molecule['x'] shape: torch.Size([288, 3])
+z_x_mol shape: torch.Size([288, 3])
+z_t_mol_x shape: torch.Size([288, 3])
+xh_mol[:,self.x_dim:]): torch.Size([288, 20])
+z_t_mol shape: torch.Size([288, 23])
+z_t_mol shape: torch.Size([288, 23])
+z_t_pro shape: torch.Size([5760, 23])
+v_target_mol shape: torch.Size([288, 23])
+t shape: torch.Size([32, 1])
+Epoch 0:   3%|▎         | 7/217 [00:01<00:40,  5.22it/s, loss=2.56, v_num=1.78e+7]Epoch 0:   3%|▎         | 7/217 [00:01<00:40,  5.22it/s, loss=2.56, v_num=1.78e+7]noise_scaling: 1
+t shape: torch.Size([32, 1])
+molecule['x'] shape: torch.Size([288, 3])
+z_x_mol shape: torch.Size([288, 3])
+z_t_mol_x shape: torch.Size([288, 3])
+xh_mol[:,self.x_dim:]): torch.Size([288, 20])
+z_t_mol shape: torch.Size([288, 23])
+z_t_mol shape: torch.Size([288, 23])
+z_t_pro shape: torch.Size([5760, 23])
+v_target_mol shape: torch.Size([288, 23])
+t shape: torch.Size([32, 1])
+Epoch 0:   4%|▎         | 8/217 [00:01<00:36,  5.78it/s, loss=2.56, v_num=1.78e+7]Epoch 0:   4%|▎         | 8/217 [00:01<00:36,  5.78it/s, loss=2.57, v_num=1.78e+7]noise_scaling: 1
+t shape: torch.Size([32, 1])
+molecule['x'] shape: torch.Size([288, 3])
+z_x_mol shape: torch.Size([288, 3])
+z_t_mol_x shape: torch.Size([288, 3])
+xh_mol[:,self.x_dim:]): torch.Size([288, 20])
+z_t_mol shape: torch.Size([288, 23])
+z_t_mol shape: torch.Size([288, 23])
+z_t_pro shape: torch.Size([5760, 23])
+v_target_mol shape: torch.Size([288, 23])
+t shape: torch.Size([32, 1])
+Epoch 0:   4%|▍         | 9/217 [00:01<00:33,  6.30it/s, loss=2.57, v_num=1.78e+7]Epoch 0:   4%|▍         | 9/217 [00:01<00:33,  6.30it/s, loss=2.57, v_num=1.78e+7]noise_scaling: 1
+t shape: torch.Size([32, 1])
+molecule['x'] shape: torch.Size([288, 3])
+z_x_mol shape: torch.Size([288, 3])
+z_t_mol_x shape: torch.Size([288, 3])
+xh_mol[:,self.x_dim:]): torch.Size([288, 20])
+z_t_mol shape: torch.Size([288, 23])
+z_t_mol shape: torch.Size([288, 23])
+z_t_pro shape: torch.Size([5760, 23])
+v_target_mol shape: torch.Size([288, 23])
+t shape: torch.Size([32, 1])
+Epoch 0:   5%|▍         | 10/217 [00:01<00:30,  6.79it/s, loss=2.57, v_num=1.78e+7]Epoch 0:   5%|▍         | 10/217 [00:01<00:30,  6.78it/s, loss=2.57, v_num=1.78e+7]noise_scaling: 1
+t shape: torch.Size([32, 1])
+molecule['x'] shape: torch.Size([288, 3])
+z_x_mol shape: torch.Size([288, 3])
+z_t_mol_x shape: torch.Size([288, 3])
+xh_mol[:,self.x_dim:]): torch.Size([288, 20])
+z_t_mol shape: torch.Size([288, 23])
+z_t_mol shape: torch.Size([288, 23])
+z_t_pro shape: torch.Size([5760, 23])
+v_target_mol shape: torch.Size([288, 23])
+t shape: torch.Size([32, 1])
+Epoch 0:   5%|▌         | 11/217 [00:01<00:28,  7.25it/s, loss=2.57, v_num=1.78e+7]Epoch 0:   5%|▌         | 11/217 [00:01<00:28,  7.24it/s, loss=2.57, v_num=1.78e+7]noise_scaling: 1
+t shape: torch.Size([32, 1])
+molecule['x'] shape: torch.Size([288, 3])
+z_x_mol shape: torch.Size([288, 3])
+z_t_mol_x shape: torch.Size([288, 3])
+xh_mol[:,self.x_dim:]): torch.Size([288, 20])
+z_t_mol shape: torch.Size([288, 23])
+z_t_mol shape: torch.Size([288, 23])
+z_t_pro shape: torch.Size([5760, 23])
+v_target_mol shape: torch.Size([288, 23])
+t shape: torch.Size([32, 1])
+Epoch 0:   6%|▌         | 12/217 [00:01<00:26,  7.68it/s, loss=2.57, v_num=1.78e+7]Epoch 0:   6%|▌         | 12/217 [00:01<00:26,  7.67it/s, loss=2.56, v_num=1.78e+7]noise_scaling: 1
+t shape: torch.Size([32, 1])
+molecule['x'] shape: torch.Size([288, 3])
+z_x_mol shape: torch.Size([288, 3])
+z_t_mol_x shape: torch.Size([288, 3])
+xh_mol[:,self.x_dim:]): torch.Size([288, 20])
+z_t_mol shape: torch.Size([288, 23])
+z_t_mol shape: torch.Size([288, 23])
+z_t_pro shape: torch.Size([5760, 23])
+v_target_mol shape: torch.Size([288, 23])
+t shape: torch.Size([32, 1])
+Epoch 0:   6%|▌         | 13/217 [00:01<00:25,  8.09it/s, loss=2.56, v_num=1.78e+7]Epoch 0:   6%|▌         | 13/217 [00:01<00:25,  8.08it/s, loss=2.57, v_num=1.78e+7]noise_scaling: 1
+t shape: torch.Size([32, 1])
+molecule['x'] shape: torch.Size([288, 3])
+z_x_mol shape: torch.Size([288, 3])
+z_t_mol_x shape: torch.Size([288, 3])
+xh_mol[:,self.x_dim:]): torch.Size([288, 20])
+z_t_mol shape: torch.Size([288, 23])
+z_t_mol shape: torch.Size([288, 23])
+z_t_pro shape: torch.Size([5760, 23])
+v_target_mol shape: torch.Size([288, 23])
+t shape: torch.Size([32, 1])
+Epoch 0:   6%|▋         | 14/217 [00:01<00:23,  8.48it/s, loss=2.57, v_num=1.78e+7]Epoch 0:   6%|▋         | 14/217 [00:01<00:23,  8.47it/s, loss=2.56, v_num=1.78e+7]noise_scaling: 1
+t shape: torch.Size([32, 1])
+molecule['x'] shape: torch.Size([288, 3])
+z_x_mol shape: torch.Size([288, 3])
+z_t_mol_x shape: torch.Size([288, 3])
+xh_mol[:,self.x_dim:]): torch.Size([288, 20])
+z_t_mol shape: torch.Size([288, 23])
+z_t_mol shape: torch.Size([288, 23])
+z_t_pro shape: torch.Size([5760, 23])
+v_target_mol shape: torch.Size([288, 23])
+t shape: torch.Size([32, 1])
+Epoch 0:   7%|▋         | 15/217 [00:01<00:22,  8.83it/s, loss=2.56, v_num=1.78e+7]Epoch 0:   7%|▋         | 15/217 [00:01<00:22,  8.83it/s, loss=2.57, v_num=1.78e+7]noise_scaling: 1
+t shape: torch.Size([32, 1])
+molecule['x'] shape: torch.Size([288, 3])
+z_x_mol shape: torch.Size([288, 3])
+z_t_mol_x shape: torch.Size([288, 3])
+xh_mol[:,self.x_dim:]): torch.Size([288, 20])
+z_t_mol shape: torch.Size([288, 23])
+z_t_mol shape: torch.Size([288, 23])
+z_t_pro shape: torch.Size([5760, 23])
+v_target_mol shape: torch.Size([288, 23])
+t shape: torch.Size([32, 1])
+Epoch 0:   7%|▋         | 16/217 [00:01<00:21,  9.18it/s, loss=2.57, v_num=1.78e+7]Epoch 0:   7%|▋         | 16/217 [00:01<00:21,  9.17it/s, loss=2.56, v_num=1.78e+7]noise_scaling: 1
+t shape: torch.Size([32, 1])
+molecule['x'] shape: torch.Size([288, 3])
+z_x_mol shape: torch.Size([288, 3])
+z_t_mol_x shape: torch.Size([288, 3])
+xh_mol[:,self.x_dim:]): torch.Size([288, 20])
+z_t_mol shape: torch.Size([288, 23])
+z_t_mol shape: torch.Size([288, 23])
+z_t_pro shape: torch.Size([5760, 23])
+v_target_mol shape: torch.Size([288, 23])
+t shape: torch.Size([32, 1])
+Epoch 0:   8%|▊         | 17/217 [00:01<00:21,  9.50it/s, loss=2.56, v_num=1.78e+7]Epoch 0:   8%|▊         | 17/217 [00:01<00:21,  9.50it/s, loss=2.56, v_num=1.78e+7]noise_scaling: 1
+t shape: torch.Size([32, 1])
+molecule['x'] shape: torch.Size([288, 3])
+z_x_mol shape: torch.Size([288, 3])
+z_t_mol_x shape: torch.Size([288, 3])
+xh_mol[:,self.x_dim:]): torch.Size([288, 20])
+z_t_mol shape: torch.Size([288, 23])
+z_t_mol shape: torch.Size([288, 23])
+z_t_pro shape: torch.Size([5760, 23])
+v_target_mol shape: torch.Size([288, 23])
+t shape: torch.Size([32, 1])
+Epoch 0:   8%|▊         | 18/217 [00:01<00:20,  9.81it/s, loss=2.56, v_num=1.78e+7]Epoch 0:   8%|▊         | 18/217 [00:01<00:20,  9.81it/s, loss=2.56, v_num=1.78e+7]noise_scaling: 1
+t shape: torch.Size([32, 1])
+molecule['x'] shape: torch.Size([288, 3])
+z_x_mol shape: torch.Size([288, 3])
+z_t_mol_x shape: torch.Size([288, 3])
+xh_mol[:,self.x_dim:]): torch.Size([288, 20])
+z_t_mol shape: torch.Size([288, 23])
+z_t_mol shape: torch.Size([288, 23])
+z_t_pro shape: torch.Size([5760, 23])
+v_target_mol shape: torch.Size([288, 23])
+t shape: torch.Size([32, 1])
+Epoch 0:   9%|▉         | 19/217 [00:01<00:19, 10.11it/s, loss=2.56, v_num=1.78e+7]Epoch 0:   9%|▉         | 19/217 [00:01<00:19, 10.10it/s, loss=2.55, v_num=1.78e+7]noise_scaling: 1
+t shape: torch.Size([32, 1])
+molecule['x'] shape: torch.Size([288, 3])
+z_x_mol shape: torch.Size([288, 3])
+z_t_mol_x shape: torch.Size([288, 3])
+xh_mol[:,self.x_dim:]): torch.Size([288, 20])
+z_t_mol shape: torch.Size([288, 23])
+z_t_mol shape: torch.Size([288, 23])
+z_t_pro shape: torch.Size([5760, 23])
+v_target_mol shape: torch.Size([288, 23])
+t shape: torch.Size([32, 1])
+Epoch 0:   9%|▉         | 20/217 [00:01<00:18, 10.39it/s, loss=2.55, v_num=1.78e+7]Epoch 0:   9%|▉         | 20/217 [00:01<00:18, 10.39it/s, loss=2.55, v_num=1.78e+7]noise_scaling: 1
+t shape: torch.Size([32, 1])
+molecule['x'] shape: torch.Size([288, 3])
+z_x_mol shape: torch.Size([288, 3])
+z_t_mol_x shape: torch.Size([288, 3])
+xh_mol[:,self.x_dim:]): torch.Size([288, 20])
+z_t_mol shape: torch.Size([288, 23])
+z_t_mol shape: torch.Size([288, 23])
+z_t_pro shape: torch.Size([5760, 23])
+v_target_mol shape: torch.Size([288, 23])
+t shape: torch.Size([32, 1])
+Epoch 0:  10%|▉         | 21/217 [00:01<00:18, 10.66it/s, loss=2.55, v_num=1.78e+7]Epoch 0:  10%|▉         | 21/217 [00:01<00:18, 10.66it/s, loss=2.54, v_num=1.78e+7]noise_scaling: 1
+t shape: torch.Size([32, 1])
+molecule['x'] shape: torch.Size([288, 3])
+z_x_mol shape: torch.Size([288, 3])
+z_t_mol_x shape: torch.Size([288, 3])
+xh_mol[:,self.x_dim:]): torch.Size([288, 20])
+z_t_mol shape: torch.Size([288, 23])
+z_t_mol shape: torch.Size([288, 23])
+z_t_pro shape: torch.Size([5760, 23])
+v_target_mol shape: torch.Size([288, 23])
+t shape: torch.Size([32, 1])
+Epoch 0:  10%|█         | 22/217 [00:02<00:17, 10.91it/s, loss=2.54, v_num=1.78e+7]Epoch 0:  10%|█         | 22/217 [00:02<00:17, 10.91it/s, loss=2.54, v_num=1.78e+7]noise_scaling: 1
+t shape: torch.Size([32, 1])
+molecule['x'] shape: torch.Size([288, 3])
+z_x_mol shape: torch.Size([288, 3])
+z_t_mol_x shape: torch.Size([288, 3])
+xh_mol[:,self.x_dim:]): torch.Size([288, 20])
+z_t_mol shape: torch.Size([288, 23])
+z_t_mol shape: torch.Size([288, 23])
+z_t_pro shape: torch.Size([5760, 23])
+v_target_mol shape: torch.Size([288, 23])
+t shape: torch.Size([32, 1])
+Epoch 0:  11%|█         | 23/217 [00:02<00:17, 11.16it/s, loss=2.54, v_num=1.78e+7]Epoch 0:  11%|█         | 23/217 [00:02<00:17, 11.16it/s, loss=2.53, v_num=1.78e+7]noise_scaling: 1
+t shape: torch.Size([32, 1])
+molecule['x'] shape: torch.Size([288, 3])
+z_x_mol shape: torch.Size([288, 3])
+z_t_mol_x shape: torch.Size([288, 3])
+xh_mol[:,self.x_dim:]): torch.Size([288, 20])
+z_t_mol shape: torch.Size([288, 23])
+z_t_mol shape: torch.Size([288, 23])
+z_t_pro shape: torch.Size([5760, 23])
+v_target_mol shape: torch.Size([288, 23])
+t shape: torch.Size([32, 1])
+Epoch 0:  11%|█         | 24/217 [00:02<00:16, 11.40it/s, loss=2.53, v_num=1.78e+7]Epoch 0:  11%|█         | 24/217 [00:02<00:16, 11.40it/s, loss=2.52, v_num=1.78e+7]noise_scaling: 1
+t shape: torch.Size([32, 1])
+molecule['x'] shape: torch.Size([288, 3])
+z_x_mol shape: torch.Size([288, 3])
+z_t_mol_x shape: torch.Size([288, 3])
+xh_mol[:,self.x_dim:]): torch.Size([288, 20])
+z_t_mol shape: torch.Size([288, 23])
+z_t_mol shape: torch.Size([288, 23])
+z_t_pro shape: torch.Size([5760, 23])
+v_target_mol shape: torch.Size([288, 23])
+t shape: torch.Size([32, 1])
+Epoch 0:  12%|█▏        | 25/217 [00:02<00:16, 11.63it/s, loss=2.52, v_num=1.78e+7]Epoch 0:  12%|█▏        | 25/217 [00:02<00:16, 11.63it/s, loss=2.5, v_num=1.78e+7] noise_scaling: 1
+t shape: torch.Size([32, 1])
+molecule['x'] shape: torch.Size([288, 3])
+z_x_mol shape: torch.Size([288, 3])
+z_t_mol_x shape: torch.Size([288, 3])
+xh_mol[:,self.x_dim:]): torch.Size([288, 20])
+z_t_mol shape: torch.Size([288, 23])
+z_t_mol shape: torch.Size([288, 23])
+z_t_pro shape: torch.Size([5760, 23])
+v_target_mol shape: torch.Size([288, 23])
+t shape: torch.Size([32, 1])
+Epoch 0:  12%|█▏        | 26/217 [00:02<00:16, 11.84it/s, loss=2.5, v_num=1.78e+7]Epoch 0:  12%|█▏        | 26/217 [00:02<00:16, 11.84it/s, loss=2.49, v_num=1.78e+7]noise_scaling: 1
+t shape: torch.Size([32, 1])
+molecule['x'] shape: torch.Size([288, 3])
+z_x_mol shape: torch.Size([288, 3])
+z_t_mol_x shape: torch.Size([288, 3])
+xh_mol[:,self.x_dim:]): torch.Size([288, 20])
+z_t_mol shape: torch.Size([288, 23])
+z_t_mol shape: torch.Size([288, 23])
+z_t_pro shape: torch.Size([5760, 23])
+v_target_mol shape: torch.Size([288, 23])
+t shape: torch.Size([32, 1])
+Epoch 0:  12%|█▏        | 27/217 [00:02<00:15, 12.05it/s, loss=2.49, v_num=1.78e+7]Epoch 0:  12%|█▏        | 27/217 [00:02<00:15, 12.05it/s, loss=2.48, v_num=1.78e+7]noise_scaling: 1
+t shape: torch.Size([32, 1])
+molecule['x'] shape: torch.Size([288, 3])
+z_x_mol shape: torch.Size([288, 3])
+z_t_mol_x shape: torch.Size([288, 3])
+xh_mol[:,self.x_dim:]): torch.Size([288, 20])
+z_t_mol shape: torch.Size([288, 23])
+z_t_mol shape: torch.Size([288, 23])
+z_t_pro shape: torch.Size([5760, 23])
+v_target_mol shape: torch.Size([288, 23])
+t shape: torch.Size([32, 1])
+Epoch 0:  13%|█▎        | 28/217 [00:02<00:15, 12.26it/s, loss=2.48, v_num=1.78e+7]Epoch 0:  13%|█▎        | 28/217 [00:02<00:15, 12.25it/s, loss=2.46, v_num=1.78e+7]noise_scaling: 1
+t shape: torch.Size([32, 1])
+molecule['x'] shape: torch.Size([288, 3])
+z_x_mol shape: torch.Size([288, 3])
+z_t_mol_x shape: torch.Size([288, 3])
+xh_mol[:,self.x_dim:]): torch.Size([288, 20])
+z_t_mol shape: torch.Size([288, 23])
+z_t_mol shape: torch.Size([288, 23])
+z_t_pro shape: torch.Size([5760, 23])
+v_target_mol shape: torch.Size([288, 23])
+t shape: torch.Size([32, 1])
+Epoch 0:  13%|█▎        | 29/217 [00:02<00:15, 12.45it/s, loss=2.46, v_num=1.78e+7]Epoch 0:  13%|█▎        | 29/217 [00:02<00:15, 12.45it/s, loss=2.43, v_num=1.78e+7]noise_scaling: 1
+t shape: torch.Size([32, 1])
+molecule['x'] shape: torch.Size([288, 3])
+z_x_mol shape: torch.Size([288, 3])
+z_t_mol_x shape: torch.Size([288, 3])
+xh_mol[:,self.x_dim:]): torch.Size([288, 20])
+z_t_mol shape: torch.Size([288, 23])
+z_t_mol shape: torch.Size([288, 23])
+z_t_pro shape: torch.Size([5760, 23])
+v_target_mol shape: torch.Size([288, 23])
+t shape: torch.Size([32, 1])
+Epoch 0:  14%|█▍        | 30/217 [00:02<00:14, 12.64it/s, loss=2.43, v_num=1.78e+7]Epoch 0:  14%|█▍        | 30/217 [00:02<00:14, 12.64it/s, loss=2.41, v_num=1.78e+7]noise_scaling: 1
+t shape: torch.Size([32, 1])
+molecule['x'] shape: torch.Size([288, 3])
+z_x_mol shape: torch.Size([288, 3])
+z_t_mol_x shape: torch.Size([288, 3])
+xh_mol[:,self.x_dim:]): torch.Size([288, 20])
+z_t_mol shape: torch.Size([288, 23])
+z_t_mol shape: torch.Size([288, 23])
+z_t_pro shape: torch.Size([5760, 23])
+v_target_mol shape: torch.Size([288, 23])
+t shape: torch.Size([32, 1])
+Epoch 0:  14%|█▍        | 31/217 [00:02<00:14, 12.81it/s, loss=2.41, v_num=1.78e+7]Epoch 0:  14%|█▍        | 31/217 [00:02<00:14, 12.81it/s, loss=2.38, v_num=1.78e+7]noise_scaling: 1
+t shape: torch.Size([32, 1])
+molecule['x'] shape: torch.Size([288, 3])
+z_x_mol shape: torch.Size([288, 3])
+z_t_mol_x shape: torch.Size([288, 3])
+xh_mol[:,self.x_dim:]): torch.Size([288, 20])
+z_t_mol shape: torch.Size([288, 23])
+z_t_mol shape: torch.Size([288, 23])
+z_t_pro shape: torch.Size([5760, 23])
+v_target_mol shape: torch.Size([288, 23])
+t shape: torch.Size([32, 1])
+Epoch 0:  15%|█▍        | 32/217 [00:02<00:14, 12.98it/s, loss=2.38, v_num=1.78e+7]Epoch 0:  15%|█▍        | 32/217 [00:02<00:14, 12.98it/s, loss=2.36, v_num=1.78e+7]noise_scaling: 1
+t shape: torch.Size([32, 1])
+molecule['x'] shape: torch.Size([288, 3])
+z_x_mol shape: torch.Size([288, 3])
+z_t_mol_x shape: torch.Size([288, 3])
+xh_mol[:,self.x_dim:]): torch.Size([288, 20])
+z_t_mol shape: torch.Size([288, 23])
+z_t_mol shape: torch.Size([288, 23])
+z_t_pro shape: torch.Size([5760, 23])
+v_target_mol shape: torch.Size([288, 23])
+t shape: torch.Size([32, 1])
+Epoch 0:  15%|█▌        | 33/217 [00:02<00:13, 13.15it/s, loss=2.36, v_num=1.78e+7]Epoch 0:  15%|█▌        | 33/217 [00:02<00:13, 13.15it/s, loss=2.33, v_num=1.78e+7]noise_scaling: 1
+t shape: torch.Size([32, 1])
+molecule['x'] shape: torch.Size([288, 3])
+z_x_mol shape: torch.Size([288, 3])
+z_t_mol_x shape: torch.Size([288, 3])
+xh_mol[:,self.x_dim:]): torch.Size([288, 20])
+z_t_mol shape: torch.Size([288, 23])
+z_t_mol shape: torch.Size([288, 23])
+z_t_pro shape: torch.Size([5760, 23])
+v_target_mol shape: torch.Size([288, 23])
+t shape: torch.Size([32, 1])
+Epoch 0:  16%|█▌        | 34/217 [00:02<00:13, 13.30it/s, loss=2.33, v_num=1.78e+7]Epoch 0:  16%|█▌        | 34/217 [00:02<00:13, 13.30it/s, loss=2.3, v_num=1.78e+7] noise_scaling: 1
+t shape: torch.Size([32, 1])
+molecule['x'] shape: torch.Size([288, 3])
+z_x_mol shape: torch.Size([288, 3])
+z_t_mol_x shape: torch.Size([288, 3])
+xh_mol[:,self.x_dim:]): torch.Size([288, 20])
+z_t_mol shape: torch.Size([288, 23])
+z_t_mol shape: torch.Size([288, 23])
+z_t_pro shape: torch.Size([5760, 23])
+v_target_mol shape: torch.Size([288, 23])
+t shape: torch.Size([32, 1])
+Epoch 0:  16%|█▌        | 35/217 [00:02<00:13, 13.46it/s, loss=2.3, v_num=1.78e+7]Epoch 0:  16%|█▌        | 35/217 [00:02<00:13, 13.46it/s, loss=2.27, v_num=1.78e+7]noise_scaling: 1
+t shape: torch.Size([32, 1])
+molecule['x'] shape: torch.Size([288, 3])
+z_x_mol shape: torch.Size([288, 3])
+z_t_mol_x shape: torch.Size([288, 3])
+xh_mol[:,self.x_dim:]): torch.Size([288, 20])
+z_t_mol shape: torch.Size([288, 23])
+z_t_mol shape: torch.Size([288, 23])
+z_t_pro shape: torch.Size([5760, 23])
+v_target_mol shape: torch.Size([288, 23])
+t shape: torch.Size([32, 1])
+Epoch 0:  17%|█▋        | 36/217 [00:02<00:13, 13.61it/s, loss=2.27, v_num=1.78e+7]Epoch 0:  17%|█▋        | 36/217 [00:02<00:13, 13.61it/s, loss=2.24, v_num=1.78e+7]noise_scaling: 1
+t shape: torch.Size([32, 1])
+molecule['x'] shape: torch.Size([288, 3])
+z_x_mol shape: torch.Size([288, 3])
+z_t_mol_x shape: torch.Size([288, 3])
+xh_mol[:,self.x_dim:]): torch.Size([288, 20])
+z_t_mol shape: torch.Size([288, 23])
+z_t_mol shape: torch.Size([288, 23])
+z_t_pro shape: torch.Size([5760, 23])
+v_target_mol shape: torch.Size([288, 23])
+t shape: torch.Size([32, 1])
+Epoch 0:  17%|█▋        | 37/217 [00:02<00:13, 13.76it/s, loss=2.24, v_num=1.78e+7]Epoch 0:  17%|█▋        | 37/217 [00:02<00:13, 13.75it/s, loss=2.21, v_num=1.78e+7]noise_scaling: 1
+t shape: torch.Size([32, 1])
+molecule['x'] shape: torch.Size([288, 3])
+z_x_mol shape: torch.Size([288, 3])
+z_t_mol_x shape: torch.Size([288, 3])
+xh_mol[:,self.x_dim:]): torch.Size([288, 20])
+z_t_mol shape: torch.Size([288, 23])
+z_t_mol shape: torch.Size([288, 23])
+z_t_pro shape: torch.Size([5760, 23])
+v_target_mol shape: torch.Size([288, 23])
+t shape: torch.Size([32, 1])
+Epoch 0:  18%|█▊        | 38/217 [00:02<00:12, 13.89it/s, loss=2.21, v_num=1.78e+7]Epoch 0:  18%|█▊        | 38/217 [00:02<00:12, 13.89it/s, loss=2.17, v_num=1.78e+7]noise_scaling: 1
+t shape: torch.Size([32, 1])
+molecule['x'] shape: torch.Size([288, 3])
+z_x_mol shape: torch.Size([288, 3])
+z_t_mol_x shape: torch.Size([288, 3])
+xh_mol[:,self.x_dim:]): torch.Size([288, 20])
+z_t_mol shape: torch.Size([288, 23])
+z_t_mol shape: torch.Size([288, 23])
+z_t_pro shape: torch.Size([5760, 23])
+v_target_mol shape: torch.Size([288, 23])
+t shape: torch.Size([32, 1])
+Epoch 0:  18%|█▊        | 39/217 [00:02<00:12, 14.02it/s, loss=2.17, v_num=1.78e+7]Epoch 0:  18%|█▊        | 39/217 [00:02<00:12, 14.02it/s, loss=2.13, v_num=1.78e+7]noise_scaling: 1
+t shape: torch.Size([32, 1])
+molecule['x'] shape: torch.Size([288, 3])
+z_x_mol shape: torch.Size([288, 3])
+z_t_mol_x shape: torch.Size([288, 3])
+xh_mol[:,self.x_dim:]): torch.Size([288, 20])
+z_t_mol shape: torch.Size([288, 23])
+z_t_mol shape: torch.Size([288, 23])
+z_t_pro shape: torch.Size([5760, 23])
+v_target_mol shape: torch.Size([288, 23])
+t shape: torch.Size([32, 1])
+Epoch 0:  18%|█▊        | 40/217 [00:02<00:12, 14.15it/s, loss=2.13, v_num=1.78e+7]Epoch 0:  18%|█▊        | 40/217 [00:02<00:12, 14.15it/s, loss=2.09, v_num=1.78e+7]noise_scaling: 1
+t shape: torch.Size([32, 1])
+molecule['x'] shape: torch.Size([288, 3])
+z_x_mol shape: torch.Size([288, 3])
+z_t_mol_x shape: torch.Size([288, 3])
+xh_mol[:,self.x_dim:]): torch.Size([288, 20])
+z_t_mol shape: torch.Size([288, 23])
+z_t_mol shape: torch.Size([288, 23])
+z_t_pro shape: torch.Size([5760, 23])
+v_target_mol shape: torch.Size([288, 23])
+t shape: torch.Size([32, 1])
+Epoch 0:  19%|█▉        | 41/217 [00:02<00:12, 14.28it/s, loss=2.09, v_num=1.78e+7]Epoch 0:  19%|█▉        | 41/217 [00:02<00:12, 14.28it/s, loss=2.05, v_num=1.78e+7]noise_scaling: 1
+t shape: torch.Size([32, 1])
+molecule['x'] shape: torch.Size([288, 3])
+z_x_mol shape: torch.Size([288, 3])
+z_t_mol_x shape: torch.Size([288, 3])
+xh_mol[:,self.x_dim:]): torch.Size([288, 20])
+z_t_mol shape: torch.Size([288, 23])
+z_t_mol shape: torch.Size([288, 23])
+z_t_pro shape: torch.Size([5760, 23])
+v_target_mol shape: torch.Size([288, 23])
+t shape: torch.Size([32, 1])
+Epoch 0:  19%|█▉        | 42/217 [00:02<00:12, 14.41it/s, loss=2.05, v_num=1.78e+7]Epoch 0:  19%|█▉        | 42/217 [00:02<00:12, 14.41it/s, loss=2, v_num=1.78e+7]   noise_scaling: 1
+t shape: torch.Size([32, 1])
+molecule['x'] shape: torch.Size([288, 3])
+z_x_mol shape: torch.Size([288, 3])
+z_t_mol_x shape: torch.Size([288, 3])
+xh_mol[:,self.x_dim:]): torch.Size([288, 20])
+z_t_mol shape: torch.Size([288, 23])
+z_t_mol shape: torch.Size([288, 23])
+z_t_pro shape: torch.Size([5760, 23])
+v_target_mol shape: torch.Size([288, 23])
+t shape: torch.Size([32, 1])
+Epoch 0:  20%|█▉        | 43/217 [00:02<00:11, 14.51it/s, loss=2, v_num=1.78e+7]Epoch 0:  20%|█▉        | 43/217 [00:02<00:11, 14.51it/s, loss=1.97, v_num=1.78e+7]noise_scaling: 1
+t shape: torch.Size([32, 1])
+molecule['x'] shape: torch.Size([288, 3])
+z_x_mol shape: torch.Size([288, 3])
+z_t_mol_x shape: torch.Size([288, 3])
+xh_mol[:,self.x_dim:]): torch.Size([288, 20])
+z_t_mol shape: torch.Size([288, 23])
+z_t_mol shape: torch.Size([288, 23])
+z_t_pro shape: torch.Size([5760, 23])
+v_target_mol shape: torch.Size([288, 23])
+t shape: torch.Size([32, 1])
+Epoch 0:  20%|██        | 44/217 [00:03<00:11, 14.63it/s, loss=1.97, v_num=1.78e+7]Epoch 0:  20%|██        | 44/217 [00:03<00:11, 14.63it/s, loss=1.94, v_num=1.78e+7]noise_scaling: 1
+t shape: torch.Size([32, 1])
+molecule['x'] shape: torch.Size([288, 3])
+z_x_mol shape: torch.Size([288, 3])
+z_t_mol_x shape: torch.Size([288, 3])
+xh_mol[:,self.x_dim:]): torch.Size([288, 20])
+z_t_mol shape: torch.Size([288, 23])
+z_t_mol shape: torch.Size([288, 23])
+z_t_pro shape: torch.Size([5760, 23])
+v_target_mol shape: torch.Size([288, 23])
+t shape: torch.Size([32, 1])
+Epoch 0:  21%|██        | 45/217 [00:03<00:11, 14.75it/s, loss=1.94, v_num=1.78e+7]Epoch 0:  21%|██        | 45/217 [00:03<00:11, 14.74it/s, loss=1.91, v_num=1.78e+7]noise_scaling: 1
+t shape: torch.Size([32, 1])
+molecule['x'] shape: torch.Size([288, 3])
+z_x_mol shape: torch.Size([288, 3])
+z_t_mol_x shape: torch.Size([288, 3])
+xh_mol[:,self.x_dim:]): torch.Size([288, 20])
+z_t_mol shape: torch.Size([288, 23])
+z_t_mol shape: torch.Size([288, 23])
+z_t_pro shape: torch.Size([5760, 23])
+v_target_mol shape: torch.Size([288, 23])
+t shape: torch.Size([32, 1])
+Epoch 0:  21%|██        | 46/217 [00:03<00:11, 14.85it/s, loss=1.91, v_num=1.78e+7]Epoch 0:  21%|██        | 46/217 [00:03<00:11, 14.85it/s, loss=1.88, v_num=1.78e+7]noise_scaling: 1
+t shape: torch.Size([32, 1])
+molecule['x'] shape: torch.Size([288, 3])
+z_x_mol shape: torch.Size([288, 3])
+z_t_mol_x shape: torch.Size([288, 3])
+xh_mol[:,self.x_dim:]): torch.Size([288, 20])
+z_t_mol shape: torch.Size([288, 23])
+z_t_mol shape: torch.Size([288, 23])
+z_t_pro shape: torch.Size([5760, 23])
+v_target_mol shape: torch.Size([288, 23])
+t shape: torch.Size([32, 1])
+Epoch 0:  22%|██▏       | 47/217 [00:03<00:11, 14.95it/s, loss=1.88, v_num=1.78e+7]Epoch 0:  22%|██▏       | 47/217 [00:03<00:11, 14.95it/s, loss=1.85, v_num=1.78e+7]noise_scaling: 1
+t shape: torch.Size([32, 1])
+molecule['x'] shape: torch.Size([288, 3])
+z_x_mol shape: torch.Size([288, 3])
+z_t_mol_x shape: torch.Size([288, 3])
+xh_mol[:,self.x_dim:]): torch.Size([288, 20])
+z_t_mol shape: torch.Size([288, 23])
+z_t_mol shape: torch.Size([288, 23])
+z_t_pro shape: torch.Size([5760, 23])
+v_target_mol shape: torch.Size([288, 23])
+t shape: torch.Size([32, 1])
+Epoch 0:  22%|██▏       | 48/217 [00:03<00:11, 15.06it/s, loss=1.85, v_num=1.78e+7]Epoch 0:  22%|██▏       | 48/217 [00:03<00:11, 15.05it/s, loss=1.82, v_num=1.78e+7]noise_scaling: 1
+t shape: torch.Size([32, 1])
+molecule['x'] shape: torch.Size([288, 3])
+z_x_mol shape: torch.Size([288, 3])
+z_t_mol_x shape: torch.Size([288, 3])
+xh_mol[:,self.x_dim:]): torch.Size([288, 20])
+z_t_mol shape: torch.Size([288, 23])
+z_t_mol shape: torch.Size([288, 23])
+z_t_pro shape: torch.Size([5760, 23])
+v_target_mol shape: torch.Size([288, 23])
+t shape: torch.Size([32, 1])
+Epoch 0:  23%|██▎       | 49/217 [00:03<00:11, 15.16it/s, loss=1.82, v_num=1.78e+7]Epoch 0:  23%|██▎       | 49/217 [00:03<00:11, 15.15it/s, loss=1.8, v_num=1.78e+7] noise_scaling: 1
+t shape: torch.Size([32, 1])
+molecule['x'] shape: torch.Size([288, 3])
+z_x_mol shape: torch.Size([288, 3])
+z_t_mol_x shape: torch.Size([288, 3])
+xh_mol[:,self.x_dim:]): torch.Size([288, 20])
+z_t_mol shape: torch.Size([288, 23])
+z_t_mol shape: torch.Size([288, 23])
+z_t_pro shape: torch.Size([5760, 23])
+v_target_mol shape: torch.Size([288, 23])
+t shape: torch.Size([32, 1])
+Epoch 0:  23%|██▎       | 50/217 [00:03<00:10, 15.25it/s, loss=1.8, v_num=1.78e+7]Epoch 0:  23%|██▎       | 50/217 [00:03<00:10, 15.25it/s, loss=1.77, v_num=1.78e+7]noise_scaling: 1
+t shape: torch.Size([32, 1])
+molecule['x'] shape: torch.Size([288, 3])
+z_x_mol shape: torch.Size([288, 3])
+z_t_mol_x shape: torch.Size([288, 3])
+xh_mol[:,self.x_dim:]): torch.Size([288, 20])
+z_t_mol shape: torch.Size([288, 23])
+z_t_mol shape: torch.Size([288, 23])
+z_t_pro shape: torch.Size([5760, 23])
+v_target_mol shape: torch.Size([288, 23])
+t shape: torch.Size([32, 1])
+Epoch 0:  24%|██▎       | 51/217 [00:03<00:10, 15.30it/s, loss=1.77, v_num=1.78e+7]Epoch 0:  24%|██▎       | 51/217 [00:03<00:10, 15.30it/s, loss=1.75, v_num=1.78e+7]noise_scaling: 1
+t shape: torch.Size([32, 1])
+molecule['x'] shape: torch.Size([288, 3])
+z_x_mol shape: torch.Size([288, 3])
+z_t_mol_x shape: torch.Size([288, 3])
+xh_mol[:,self.x_dim:]): torch.Size([288, 20])
+z_t_mol shape: torch.Size([288, 23])
+z_t_mol shape: torch.Size([288, 23])
+z_t_pro shape: torch.Size([5760, 23])
+v_target_mol shape: torch.Size([288, 23])
+t shape: torch.Size([32, 1])
+Epoch 0:  24%|██▍       | 52/217 [00:03<00:10, 15.40it/s, loss=1.75, v_num=1.78e+7]Epoch 0:  24%|██▍       | 52/217 [00:03<00:10, 15.39it/s, loss=1.71, v_num=1.78e+7]noise_scaling: 1
+t shape: torch.Size([32, 1])
+molecule['x'] shape: torch.Size([288, 3])
+z_x_mol shape: torch.Size([288, 3])
+z_t_mol_x shape: torch.Size([288, 3])
+xh_mol[:,self.x_dim:]): torch.Size([288, 20])
+z_t_mol shape: torch.Size([288, 23])
+z_t_mol shape: torch.Size([288, 23])
+z_t_pro shape: torch.Size([5760, 23])
+v_target_mol shape: torch.Size([288, 23])
+t shape: torch.Size([32, 1])
+Epoch 0:  24%|██▍       | 53/217 [00:03<00:10, 15.49it/s, loss=1.71, v_num=1.78e+7]Epoch 0:  24%|██▍       | 53/217 [00:03<00:10, 15.49it/s, loss=1.68, v_num=1.78e+7]noise_scaling: 1
+t shape: torch.Size([32, 1])
+molecule['x'] shape: torch.Size([288, 3])
+z_x_mol shape: torch.Size([288, 3])
+z_t_mol_x shape: torch.Size([288, 3])
+xh_mol[:,self.x_dim:]): torch.Size([288, 20])
+z_t_mol shape: torch.Size([288, 23])
+z_t_mol shape: torch.Size([288, 23])
+z_t_pro shape: torch.Size([5760, 23])
+v_target_mol shape: torch.Size([288, 23])
+t shape: torch.Size([32, 1])
+Epoch 0:  25%|██▍       | 54/217 [00:03<00:10, 15.57it/s, loss=1.68, v_num=1.78e+7]Epoch 0:  25%|██▍       | 54/217 [00:03<00:10, 15.57it/s, loss=1.65, v_num=1.78e+7]noise_scaling: 1
+t shape: torch.Size([32, 1])
+molecule['x'] shape: torch.Size([288, 3])
+z_x_mol shape: torch.Size([288, 3])
+z_t_mol_x shape: torch.Size([288, 3])
+xh_mol[:,self.x_dim:]): torch.Size([288, 20])
+z_t_mol shape: torch.Size([288, 23])
+z_t_mol shape: torch.Size([288, 23])
+z_t_pro shape: torch.Size([5760, 23])
+v_target_mol shape: torch.Size([288, 23])
+t shape: torch.Size([32, 1])
+Epoch 0:  25%|██▌       | 55/217 [00:03<00:10, 15.66it/s, loss=1.65, v_num=1.78e+7]Epoch 0:  25%|██▌       | 55/217 [00:03<00:10, 15.66it/s, loss=1.62, v_num=1.78e+7]noise_scaling: 1
+t shape: torch.Size([32, 1])
+molecule['x'] shape: torch.Size([288, 3])
+z_x_mol shape: torch.Size([288, 3])
+z_t_mol_x shape: torch.Size([288, 3])
+xh_mol[:,self.x_dim:]): torch.Size([288, 20])
+z_t_mol shape: torch.Size([288, 23])
+z_t_mol shape: torch.Size([288, 23])
+z_t_pro shape: torch.Size([5760, 23])
+v_target_mol shape: torch.Size([288, 23])
+t shape: torch.Size([32, 1])
+Epoch 0:  26%|██▌       | 56/217 [00:03<00:10, 15.74it/s, loss=1.62, v_num=1.78e+7]Epoch 0:  26%|██▌       | 56/217 [00:03<00:10, 15.74it/s, loss=1.59, v_num=1.78e+7]noise_scaling: 1
+t shape: torch.Size([32, 1])
+molecule['x'] shape: torch.Size([288, 3])
+z_x_mol shape: torch.Size([288, 3])
+z_t_mol_x shape: torch.Size([288, 3])
+xh_mol[:,self.x_dim:]): torch.Size([288, 20])
+z_t_mol shape: torch.Size([288, 23])
+z_t_mol shape: torch.Size([288, 23])
+z_t_pro shape: torch.Size([5760, 23])
+v_target_mol shape: torch.Size([288, 23])
+t shape: torch.Size([32, 1])
+Epoch 0:  26%|██▋       | 57/217 [00:03<00:10, 15.82it/s, loss=1.59, v_num=1.78e+7]Epoch 0:  26%|██▋       | 57/217 [00:03<00:10, 15.82it/s, loss=1.56, v_num=1.78e+7]noise_scaling: 1
+t shape: torch.Size([32, 1])
+molecule['x'] shape: torch.Size([288, 3])
+z_x_mol shape: torch.Size([288, 3])
+z_t_mol_x shape: torch.Size([288, 3])
+xh_mol[:,self.x_dim:]): torch.Size([288, 20])
+z_t_mol shape: torch.Size([288, 23])
+z_t_mol shape: torch.Size([288, 23])
+z_t_pro shape: torch.Size([5760, 23])
+v_target_mol shape: torch.Size([288, 23])
+t shape: torch.Size([32, 1])
+Epoch 0:  27%|██▋       | 58/217 [00:03<00:10, 15.90it/s, loss=1.56, v_num=1.78e+7]Epoch 0:  27%|██▋       | 58/217 [00:03<00:10, 15.90it/s, loss=1.54, v_num=1.78e+7]noise_scaling: 1
+t shape: torch.Size([32, 1])
+molecule['x'] shape: torch.Size([288, 3])
+z_x_mol shape: torch.Size([288, 3])
+z_t_mol_x shape: torch.Size([288, 3])
+xh_mol[:,self.x_dim:]): torch.Size([288, 20])
+z_t_mol shape: torch.Size([288, 23])
+z_t_mol shape: torch.Size([288, 23])
+z_t_pro shape: torch.Size([5760, 23])
+v_target_mol shape: torch.Size([288, 23])
+t shape: torch.Size([32, 1])
+Epoch 0:  27%|██▋       | 59/217 [00:03<00:09, 15.97it/s, loss=1.54, v_num=1.78e+7]Epoch 0:  27%|██▋       | 59/217 [00:03<00:09, 15.97it/s, loss=1.51, v_num=1.78e+7]noise_scaling: 1
+t shape: torch.Size([32, 1])
+molecule['x'] shape: torch.Size([288, 3])
+z_x_mol shape: torch.Size([288, 3])
+z_t_mol_x shape: torch.Size([288, 3])
+xh_mol[:,self.x_dim:]): torch.Size([288, 20])
+z_t_mol shape: torch.Size([288, 23])
+z_t_mol shape: torch.Size([288, 23])
+z_t_pro shape: torch.Size([5760, 23])
+v_target_mol shape: torch.Size([288, 23])
+t shape: torch.Size([32, 1])
+Epoch 0:  28%|██▊       | 60/217 [00:03<00:09, 16.05it/s, loss=1.51, v_num=1.78e+7]Epoch 0:  28%|██▊       | 60/217 [00:03<00:09, 16.05it/s, loss=1.49, v_num=1.78e+7]noise_scaling: 1
+t shape: torch.Size([32, 1])
+molecule['x'] shape: torch.Size([288, 3])
+z_x_mol shape: torch.Size([288, 3])
+z_t_mol_x shape: torch.Size([288, 3])
+xh_mol[:,self.x_dim:]): torch.Size([288, 20])
+z_t_mol shape: torch.Size([288, 23])
+z_t_mol shape: torch.Size([288, 23])
+z_t_pro shape: torch.Size([5760, 23])
+v_target_mol shape: torch.Size([288, 23])
+t shape: torch.Size([32, 1])
+Epoch 0:  28%|██▊       | 61/217 [00:03<00:09, 16.12it/s, loss=1.49, v_num=1.78e+7]Epoch 0:  28%|██▊       | 61/217 [00:03<00:09, 16.12it/s, loss=1.49, v_num=1.78e+7]noise_scaling: 1
+t shape: torch.Size([32, 1])
+molecule['x'] shape: torch.Size([288, 3])
+z_x_mol shape: torch.Size([288, 3])
+z_t_mol_x shape: torch.Size([288, 3])
+xh_mol[:,self.x_dim:]): torch.Size([288, 20])
+z_t_mol shape: torch.Size([288, 23])
+z_t_mol shape: torch.Size([288, 23])
+z_t_pro shape: torch.Size([5760, 23])
+v_target_mol shape: torch.Size([288, 23])
+t shape: torch.Size([32, 1])
+Epoch 0:  29%|██▊       | 62/217 [00:03<00:09, 16.19it/s, loss=1.49, v_num=1.78e+7]Epoch 0:  29%|██▊       | 62/217 [00:03<00:09, 16.19it/s, loss=1.47, v_num=1.78e+7]noise_scaling: 1
+t shape: torch.Size([32, 1])
+molecule['x'] shape: torch.Size([288, 3])
+z_x_mol shape: torch.Size([288, 3])
+z_t_mol_x shape: torch.Size([288, 3])
+xh_mol[:,self.x_dim:]): torch.Size([288, 20])
+z_t_mol shape: torch.Size([288, 23])
+z_t_mol shape: torch.Size([288, 23])
+z_t_pro shape: torch.Size([5760, 23])
+v_target_mol shape: torch.Size([288, 23])
+t shape: torch.Size([32, 1])
+Epoch 0:  29%|██▉       | 63/217 [00:03<00:09, 16.26it/s, loss=1.47, v_num=1.78e+7]Epoch 0:  29%|██▉       | 63/217 [00:03<00:09, 16.26it/s, loss=1.46, v_num=1.78e+7]noise_scaling: 1
+t shape: torch.Size([32, 1])
+molecule['x'] shape: torch.Size([288, 3])
+z_x_mol shape: torch.Size([288, 3])
+z_t_mol_x shape: torch.Size([288, 3])
+xh_mol[:,self.x_dim:]): torch.Size([288, 20])
+z_t_mol shape: torch.Size([288, 23])
+z_t_mol shape: torch.Size([288, 23])
+z_t_pro shape: torch.Size([5760, 23])
+v_target_mol shape: torch.Size([288, 23])
+t shape: torch.Size([32, 1])
+Epoch 0:  29%|██▉       | 64/217 [00:03<00:09, 16.33it/s, loss=1.46, v_num=1.78e+7]Epoch 0:  29%|██▉       | 64/217 [00:03<00:09, 16.32it/s, loss=1.43, v_num=1.78e+7]noise_scaling: 1
+t shape: torch.Size([32, 1])
+molecule['x'] shape: torch.Size([288, 3])
+z_x_mol shape: torch.Size([288, 3])
+z_t_mol_x shape: torch.Size([288, 3])
+xh_mol[:,self.x_dim:]): torch.Size([288, 20])
+z_t_mol shape: torch.Size([288, 23])
+z_t_mol shape: torch.Size([288, 23])
+z_t_pro shape: torch.Size([5760, 23])
+v_target_mol shape: torch.Size([288, 23])
+t shape: torch.Size([32, 1])
+Epoch 0:  30%|██▉       | 65/217 [00:03<00:09, 16.39it/s, loss=1.43, v_num=1.78e+7]Epoch 0:  30%|██▉       | 65/217 [00:03<00:09, 16.39it/s, loss=1.42, v_num=1.78e+7]noise_scaling: 1
+t shape: torch.Size([32, 1])
+molecule['x'] shape: torch.Size([288, 3])
+z_x_mol shape: torch.Size([288, 3])
+z_t_mol_x shape: torch.Size([288, 3])
+xh_mol[:,self.x_dim:]): torch.Size([288, 20])
+z_t_mol shape: torch.Size([288, 23])
+z_t_mol shape: torch.Size([288, 23])
+z_t_pro shape: torch.Size([5760, 23])
+v_target_mol shape: torch.Size([288, 23])
+t shape: torch.Size([32, 1])
+Epoch 0:  30%|███       | 66/217 [00:04<00:09, 16.46it/s, loss=1.42, v_num=1.78e+7]Epoch 0:  30%|███       | 66/217 [00:04<00:09, 16.46it/s, loss=1.4, v_num=1.78e+7] noise_scaling: 1
+t shape: torch.Size([32, 1])
+molecule['x'] shape: torch.Size([288, 3])
+z_x_mol shape: torch.Size([288, 3])
+z_t_mol_x shape: torch.Size([288, 3])
+xh_mol[:,self.x_dim:]): torch.Size([288, 20])
+z_t_mol shape: torch.Size([288, 23])
+z_t_mol shape: torch.Size([288, 23])
+z_t_pro shape: torch.Size([5760, 23])
+v_target_mol shape: torch.Size([288, 23])
+t shape: torch.Size([32, 1])
+Epoch 0:  31%|███       | 67/217 [00:04<00:09, 16.52it/s, loss=1.4, v_num=1.78e+7]Epoch 0:  31%|███       | 67/217 [00:04<00:09, 16.52it/s, loss=1.38, v_num=1.78e+7]noise_scaling: 1
+t shape: torch.Size([32, 1])
+molecule['x'] shape: torch.Size([288, 3])
+z_x_mol shape: torch.Size([288, 3])
+z_t_mol_x shape: torch.Size([288, 3])
+xh_mol[:,self.x_dim:]): torch.Size([288, 20])
+z_t_mol shape: torch.Size([288, 23])
+z_t_mol shape: torch.Size([288, 23])
+z_t_pro shape: torch.Size([5760, 23])
+v_target_mol shape: torch.Size([288, 23])
+t shape: torch.Size([32, 1])
+Epoch 0:  31%|███▏      | 68/217 [00:04<00:08, 16.58it/s, loss=1.38, v_num=1.78e+7]Epoch 0:  31%|███▏      | 68/217 [00:04<00:08, 16.58it/s, loss=1.35, v_num=1.78e+7]noise_scaling: 1
+t shape: torch.Size([32, 1])
+molecule['x'] shape: torch.Size([288, 3])
+z_x_mol shape: torch.Size([288, 3])
+z_t_mol_x shape: torch.Size([288, 3])
+xh_mol[:,self.x_dim:]): torch.Size([288, 20])
+z_t_mol shape: torch.Size([288, 23])
+z_t_mol shape: torch.Size([288, 23])
+z_t_pro shape: torch.Size([5760, 23])
+v_target_mol shape: torch.Size([288, 23])
+t shape: torch.Size([32, 1])
+Epoch 0:  32%|███▏      | 69/217 [00:04<00:08, 16.64it/s, loss=1.35, v_num=1.78e+7]Epoch 0:  32%|███▏      | 69/217 [00:04<00:08, 16.64it/s, loss=1.33, v_num=1.78e+7]noise_scaling: 1
+t shape: torch.Size([32, 1])
+molecule['x'] shape: torch.Size([288, 3])
+z_x_mol shape: torch.Size([288, 3])
+z_t_mol_x shape: torch.Size([288, 3])
+xh_mol[:,self.x_dim:]): torch.Size([288, 20])
+z_t_mol shape: torch.Size([288, 23])
+z_t_mol shape: torch.Size([288, 23])
+z_t_pro shape: torch.Size([5760, 23])
+v_target_mol shape: torch.Size([288, 23])
+t shape: torch.Size([32, 1])
+Epoch 0:  32%|███▏      | 70/217 [00:04<00:08, 16.71it/s, loss=1.33, v_num=1.78e+7]Epoch 0:  32%|███▏      | 70/217 [00:04<00:08, 16.70it/s, loss=1.33, v_num=1.78e+7]noise_scaling: 1
+t shape: torch.Size([32, 1])
+molecule['x'] shape: torch.Size([288, 3])
+z_x_mol shape: torch.Size([288, 3])
+z_t_mol_x shape: torch.Size([288, 3])
+xh_mol[:,self.x_dim:]): torch.Size([288, 20])
+z_t_mol shape: torch.Size([288, 23])
+z_t_mol shape: torch.Size([288, 23])
+z_t_pro shape: torch.Size([5760, 23])
+v_target_mol shape: torch.Size([288, 23])
+t shape: torch.Size([32, 1])
+Epoch 0:  33%|███▎      | 71/217 [00:04<00:08, 16.76it/s, loss=1.33, v_num=1.78e+7]Epoch 0:  33%|███▎      | 71/217 [00:04<00:08, 16.76it/s, loss=1.31, v_num=1.78e+7]noise_scaling: 1
+t shape: torch.Size([32, 1])
+molecule['x'] shape: torch.Size([288, 3])
+z_x_mol shape: torch.Size([288, 3])
+z_t_mol_x shape: torch.Size([288, 3])
+xh_mol[:,self.x_dim:]): torch.Size([288, 20])
+z_t_mol shape: torch.Size([288, 23])
+z_t_mol shape: torch.Size([288, 23])
+z_t_pro shape: torch.Size([5760, 23])
+v_target_mol shape: torch.Size([288, 23])
+t shape: torch.Size([32, 1])
+Epoch 0:  33%|███▎      | 72/217 [00:04<00:08, 16.82it/s, loss=1.31, v_num=1.78e+7]Epoch 0:  33%|███▎      | 72/217 [00:04<00:08, 16.82it/s, loss=1.28, v_num=1.78e+7]noise_scaling: 1
+t shape: torch.Size([32, 1])
+molecule['x'] shape: torch.Size([288, 3])
+z_x_mol shape: torch.Size([288, 3])
+z_t_mol_x shape: torch.Size([288, 3])
+xh_mol[:,self.x_dim:]): torch.Size([288, 20])
+z_t_mol shape: torch.Size([288, 23])
+z_t_mol shape: torch.Size([288, 23])
+z_t_pro shape: torch.Size([5760, 23])
+v_target_mol shape: torch.Size([288, 23])
+t shape: torch.Size([32, 1])
+Epoch 0:  34%|███▎      | 73/217 [00:04<00:08, 16.88it/s, loss=1.28, v_num=1.78e+7]Epoch 0:  34%|███▎      | 73/217 [00:04<00:08, 16.88it/s, loss=1.26, v_num=1.78e+7]noise_scaling: 1
+t shape: torch.Size([32, 1])
+molecule['x'] shape: torch.Size([288, 3])
+z_x_mol shape: torch.Size([288, 3])
+z_t_mol_x shape: torch.Size([288, 3])
+xh_mol[:,self.x_dim:]): torch.Size([288, 20])
+z_t_mol shape: torch.Size([288, 23])
+z_t_mol shape: torch.Size([288, 23])
+z_t_pro shape: torch.Size([5760, 23])
+v_target_mol shape: torch.Size([288, 23])
+t shape: torch.Size([32, 1])
+Epoch 0:  34%|███▍      | 74/217 [00:04<00:08, 16.93it/s, loss=1.26, v_num=1.78e+7]Epoch 0:  34%|███▍      | 74/217 [00:04<00:08, 16.93it/s, loss=1.25, v_num=1.78e+7]noise_scaling: 1
+t shape: torch.Size([32, 1])
+molecule['x'] shape: torch.Size([288, 3])
+z_x_mol shape: torch.Size([288, 3])
+z_t_mol_x shape: torch.Size([288, 3])
+xh_mol[:,self.x_dim:]): torch.Size([288, 20])
+z_t_mol shape: torch.Size([288, 23])
+z_t_mol shape: torch.Size([288, 23])
+z_t_pro shape: torch.Size([5760, 23])
+v_target_mol shape: torch.Size([288, 23])
+t shape: torch.Size([32, 1])
+Epoch 0:  35%|███▍      | 75/217 [00:04<00:08, 16.97it/s, loss=1.25, v_num=1.78e+7]Epoch 0:  35%|███▍      | 75/217 [00:04<00:08, 16.97it/s, loss=1.23, v_num=1.78e+7]noise_scaling: 1
+t shape: torch.Size([32, 1])
+molecule['x'] shape: torch.Size([288, 3])
+z_x_mol shape: torch.Size([288, 3])
+z_t_mol_x shape: torch.Size([288, 3])
+xh_mol[:,self.x_dim:]): torch.Size([288, 20])
+z_t_mol shape: torch.Size([288, 23])
+z_t_mol shape: torch.Size([288, 23])
+z_t_pro shape: torch.Size([5760, 23])
+v_target_mol shape: torch.Size([288, 23])
+t shape: torch.Size([32, 1])
+Epoch 0:  35%|███▌      | 76/217 [00:04<00:08, 17.03it/s, loss=1.23, v_num=1.78e+7]Epoch 0:  35%|███▌      | 76/217 [00:04<00:08, 17.03it/s, loss=1.2, v_num=1.78e+7] noise_scaling: 1
+t shape: torch.Size([32, 1])
+molecule['x'] shape: torch.Size([288, 3])
+z_x_mol shape: torch.Size([288, 3])
+z_t_mol_x shape: torch.Size([288, 3])
+xh_mol[:,self.x_dim:]): torch.Size([288, 20])
+z_t_mol shape: torch.Size([288, 23])
+z_t_mol shape: torch.Size([288, 23])
+z_t_pro shape: torch.Size([5760, 23])
+v_target_mol shape: torch.Size([288, 23])
+t shape: torch.Size([32, 1])
+Epoch 0:  35%|███▌      | 77/217 [00:04<00:08, 17.09it/s, loss=1.2, v_num=1.78e+7]Epoch 0:  35%|███▌      | 77/217 [00:04<00:08, 17.09it/s, loss=1.18, v_num=1.78e+7]noise_scaling: 1
+t shape: torch.Size([32, 1])
+molecule['x'] shape: torch.Size([288, 3])
+z_x_mol shape: torch.Size([288, 3])
+z_t_mol_x shape: torch.Size([288, 3])
+xh_mol[:,self.x_dim:]): torch.Size([288, 20])
+z_t_mol shape: torch.Size([288, 23])
+z_t_mol shape: torch.Size([288, 23])
+z_t_pro shape: torch.Size([5760, 23])
+v_target_mol shape: torch.Size([288, 23])
+t shape: torch.Size([32, 1])
+Epoch 0:  36%|███▌      | 78/217 [00:04<00:08, 17.13it/s, loss=1.18, v_num=1.78e+7]Epoch 0:  36%|███▌      | 78/217 [00:04<00:08, 17.13it/s, loss=1.17, v_num=1.78e+7]noise_scaling: 1
+t shape: torch.Size([32, 1])
+molecule['x'] shape: torch.Size([288, 3])
+z_x_mol shape: torch.Size([288, 3])
+z_t_mol_x shape: torch.Size([288, 3])
+xh_mol[:,self.x_dim:]): torch.Size([288, 20])
+z_t_mol shape: torch.Size([288, 23])
+z_t_mol shape: torch.Size([288, 23])
+z_t_pro shape: torch.Size([5760, 23])
+v_target_mol shape: torch.Size([288, 23])
+t shape: torch.Size([32, 1])
+Epoch 0:  36%|███▋      | 79/217 [00:04<00:08, 17.18it/s, loss=1.17, v_num=1.78e+7]Epoch 0:  36%|███▋      | 79/217 [00:04<00:08, 17.17it/s, loss=1.18, v_num=1.78e+7]noise_scaling: 1
+t shape: torch.Size([32, 1])
+molecule['x'] shape: torch.Size([288, 3])
+z_x_mol shape: torch.Size([288, 3])
+z_t_mol_x shape: torch.Size([288, 3])
+xh_mol[:,self.x_dim:]): torch.Size([288, 20])
+z_t_mol shape: torch.Size([288, 23])
+z_t_mol shape: torch.Size([288, 23])
+z_t_pro shape: torch.Size([5760, 23])
+v_target_mol shape: torch.Size([288, 23])
+t shape: torch.Size([32, 1])
+Epoch 0:  37%|███▋      | 80/217 [00:04<00:07, 17.23it/s, loss=1.18, v_num=1.78e+7]Epoch 0:  37%|███▋      | 80/217 [00:04<00:07, 17.23it/s, loss=1.15, v_num=1.78e+7]noise_scaling: 1
+t shape: torch.Size([32, 1])
+molecule['x'] shape: torch.Size([288, 3])
+z_x_mol shape: torch.Size([288, 3])
+z_t_mol_x shape: torch.Size([288, 3])
+xh_mol[:,self.x_dim:]): torch.Size([288, 20])
+z_t_mol shape: torch.Size([288, 23])
+z_t_mol shape: torch.Size([288, 23])
+z_t_pro shape: torch.Size([5760, 23])
+v_target_mol shape: torch.Size([288, 23])
+t shape: torch.Size([32, 1])
+Epoch 0:  37%|███▋      | 81/217 [00:04<00:07, 17.28it/s, loss=1.15, v_num=1.78e+7]Epoch 0:  37%|███▋      | 81/217 [00:04<00:07, 17.28it/s, loss=1.13, v_num=1.78e+7]noise_scaling: 1
+t shape: torch.Size([32, 1])
+molecule['x'] shape: torch.Size([288, 3])
+z_x_mol shape: torch.Size([288, 3])
+z_t_mol_x shape: torch.Size([288, 3])
+xh_mol[:,self.x_dim:]): torch.Size([288, 20])
+z_t_mol shape: torch.Size([288, 23])
+z_t_mol shape: torch.Size([288, 23])
+z_t_pro shape: torch.Size([5760, 23])
+v_target_mol shape: torch.Size([288, 23])
+t shape: torch.Size([32, 1])
+Epoch 0:  38%|███▊      | 82/217 [00:04<00:07, 17.33it/s, loss=1.13, v_num=1.78e+7]Epoch 0:  38%|███▊      | 82/217 [00:04<00:07, 17.33it/s, loss=1.12, v_num=1.78e+7]noise_scaling: 1
+t shape: torch.Size([32, 1])
+molecule['x'] shape: torch.Size([288, 3])
+z_x_mol shape: torch.Size([288, 3])
+z_t_mol_x shape: torch.Size([288, 3])
+xh_mol[:,self.x_dim:]): torch.Size([288, 20])
+z_t_mol shape: torch.Size([288, 23])
+z_t_mol shape: torch.Size([288, 23])
+z_t_pro shape: torch.Size([5760, 23])
+v_target_mol shape: torch.Size([288, 23])
+t shape: torch.Size([32, 1])
+Epoch 0:  38%|███▊      | 83/217 [00:04<00:07, 17.38it/s, loss=1.12, v_num=1.78e+7]Epoch 0:  38%|███▊      | 83/217 [00:04<00:07, 17.38it/s, loss=1.08, v_num=1.78e+7]noise_scaling: 1
+t shape: torch.Size([32, 1])
+molecule['x'] shape: torch.Size([288, 3])
+z_x_mol shape: torch.Size([288, 3])
+z_t_mol_x shape: torch.Size([288, 3])
+xh_mol[:,self.x_dim:]): torch.Size([288, 20])
+z_t_mol shape: torch.Size([288, 23])
+z_t_mol shape: torch.Size([288, 23])
+z_t_pro shape: torch.Size([5760, 23])
+v_target_mol shape: torch.Size([288, 23])
+t shape: torch.Size([32, 1])
+Epoch 0:  39%|███▊      | 84/217 [00:04<00:07, 17.42it/s, loss=1.08, v_num=1.78e+7]Epoch 0:  39%|███▊      | 84/217 [00:04<00:07, 17.42it/s, loss=1.06, v_num=1.78e+7]noise_scaling: 1
+t shape: torch.Size([32, 1])
+molecule['x'] shape: torch.Size([288, 3])
+z_x_mol shape: torch.Size([288, 3])
+z_t_mol_x shape: torch.Size([288, 3])
+xh_mol[:,self.x_dim:]): torch.Size([288, 20])
+z_t_mol shape: torch.Size([288, 23])
+z_t_mol shape: torch.Size([288, 23])
+z_t_pro shape: torch.Size([5760, 23])
+v_target_mol shape: torch.Size([288, 23])
+t shape: torch.Size([32, 1])
+Epoch 0:  39%|███▉      | 85/217 [00:04<00:07, 17.47it/s, loss=1.06, v_num=1.78e+7]Epoch 0:  39%|███▉      | 85/217 [00:04<00:07, 17.46it/s, loss=1.04, v_num=1.78e+7]noise_scaling: 1
+t shape: torch.Size([32, 1])
+molecule['x'] shape: torch.Size([288, 3])
+z_x_mol shape: torch.Size([288, 3])
+z_t_mol_x shape: torch.Size([288, 3])
+xh_mol[:,self.x_dim:]): torch.Size([288, 20])
+z_t_mol shape: torch.Size([288, 23])
+z_t_mol shape: torch.Size([288, 23])
+z_t_pro shape: torch.Size([5760, 23])
+v_target_mol shape: torch.Size([288, 23])
+t shape: torch.Size([32, 1])
+Epoch 0:  40%|███▉      | 86/217 [00:04<00:07, 17.51it/s, loss=1.04, v_num=1.78e+7]Epoch 0:  40%|███▉      | 86/217 [00:04<00:07, 17.51it/s, loss=1.04, v_num=1.78e+7]noise_scaling: 1
+t shape: torch.Size([32, 1])
+molecule['x'] shape: torch.Size([288, 3])
+z_x_mol shape: torch.Size([288, 3])
+z_t_mol_x shape: torch.Size([288, 3])
+xh_mol[:,self.x_dim:]): torch.Size([288, 20])
+z_t_mol shape: torch.Size([288, 23])
+z_t_mol shape: torch.Size([288, 23])
+z_t_pro shape: torch.Size([5760, 23])
+v_target_mol shape: torch.Size([288, 23])
+t shape: torch.Size([32, 1])
+Epoch 0:  40%|████      | 87/217 [00:04<00:07, 17.55it/s, loss=1.04, v_num=1.78e+7]Epoch 0:  40%|████      | 87/217 [00:04<00:07, 17.55it/s, loss=1.02, v_num=1.78e+7]noise_scaling: 1
+t shape: torch.Size([32, 1])
+molecule['x'] shape: torch.Size([288, 3])
+z_x_mol shape: torch.Size([288, 3])
+z_t_mol_x shape: torch.Size([288, 3])
+xh_mol[:,self.x_dim:]): torch.Size([288, 20])
+z_t_mol shape: torch.Size([288, 23])
+z_t_mol shape: torch.Size([288, 23])
+z_t_pro shape: torch.Size([5760, 23])
+v_target_mol shape: torch.Size([288, 23])
+t shape: torch.Size([32, 1])
+Epoch 0:  41%|████      | 88/217 [00:05<00:07, 17.59it/s, loss=1.02, v_num=1.78e+7]Epoch 0:  41%|████      | 88/217 [00:05<00:07, 17.59it/s, loss=1.02, v_num=1.78e+7]noise_scaling: 1
+t shape: torch.Size([32, 1])
+molecule['x'] shape: torch.Size([288, 3])
+z_x_mol shape: torch.Size([288, 3])
+z_t_mol_x shape: torch.Size([288, 3])
+xh_mol[:,self.x_dim:]): torch.Size([288, 20])
+z_t_mol shape: torch.Size([288, 23])
+z_t_mol shape: torch.Size([288, 23])
+z_t_pro shape: torch.Size([5760, 23])
+v_target_mol shape: torch.Size([288, 23])
+t shape: torch.Size([32, 1])
+Epoch 0:  41%|████      | 89/217 [00:05<00:07, 17.63it/s, loss=1.02, v_num=1.78e+7]Epoch 0:  41%|████      | 89/217 [00:05<00:07, 17.63it/s, loss=1.01, v_num=1.78e+7]noise_scaling: 1
+t shape: torch.Size([32, 1])
+molecule['x'] shape: torch.Size([288, 3])
+z_x_mol shape: torch.Size([288, 3])
+z_t_mol_x shape: torch.Size([288, 3])
+xh_mol[:,self.x_dim:]): torch.Size([288, 20])
+z_t_mol shape: torch.Size([288, 23])
+z_t_mol shape: torch.Size([288, 23])
+z_t_pro shape: torch.Size([5760, 23])
+v_target_mol shape: torch.Size([288, 23])
+t shape: torch.Size([32, 1])
+Epoch 0:  41%|████▏     | 90/217 [00:05<00:07, 17.67it/s, loss=1.01, v_num=1.78e+7]Epoch 0:  41%|████▏     | 90/217 [00:05<00:07, 17.67it/s, loss=0.991, v_num=1.78e+7]noise_scaling: 1
+t shape: torch.Size([32, 1])
+molecule['x'] shape: torch.Size([288, 3])
+z_x_mol shape: torch.Size([288, 3])
+z_t_mol_x shape: torch.Size([288, 3])
+xh_mol[:,self.x_dim:]): torch.Size([288, 20])
+z_t_mol shape: torch.Size([288, 23])
+z_t_mol shape: torch.Size([288, 23])
+z_t_pro shape: torch.Size([5760, 23])
+v_target_mol shape: torch.Size([288, 23])
+t shape: torch.Size([32, 1])
+Epoch 0:  42%|████▏     | 91/217 [00:05<00:07, 17.71it/s, loss=0.991, v_num=1.78e+7]Epoch 0:  42%|████▏     | 91/217 [00:05<00:07, 17.71it/s, loss=0.975, v_num=1.78e+7]noise_scaling: 1
+t shape: torch.Size([32, 1])
+molecule['x'] shape: torch.Size([288, 3])
+z_x_mol shape: torch.Size([288, 3])
+z_t_mol_x shape: torch.Size([288, 3])
+xh_mol[:,self.x_dim:]): torch.Size([288, 20])
+z_t_mol shape: torch.Size([288, 23])
+z_t_mol shape: torch.Size([288, 23])
+z_t_pro shape: torch.Size([5760, 23])
+v_target_mol shape: torch.Size([288, 23])
+t shape: torch.Size([32, 1])
+Epoch 0:  42%|████▏     | 92/217 [00:05<00:07, 17.75it/s, loss=0.975, v_num=1.78e+7]Epoch 0:  42%|████▏     | 92/217 [00:05<00:07, 17.74it/s, loss=0.975, v_num=1.78e+7]noise_scaling: 1
+t shape: torch.Size([32, 1])
+molecule['x'] shape: torch.Size([288, 3])
+z_x_mol shape: torch.Size([288, 3])
+z_t_mol_x shape: torch.Size([288, 3])
+xh_mol[:,self.x_dim:]): torch.Size([288, 20])
+z_t_mol shape: torch.Size([288, 23])
+z_t_mol shape: torch.Size([288, 23])
+z_t_pro shape: torch.Size([5760, 23])
+v_target_mol shape: torch.Size([288, 23])
+t shape: torch.Size([32, 1])
+Epoch 0:  43%|████▎     | 93/217 [00:05<00:06, 17.79it/s, loss=0.975, v_num=1.78e+7]Epoch 0:  43%|████▎     | 93/217 [00:05<00:06, 17.79it/s, loss=0.978, v_num=1.78e+7]noise_scaling: 1
+t shape: torch.Size([32, 1])
+molecule['x'] shape: torch.Size([288, 3])
+z_x_mol shape: torch.Size([288, 3])
+z_t_mol_x shape: torch.Size([288, 3])
+xh_mol[:,self.x_dim:]): torch.Size([288, 20])
+z_t_mol shape: torch.Size([288, 23])
+z_t_mol shape: torch.Size([288, 23])
+z_t_pro shape: torch.Size([5760, 23])
+v_target_mol shape: torch.Size([288, 23])
+t shape: torch.Size([32, 1])
+Epoch 0:  43%|████▎     | 94/217 [00:05<00:06, 17.83it/s, loss=0.978, v_num=1.78e+7]Epoch 0:  43%|████▎     | 94/217 [00:05<00:06, 17.82it/s, loss=0.953, v_num=1.78e+7]noise_scaling: 1
+t shape: torch.Size([32, 1])
+molecule['x'] shape: torch.Size([288, 3])
+z_x_mol shape: torch.Size([288, 3])
+z_t_mol_x shape: torch.Size([288, 3])
+xh_mol[:,self.x_dim:]): torch.Size([288, 20])
+z_t_mol shape: torch.Size([288, 23])
+z_t_mol shape: torch.Size([288, 23])
+z_t_pro shape: torch.Size([5760, 23])
+v_target_mol shape: torch.Size([288, 23])
+t shape: torch.Size([32, 1])
+Epoch 0:  44%|████▍     | 95/217 [00:05<00:06, 17.86it/s, loss=0.953, v_num=1.78e+7]Epoch 0:  44%|████▍     | 95/217 [00:05<00:06, 17.86it/s, loss=0.952, v_num=1.78e+7]noise_scaling: 1
+t shape: torch.Size([32, 1])
+molecule['x'] shape: torch.Size([288, 3])
+z_x_mol shape: torch.Size([288, 3])
+z_t_mol_x shape: torch.Size([288, 3])
+xh_mol[:,self.x_dim:]): torch.Size([288, 20])
+z_t_mol shape: torch.Size([288, 23])
+z_t_mol shape: torch.Size([288, 23])
+z_t_pro shape: torch.Size([5760, 23])
+v_target_mol shape: torch.Size([288, 23])
+t shape: torch.Size([32, 1])
+Epoch 0:  44%|████▍     | 96/217 [00:05<00:06, 17.90it/s, loss=0.952, v_num=1.78e+7]Epoch 0:  44%|████▍     | 96/217 [00:05<00:06, 17.90it/s, loss=0.965, v_num=1.78e+7]noise_scaling: 1
+t shape: torch.Size([32, 1])
+molecule['x'] shape: torch.Size([288, 3])
+z_x_mol shape: torch.Size([288, 3])
+z_t_mol_x shape: torch.Size([288, 3])
+xh_mol[:,self.x_dim:]): torch.Size([288, 20])
+z_t_mol shape: torch.Size([288, 23])
+z_t_mol shape: torch.Size([288, 23])
+z_t_pro shape: torch.Size([5760, 23])
+v_target_mol shape: torch.Size([288, 23])
+t shape: torch.Size([32, 1])
+Epoch 0:  45%|████▍     | 97/217 [00:05<00:06, 17.93it/s, loss=0.965, v_num=1.78e+7]Epoch 0:  45%|████▍     | 97/217 [00:05<00:06, 17.93it/s, loss=0.97, v_num=1.78e+7] noise_scaling: 1
+t shape: torch.Size([32, 1])
+molecule['x'] shape: torch.Size([288, 3])
+z_x_mol shape: torch.Size([288, 3])
+z_t_mol_x shape: torch.Size([288, 3])
+xh_mol[:,self.x_dim:]): torch.Size([288, 20])
+z_t_mol shape: torch.Size([288, 23])
+z_t_mol shape: torch.Size([288, 23])
+z_t_pro shape: torch.Size([5760, 23])
+v_target_mol shape: torch.Size([288, 23])
+t shape: torch.Size([32, 1])
+Epoch 0:  45%|████▌     | 98/217 [00:05<00:06, 17.97it/s, loss=0.97, v_num=1.78e+7]Epoch 0:  45%|████▌     | 98/217 [00:05<00:06, 17.97it/s, loss=0.962, v_num=1.78e+7]noise_scaling: 1
+t shape: torch.Size([32, 1])
+molecule['x'] shape: torch.Size([288, 3])
+z_x_mol shape: torch.Size([288, 3])
+z_t_mol_x shape: torch.Size([288, 3])
+xh_mol[:,self.x_dim:]): torch.Size([288, 20])
+z_t_mol shape: torch.Size([288, 23])
+z_t_mol shape: torch.Size([288, 23])
+z_t_pro shape: torch.Size([5760, 23])
+v_target_mol shape: torch.Size([288, 23])
+t shape: torch.Size([32, 1])
+Epoch 0:  46%|████▌     | 99/217 [00:05<00:06, 18.01it/s, loss=0.962, v_num=1.78e+7]Epoch 0:  46%|████▌     | 99/217 [00:05<00:06, 18.01it/s, loss=0.936, v_num=1.78e+7]noise_scaling: 1
+t shape: torch.Size([32, 1])
+molecule['x'] shape: torch.Size([288, 3])
+z_x_mol shape: torch.Size([288, 3])
+z_t_mol_x shape: torch.Size([288, 3])
+xh_mol[:,self.x_dim:]): torch.Size([288, 20])
+z_t_mol shape: torch.Size([288, 23])
+z_t_mol shape: torch.Size([288, 23])
+z_t_pro shape: torch.Size([5760, 23])
+v_target_mol shape: torch.Size([288, 23])
+t shape: torch.Size([32, 1])
+Epoch 0:  46%|████▌     | 100/217 [00:05<00:06, 18.04it/s, loss=0.936, v_num=1.78e+7]Epoch 0:  46%|████▌     | 100/217 [00:05<00:06, 18.04it/s, loss=0.93, v_num=1.78e+7] noise_scaling: 1
+t shape: torch.Size([32, 1])
+molecule['x'] shape: torch.Size([288, 3])
+z_x_mol shape: torch.Size([288, 3])
+z_t_mol_x shape: torch.Size([288, 3])
+xh_mol[:,self.x_dim:]): torch.Size([288, 20])
+z_t_mol shape: torch.Size([288, 23])
+z_t_mol shape: torch.Size([288, 23])
+z_t_pro shape: torch.Size([5760, 23])
+v_target_mol shape: torch.Size([288, 23])
+t shape: torch.Size([32, 1])
+Epoch 0:  47%|████▋     | 101/217 [00:05<00:06, 18.07it/s, loss=0.93, v_num=1.78e+7]Epoch 0:  47%|████▋     | 101/217 [00:05<00:06, 18.07it/s, loss=0.915, v_num=1.78e+7]noise_scaling: 1
+t shape: torch.Size([32, 1])
+molecule['x'] shape: torch.Size([288, 3])
+z_x_mol shape: torch.Size([288, 3])
+z_t_mol_x shape: torch.Size([288, 3])
+xh_mol[:,self.x_dim:]): torch.Size([288, 20])
+z_t_mol shape: torch.Size([288, 23])
+z_t_mol shape: torch.Size([288, 23])
+z_t_pro shape: torch.Size([5760, 23])
+v_target_mol shape: torch.Size([288, 23])
+t shape: torch.Size([32, 1])
+Epoch 0:  47%|████▋     | 102/217 [00:05<00:06, 18.10it/s, loss=0.915, v_num=1.78e+7]Epoch 0:  47%|████▋     | 102/217 [00:05<00:06, 18.10it/s, loss=0.897, v_num=1.78e+7]noise_scaling: 1
+t shape: torch.Size([32, 1])
+molecule['x'] shape: torch.Size([288, 3])
+z_x_mol shape: torch.Size([288, 3])
+z_t_mol_x shape: torch.Size([288, 3])
+xh_mol[:,self.x_dim:]): torch.Size([288, 20])
+z_t_mol shape: torch.Size([288, 23])
+z_t_mol shape: torch.Size([288, 23])
+z_t_pro shape: torch.Size([5760, 23])
+v_target_mol shape: torch.Size([288, 23])
+t shape: torch.Size([32, 1])
+Epoch 0:  47%|████▋     | 103/217 [00:05<00:06, 18.14it/s, loss=0.897, v_num=1.78e+7]Epoch 0:  47%|████▋     | 103/217 [00:05<00:06, 18.13it/s, loss=0.916, v_num=1.78e+7]noise_scaling: 1
+t shape: torch.Size([32, 1])
+molecule['x'] shape: torch.Size([288, 3])
+z_x_mol shape: torch.Size([288, 3])
+z_t_mol_x shape: torch.Size([288, 3])
+xh_mol[:,self.x_dim:]): torch.Size([288, 20])
+z_t_mol shape: torch.Size([288, 23])
+z_t_mol shape: torch.Size([288, 23])
+z_t_pro shape: torch.Size([5760, 23])
+v_target_mol shape: torch.Size([288, 23])
+t shape: torch.Size([32, 1])
+Epoch 0:  48%|████▊     | 104/217 [00:05<00:06, 18.16it/s, loss=0.916, v_num=1.78e+7]Epoch 0:  48%|████▊     | 104/217 [00:05<00:06, 18.16it/s, loss=0.922, v_num=1.78e+7]noise_scaling: 1
+t shape: torch.Size([32, 1])
+molecule['x'] shape: torch.Size([288, 3])
+z_x_mol shape: torch.Size([288, 3])
+z_t_mol_x shape: torch.Size([288, 3])
+xh_mol[:,self.x_dim:]): torch.Size([288, 20])
+z_t_mol shape: torch.Size([288, 23])
+z_t_mol shape: torch.Size([288, 23])
+z_t_pro shape: torch.Size([5760, 23])
+v_target_mol shape: torch.Size([288, 23])
+t shape: torch.Size([32, 1])
+Epoch 0:  48%|████▊     | 105/217 [00:05<00:06, 18.20it/s, loss=0.922, v_num=1.78e+7]Epoch 0:  48%|████▊     | 105/217 [00:05<00:06, 18.20it/s, loss=0.913, v_num=1.78e+7]noise_scaling: 1
+t shape: torch.Size([32, 1])
+molecule['x'] shape: torch.Size([288, 3])
+z_x_mol shape: torch.Size([288, 3])
+z_t_mol_x shape: torch.Size([288, 3])
+xh_mol[:,self.x_dim:]): torch.Size([288, 20])
+z_t_mol shape: torch.Size([288, 23])
+z_t_mol shape: torch.Size([288, 23])
+z_t_pro shape: torch.Size([5760, 23])
+v_target_mol shape: torch.Size([288, 23])
+t shape: torch.Size([32, 1])
+Epoch 0:  49%|████▉     | 106/217 [00:05<00:06, 18.23it/s, loss=0.913, v_num=1.78e+7]Epoch 0:  49%|████▉     | 106/217 [00:05<00:06, 18.23it/s, loss=0.894, v_num=1.78e+7]noise_scaling: 1
+t shape: torch.Size([32, 1])
+molecule['x'] shape: torch.Size([288, 3])
+z_x_mol shape: torch.Size([288, 3])
+z_t_mol_x shape: torch.Size([288, 3])
+xh_mol[:,self.x_dim:]): torch.Size([288, 20])
+z_t_mol shape: torch.Size([288, 23])
+z_t_mol shape: torch.Size([288, 23])
+z_t_pro shape: torch.Size([5760, 23])
+v_target_mol shape: torch.Size([288, 23])
+t shape: torch.Size([32, 1])
+Epoch 0:  49%|████▉     | 107/217 [00:05<00:06, 18.27it/s, loss=0.894, v_num=1.78e+7]Epoch 0:  49%|████▉     | 107/217 [00:05<00:06, 18.26it/s, loss=0.889, v_num=1.78e+7]noise_scaling: 1
+t shape: torch.Size([32, 1])
+molecule['x'] shape: torch.Size([288, 3])
+z_x_mol shape: torch.Size([288, 3])
+z_t_mol_x shape: torch.Size([288, 3])
+xh_mol[:,self.x_dim:]): torch.Size([288, 20])
+z_t_mol shape: torch.Size([288, 23])
+z_t_mol shape: torch.Size([288, 23])
+z_t_pro shape: torch.Size([5760, 23])
+v_target_mol shape: torch.Size([288, 23])
+t shape: torch.Size([32, 1])
+Epoch 0:  50%|████▉     | 108/217 [00:05<00:05, 18.30it/s, loss=0.889, v_num=1.78e+7]Epoch 0:  50%|████▉     | 108/217 [00:05<00:05, 18.30it/s, loss=0.875, v_num=1.78e+7]noise_scaling: 1
+t shape: torch.Size([32, 1])
+molecule['x'] shape: torch.Size([288, 3])
+z_x_mol shape: torch.Size([288, 3])
+z_t_mol_x shape: torch.Size([288, 3])
+xh_mol[:,self.x_dim:]): torch.Size([288, 20])
+z_t_mol shape: torch.Size([288, 23])
+z_t_mol shape: torch.Size([288, 23])
+z_t_pro shape: torch.Size([5760, 23])
+v_target_mol shape: torch.Size([288, 23])
+t shape: torch.Size([32, 1])
+Epoch 0:  50%|█████     | 109/217 [00:05<00:05, 18.33it/s, loss=0.875, v_num=1.78e+7]Epoch 0:  50%|█████     | 109/217 [00:05<00:05, 18.33it/s, loss=0.877, v_num=1.78e+7]noise_scaling: 1
+t shape: torch.Size([32, 1])
+molecule['x'] shape: torch.Size([288, 3])
+z_x_mol shape: torch.Size([288, 3])
+z_t_mol_x shape: torch.Size([288, 3])
+xh_mol[:,self.x_dim:]): torch.Size([288, 20])
+z_t_mol shape: torch.Size([288, 23])
+z_t_mol shape: torch.Size([288, 23])
+z_t_pro shape: torch.Size([5760, 23])
+v_target_mol shape: torch.Size([288, 23])
+t shape: torch.Size([32, 1])
+Epoch 0:  51%|█████     | 110/217 [00:05<00:05, 18.35it/s, loss=0.877, v_num=1.78e+7]Epoch 0:  51%|█████     | 110/217 [00:05<00:05, 18.35it/s, loss=0.884, v_num=1.78e+7]noise_scaling: 1
+t shape: torch.Size([32, 1])
+molecule['x'] shape: torch.Size([288, 3])
+z_x_mol shape: torch.Size([288, 3])
+z_t_mol_x shape: torch.Size([288, 3])
+xh_mol[:,self.x_dim:]): torch.Size([288, 20])
+z_t_mol shape: torch.Size([288, 23])
+z_t_mol shape: torch.Size([288, 23])
+z_t_pro shape: torch.Size([5760, 23])
+v_target_mol shape: torch.Size([288, 23])
+t shape: torch.Size([32, 1])
+Epoch 0:  51%|█████     | 111/217 [00:06<00:05, 18.38it/s, loss=0.884, v_num=1.78e+7]Epoch 0:  51%|█████     | 111/217 [00:06<00:05, 18.38it/s, loss=0.895, v_num=1.78e+7]noise_scaling: 1
+t shape: torch.Size([32, 1])
+molecule['x'] shape: torch.Size([288, 3])
+z_x_mol shape: torch.Size([288, 3])
+z_t_mol_x shape: torch.Size([288, 3])
+xh_mol[:,self.x_dim:]): torch.Size([288, 20])
+z_t_mol shape: torch.Size([288, 23])
+z_t_mol shape: torch.Size([288, 23])
+z_t_pro shape: torch.Size([5760, 23])
+v_target_mol shape: torch.Size([288, 23])
+t shape: torch.Size([32, 1])
+Epoch 0:  52%|█████▏    | 112/217 [00:06<00:05, 18.41it/s, loss=0.895, v_num=1.78e+7]Epoch 0:  52%|█████▏    | 112/217 [00:06<00:05, 18.41it/s, loss=0.901, v_num=1.78e+7]noise_scaling: 1
+t shape: torch.Size([32, 1])
+molecule['x'] shape: torch.Size([288, 3])
+z_x_mol shape: torch.Size([288, 3])
+z_t_mol_x shape: torch.Size([288, 3])
+xh_mol[:,self.x_dim:]): torch.Size([288, 20])
+z_t_mol shape: torch.Size([288, 23])
+z_t_mol shape: torch.Size([288, 23])
+z_t_pro shape: torch.Size([5760, 23])
+v_target_mol shape: torch.Size([288, 23])
+t shape: torch.Size([32, 1])
+Epoch 0:  52%|█████▏    | 113/217 [00:06<00:05, 18.44it/s, loss=0.901, v_num=1.78e+7]Epoch 0:  52%|█████▏    | 113/217 [00:06<00:05, 18.44it/s, loss=0.88, v_num=1.78e+7] noise_scaling: 1
+t shape: torch.Size([32, 1])
+molecule['x'] shape: torch.Size([288, 3])
+z_x_mol shape: torch.Size([288, 3])
+z_t_mol_x shape: torch.Size([288, 3])
+xh_mol[:,self.x_dim:]): torch.Size([288, 20])
+z_t_mol shape: torch.Size([288, 23])
+z_t_mol shape: torch.Size([288, 23])
+z_t_pro shape: torch.Size([5760, 23])
+v_target_mol shape: torch.Size([288, 23])
+t shape: torch.Size([32, 1])
+Epoch 0:  53%|█████▎    | 114/217 [00:06<00:05, 18.47it/s, loss=0.88, v_num=1.78e+7]Epoch 0:  53%|█████▎    | 114/217 [00:06<00:05, 18.47it/s, loss=0.886, v_num=1.78e+7]noise_scaling: 1
+t shape: torch.Size([32, 1])
+molecule['x'] shape: torch.Size([288, 3])
+z_x_mol shape: torch.Size([288, 3])
+z_t_mol_x shape: torch.Size([288, 3])
+xh_mol[:,self.x_dim:]): torch.Size([288, 20])
+z_t_mol shape: torch.Size([288, 23])
+z_t_mol shape: torch.Size([288, 23])
+z_t_pro shape: torch.Size([5760, 23])
+v_target_mol shape: torch.Size([288, 23])
+t shape: torch.Size([32, 1])
+Epoch 0:  53%|█████▎    | 115/217 [00:06<00:05, 18.50it/s, loss=0.886, v_num=1.78e+7]Epoch 0:  53%|█████▎    | 115/217 [00:06<00:05, 18.50it/s, loss=0.89, v_num=1.78e+7] noise_scaling: 1
+t shape: torch.Size([32, 1])
+molecule['x'] shape: torch.Size([288, 3])
+z_x_mol shape: torch.Size([288, 3])
+z_t_mol_x shape: torch.Size([288, 3])
+xh_mol[:,self.x_dim:]): torch.Size([288, 20])
+z_t_mol shape: torch.Size([288, 23])
+z_t_mol shape: torch.Size([288, 23])
+z_t_pro shape: torch.Size([5760, 23])
+v_target_mol shape: torch.Size([288, 23])
+t shape: torch.Size([32, 1])
+Epoch 0:  53%|█████▎    | 116/217 [00:06<00:05, 18.53it/s, loss=0.89, v_num=1.78e+7]Epoch 0:  53%|█████▎    | 116/217 [00:06<00:05, 18.53it/s, loss=0.879, v_num=1.78e+7]noise_scaling: 1
+t shape: torch.Size([32, 1])
+molecule['x'] shape: torch.Size([288, 3])
+z_x_mol shape: torch.Size([288, 3])
+z_t_mol_x shape: torch.Size([288, 3])
+xh_mol[:,self.x_dim:]): torch.Size([288, 20])
+z_t_mol shape: torch.Size([288, 23])
+z_t_mol shape: torch.Size([288, 23])
+z_t_pro shape: torch.Size([5760, 23])
+v_target_mol shape: torch.Size([288, 23])
+t shape: torch.Size([32, 1])
+Epoch 0:  54%|█████▍    | 117/217 [00:06<00:05, 18.56it/s, loss=0.879, v_num=1.78e+7]Epoch 0:  54%|█████▍    | 117/217 [00:06<00:05, 18.56it/s, loss=0.885, v_num=1.78e+7]noise_scaling: 1
+t shape: torch.Size([32, 1])
+molecule['x'] shape: torch.Size([288, 3])
+z_x_mol shape: torch.Size([288, 3])
+z_t_mol_x shape: torch.Size([288, 3])
+xh_mol[:,self.x_dim:]): torch.Size([288, 20])
+z_t_mol shape: torch.Size([288, 23])
+z_t_mol shape: torch.Size([288, 23])
+z_t_pro shape: torch.Size([5760, 23])
+v_target_mol shape: torch.Size([288, 23])
+t shape: torch.Size([32, 1])
+Epoch 0:  54%|█████▍    | 118/217 [00:06<00:05, 18.58it/s, loss=0.885, v_num=1.78e+7]Epoch 0:  54%|█████▍    | 118/217 [00:06<00:05, 18.58it/s, loss=0.873, v_num=1.78e+7]noise_scaling: 1
+t shape: torch.Size([32, 1])
+molecule['x'] shape: torch.Size([288, 3])
+z_x_mol shape: torch.Size([288, 3])
+z_t_mol_x shape: torch.Size([288, 3])
+xh_mol[:,self.x_dim:]): torch.Size([288, 20])
+z_t_mol shape: torch.Size([288, 23])
+z_t_mol shape: torch.Size([288, 23])
+z_t_pro shape: torch.Size([5760, 23])
+v_target_mol shape: torch.Size([288, 23])
+t shape: torch.Size([32, 1])
+Epoch 0:  55%|█████▍    | 119/217 [00:06<00:05, 18.61it/s, loss=0.873, v_num=1.78e+7]Epoch 0:  55%|█████▍    | 119/217 [00:06<00:05, 18.61it/s, loss=0.878, v_num=1.78e+7]noise_scaling: 1
+t shape: torch.Size([32, 1])
+molecule['x'] shape: torch.Size([288, 3])
+z_x_mol shape: torch.Size([288, 3])
+z_t_mol_x shape: torch.Size([288, 3])
+xh_mol[:,self.x_dim:]): torch.Size([288, 20])
+z_t_mol shape: torch.Size([288, 23])
+z_t_mol shape: torch.Size([288, 23])
+z_t_pro shape: torch.Size([5760, 23])
+v_target_mol shape: torch.Size([288, 23])
+t shape: torch.Size([32, 1])
+Epoch 0:  55%|█████▌    | 120/217 [00:06<00:05, 18.64it/s, loss=0.878, v_num=1.78e+7]Epoch 0:  55%|█████▌    | 120/217 [00:06<00:05, 18.64it/s, loss=0.894, v_num=1.78e+7]noise_scaling: 1
+t shape: torch.Size([32, 1])
+molecule['x'] shape: torch.Size([288, 3])
+z_x_mol shape: torch.Size([288, 3])
+z_t_mol_x shape: torch.Size([288, 3])
+xh_mol[:,self.x_dim:]): torch.Size([288, 20])
+z_t_mol shape: torch.Size([288, 23])
+z_t_mol shape: torch.Size([288, 23])
+z_t_pro shape: torch.Size([5760, 23])
+v_target_mol shape: torch.Size([288, 23])
+t shape: torch.Size([32, 1])
+Epoch 0:  56%|█████▌    | 121/217 [00:06<00:05, 18.66it/s, loss=0.894, v_num=1.78e+7]Epoch 0:  56%|█████▌    | 121/217 [00:06<00:05, 18.66it/s, loss=0.891, v_num=1.78e+7]noise_scaling: 1
+t shape: torch.Size([32, 1])
+molecule['x'] shape: torch.Size([288, 3])
+z_x_mol shape: torch.Size([288, 3])
+z_t_mol_x shape: torch.Size([288, 3])
+xh_mol[:,self.x_dim:]): torch.Size([288, 20])
+z_t_mol shape: torch.Size([288, 23])
+z_t_mol shape: torch.Size([288, 23])
+z_t_pro shape: torch.Size([5760, 23])
+v_target_mol shape: torch.Size([288, 23])
+t shape: torch.Size([32, 1])
+Epoch 0:  56%|█████▌    | 122/217 [00:06<00:05, 18.69it/s, loss=0.891, v_num=1.78e+7]Epoch 0:  56%|█████▌    | 122/217 [00:06<00:05, 18.69it/s, loss=0.897, v_num=1.78e+7]noise_scaling: 1
+t shape: torch.Size([32, 1])
+molecule['x'] shape: torch.Size([288, 3])
+z_x_mol shape: torch.Size([288, 3])
+z_t_mol_x shape: torch.Size([288, 3])
+xh_mol[:,self.x_dim:]): torch.Size([288, 20])
+z_t_mol shape: torch.Size([288, 23])
+z_t_mol shape: torch.Size([288, 23])
+z_t_pro shape: torch.Size([5760, 23])
+v_target_mol shape: torch.Size([288, 23])
+t shape: torch.Size([32, 1])
+Epoch 0:  57%|█████▋    | 123/217 [00:06<00:05, 18.71it/s, loss=0.897, v_num=1.78e+7]Epoch 0:  57%|█████▋    | 123/217 [00:06<00:05, 18.71it/s, loss=0.895, v_num=1.78e+7]noise_scaling: 1
+t shape: torch.Size([32, 1])
+molecule['x'] shape: torch.Size([288, 3])
+z_x_mol shape: torch.Size([288, 3])
+z_t_mol_x shape: torch.Size([288, 3])
+xh_mol[:,self.x_dim:]): torch.Size([288, 20])
+z_t_mol shape: torch.Size([288, 23])
+z_t_mol shape: torch.Size([288, 23])
+z_t_pro shape: torch.Size([5760, 23])
+v_target_mol shape: torch.Size([288, 23])
+t shape: torch.Size([32, 1])
+Epoch 0:  57%|█████▋    | 124/217 [00:06<00:04, 18.74it/s, loss=0.895, v_num=1.78e+7]Epoch 0:  57%|█████▋    | 124/217 [00:06<00:04, 18.74it/s, loss=0.902, v_num=1.78e+7]noise_scaling: 1
+t shape: torch.Size([32, 1])
+molecule['x'] shape: torch.Size([288, 3])
+z_x_mol shape: torch.Size([288, 3])
+z_t_mol_x shape: torch.Size([288, 3])
+xh_mol[:,self.x_dim:]): torch.Size([288, 20])
+z_t_mol shape: torch.Size([288, 23])
+z_t_mol shape: torch.Size([288, 23])
+z_t_pro shape: torch.Size([5760, 23])
+v_target_mol shape: torch.Size([288, 23])
+t shape: torch.Size([32, 1])
+Epoch 0:  58%|█████▊    | 125/217 [00:06<00:04, 18.76it/s, loss=0.902, v_num=1.78e+7]Epoch 0:  58%|█████▊    | 125/217 [00:06<00:04, 18.76it/s, loss=0.888, v_num=1.78e+7]noise_scaling: 1
+t shape: torch.Size([32, 1])
+molecule['x'] shape: torch.Size([288, 3])
+z_x_mol shape: torch.Size([288, 3])
+z_t_mol_x shape: torch.Size([288, 3])
+xh_mol[:,self.x_dim:]): torch.Size([288, 20])
+z_t_mol shape: torch.Size([288, 23])
+z_t_mol shape: torch.Size([288, 23])
+z_t_pro shape: torch.Size([5760, 23])
+v_target_mol shape: torch.Size([288, 23])
+t shape: torch.Size([32, 1])
+Epoch 0:  58%|█████▊    | 126/217 [00:06<00:04, 18.79it/s, loss=0.888, v_num=1.78e+7]Epoch 0:  58%|█████▊    | 126/217 [00:06<00:04, 18.78it/s, loss=0.879, v_num=1.78e+7]noise_scaling: 1
+t shape: torch.Size([32, 1])
+molecule['x'] shape: torch.Size([288, 3])
+z_x_mol shape: torch.Size([288, 3])
+z_t_mol_x shape: torch.Size([288, 3])
+xh_mol[:,self.x_dim:]): torch.Size([288, 20])
+z_t_mol shape: torch.Size([288, 23])
+z_t_mol shape: torch.Size([288, 23])
+z_t_pro shape: torch.Size([5760, 23])
+v_target_mol shape: torch.Size([288, 23])
+t shape: torch.Size([32, 1])
+Epoch 0:  59%|█████▊    | 127/217 [00:06<00:04, 18.81it/s, loss=0.879, v_num=1.78e+7]Epoch 0:  59%|█████▊    | 127/217 [00:06<00:04, 18.81it/s, loss=0.88, v_num=1.78e+7] noise_scaling: 1
+t shape: torch.Size([32, 1])
+molecule['x'] shape: torch.Size([288, 3])
+z_x_mol shape: torch.Size([288, 3])
+z_t_mol_x shape: torch.Size([288, 3])
+xh_mol[:,self.x_dim:]): torch.Size([288, 20])
+z_t_mol shape: torch.Size([288, 23])
+z_t_mol shape: torch.Size([288, 23])
+z_t_pro shape: torch.Size([5760, 23])
+v_target_mol shape: torch.Size([288, 23])
+t shape: torch.Size([32, 1])
+Epoch 0:  59%|█████▉    | 128/217 [00:06<00:04, 18.83it/s, loss=0.88, v_num=1.78e+7]Epoch 0:  59%|█████▉    | 128/217 [00:06<00:04, 18.83it/s, loss=0.887, v_num=1.78e+7]noise_scaling: 1
+t shape: torch.Size([32, 1])
+molecule['x'] shape: torch.Size([288, 3])
+z_x_mol shape: torch.Size([288, 3])
+z_t_mol_x shape: torch.Size([288, 3])
+xh_mol[:,self.x_dim:]): torch.Size([288, 20])
+z_t_mol shape: torch.Size([288, 23])
+z_t_mol shape: torch.Size([288, 23])
+z_t_pro shape: torch.Size([5760, 23])
+v_target_mol shape: torch.Size([288, 23])
+t shape: torch.Size([32, 1])
+Epoch 0:  59%|█████▉    | 129/217 [00:06<00:04, 18.86it/s, loss=0.887, v_num=1.78e+7]Epoch 0:  59%|█████▉    | 129/217 [00:06<00:04, 18.85it/s, loss=0.889, v_num=1.78e+7]noise_scaling: 1
+t shape: torch.Size([32, 1])
+molecule['x'] shape: torch.Size([288, 3])
+z_x_mol shape: torch.Size([288, 3])
+z_t_mol_x shape: torch.Size([288, 3])
+xh_mol[:,self.x_dim:]): torch.Size([288, 20])
+z_t_mol shape: torch.Size([288, 23])
+z_t_mol shape: torch.Size([288, 23])
+z_t_pro shape: torch.Size([5760, 23])
+v_target_mol shape: torch.Size([288, 23])
+t shape: torch.Size([32, 1])
+Epoch 0:  60%|█████▉    | 130/217 [00:06<00:04, 18.88it/s, loss=0.889, v_num=1.78e+7]Epoch 0:  60%|█████▉    | 130/217 [00:06<00:04, 18.88it/s, loss=0.881, v_num=1.78e+7]noise_scaling: 1
+t shape: torch.Size([32, 1])
+molecule['x'] shape: torch.Size([288, 3])
+z_x_mol shape: torch.Size([288, 3])
+z_t_mol_x shape: torch.Size([288, 3])
+xh_mol[:,self.x_dim:]): torch.Size([288, 20])
+z_t_mol shape: torch.Size([288, 23])
+z_t_mol shape: torch.Size([288, 23])
+z_t_pro shape: torch.Size([5760, 23])
+v_target_mol shape: torch.Size([288, 23])
+t shape: torch.Size([32, 1])
+Epoch 0:  60%|██████    | 131/217 [00:06<00:04, 18.90it/s, loss=0.881, v_num=1.78e+7]Epoch 0:  60%|██████    | 131/217 [00:06<00:04, 18.90it/s, loss=0.864, v_num=1.78e+7]noise_scaling: 1
+t shape: torch.Size([32, 1])
+molecule['x'] shape: torch.Size([288, 3])
+z_x_mol shape: torch.Size([288, 3])
+z_t_mol_x shape: torch.Size([288, 3])
+xh_mol[:,self.x_dim:]): torch.Size([288, 20])
+z_t_mol shape: torch.Size([288, 23])
+z_t_mol shape: torch.Size([288, 23])
+z_t_pro shape: torch.Size([5760, 23])
+v_target_mol shape: torch.Size([288, 23])
+t shape: torch.Size([32, 1])
+Epoch 0:  61%|██████    | 132/217 [00:06<00:04, 18.93it/s, loss=0.864, v_num=1.78e+7]Epoch 0:  61%|██████    | 132/217 [00:06<00:04, 18.93it/s, loss=0.858, v_num=1.78e+7]noise_scaling: 1
+t shape: torch.Size([32, 1])
+molecule['x'] shape: torch.Size([288, 3])
+z_x_mol shape: torch.Size([288, 3])
+z_t_mol_x shape: torch.Size([288, 3])
+xh_mol[:,self.x_dim:]): torch.Size([288, 20])
+z_t_mol shape: torch.Size([288, 23])
+z_t_mol shape: torch.Size([288, 23])
+z_t_pro shape: torch.Size([5760, 23])
+v_target_mol shape: torch.Size([288, 23])
+t shape: torch.Size([32, 1])
+Epoch 0:  61%|██████▏   | 133/217 [00:07<00:04, 18.95it/s, loss=0.858, v_num=1.78e+7]Epoch 0:  61%|██████▏   | 133/217 [00:07<00:04, 18.95it/s, loss=0.881, v_num=1.78e+7]noise_scaling: 1
+t shape: torch.Size([32, 1])
+molecule['x'] shape: torch.Size([288, 3])
+z_x_mol shape: torch.Size([288, 3])
+z_t_mol_x shape: torch.Size([288, 3])
+xh_mol[:,self.x_dim:]): torch.Size([288, 20])
+z_t_mol shape: torch.Size([288, 23])
+z_t_mol shape: torch.Size([288, 23])
+z_t_pro shape: torch.Size([5760, 23])
+v_target_mol shape: torch.Size([288, 23])
+t shape: torch.Size([32, 1])
+Epoch 0:  62%|██████▏   | 134/217 [00:07<00:04, 18.97it/s, loss=0.881, v_num=1.78e+7]Epoch 0:  62%|██████▏   | 134/217 [00:07<00:04, 18.97it/s, loss=0.9, v_num=1.78e+7]  noise_scaling: 1
+t shape: torch.Size([32, 1])
+molecule['x'] shape: torch.Size([288, 3])
+z_x_mol shape: torch.Size([288, 3])
+z_t_mol_x shape: torch.Size([288, 3])
+xh_mol[:,self.x_dim:]): torch.Size([288, 20])
+z_t_mol shape: torch.Size([288, 23])
+z_t_mol shape: torch.Size([288, 23])
+z_t_pro shape: torch.Size([5760, 23])
+v_target_mol shape: torch.Size([288, 23])
+t shape: torch.Size([32, 1])
+Epoch 0:  62%|██████▏   | 135/217 [00:07<00:04, 18.99it/s, loss=0.9, v_num=1.78e+7]Epoch 0:  62%|██████▏   | 135/217 [00:07<00:04, 18.99it/s, loss=0.891, v_num=1.78e+7]noise_scaling: 1
+t shape: torch.Size([32, 1])
+molecule['x'] shape: torch.Size([288, 3])
+z_x_mol shape: torch.Size([288, 3])
+z_t_mol_x shape: torch.Size([288, 3])
+xh_mol[:,self.x_dim:]): torch.Size([288, 20])
+z_t_mol shape: torch.Size([288, 23])
+z_t_mol shape: torch.Size([288, 23])
+z_t_pro shape: torch.Size([5760, 23])
+v_target_mol shape: torch.Size([288, 23])
+t shape: torch.Size([32, 1])
+Epoch 0:  63%|██████▎   | 136/217 [00:07<00:04, 19.01it/s, loss=0.891, v_num=1.78e+7]Epoch 0:  63%|██████▎   | 136/217 [00:07<00:04, 19.01it/s, loss=0.912, v_num=1.78e+7]noise_scaling: 1
+t shape: torch.Size([32, 1])
+molecule['x'] shape: torch.Size([288, 3])
+z_x_mol shape: torch.Size([288, 3])
+z_t_mol_x shape: torch.Size([288, 3])
+xh_mol[:,self.x_dim:]): torch.Size([288, 20])
+z_t_mol shape: torch.Size([288, 23])
+z_t_mol shape: torch.Size([288, 23])
+z_t_pro shape: torch.Size([5760, 23])
+v_target_mol shape: torch.Size([288, 23])
+t shape: torch.Size([32, 1])
+Epoch 0:  63%|██████▎   | 137/217 [00:07<00:04, 19.03it/s, loss=0.912, v_num=1.78e+7]Epoch 0:  63%|██████▎   | 137/217 [00:07<00:04, 19.03it/s, loss=0.898, v_num=1.78e+7]noise_scaling: 1
+t shape: torch.Size([32, 1])
+molecule['x'] shape: torch.Size([288, 3])
+z_x_mol shape: torch.Size([288, 3])
+z_t_mol_x shape: torch.Size([288, 3])
+xh_mol[:,self.x_dim:]): torch.Size([288, 20])
+z_t_mol shape: torch.Size([288, 23])
+z_t_mol shape: torch.Size([288, 23])
+z_t_pro shape: torch.Size([5760, 23])
+v_target_mol shape: torch.Size([288, 23])
+t shape: torch.Size([32, 1])
+Epoch 0:  64%|██████▎   | 138/217 [00:07<00:04, 19.05it/s, loss=0.898, v_num=1.78e+7]Epoch 0:  64%|██████▎   | 138/217 [00:07<00:04, 19.05it/s, loss=0.918, v_num=1.78e+7]noise_scaling: 1
+t shape: torch.Size([32, 1])
+molecule['x'] shape: torch.Size([288, 3])
+z_x_mol shape: torch.Size([288, 3])
+z_t_mol_x shape: torch.Size([288, 3])
+xh_mol[:,self.x_dim:]): torch.Size([288, 20])
+z_t_mol shape: torch.Size([288, 23])
+z_t_mol shape: torch.Size([288, 23])
+z_t_pro shape: torch.Size([5760, 23])
+v_target_mol shape: torch.Size([288, 23])
+t shape: torch.Size([32, 1])
+Epoch 0:  64%|██████▍   | 139/217 [00:07<00:04, 19.07it/s, loss=0.918, v_num=1.78e+7]Epoch 0:  64%|██████▍   | 139/217 [00:07<00:04, 19.07it/s, loss=0.909, v_num=1.78e+7]noise_scaling: 1
+t shape: torch.Size([32, 1])
+molecule['x'] shape: torch.Size([288, 3])
+z_x_mol shape: torch.Size([288, 3])
+z_t_mol_x shape: torch.Size([288, 3])
+xh_mol[:,self.x_dim:]): torch.Size([288, 20])
+z_t_mol shape: torch.Size([288, 23])
+z_t_mol shape: torch.Size([288, 23])
+z_t_pro shape: torch.Size([5760, 23])
+v_target_mol shape: torch.Size([288, 23])
+t shape: torch.Size([32, 1])
+Epoch 0:  65%|██████▍   | 140/217 [00:07<00:04, 19.09it/s, loss=0.909, v_num=1.78e+7]Epoch 0:  65%|██████▍   | 140/217 [00:07<00:04, 19.09it/s, loss=0.9, v_num=1.78e+7]  noise_scaling: 1
+t shape: torch.Size([32, 1])
+molecule['x'] shape: torch.Size([288, 3])
+z_x_mol shape: torch.Size([288, 3])
+z_t_mol_x shape: torch.Size([288, 3])
+xh_mol[:,self.x_dim:]): torch.Size([288, 20])
+z_t_mol shape: torch.Size([288, 23])
+z_t_mol shape: torch.Size([288, 23])
+z_t_pro shape: torch.Size([5760, 23])
+v_target_mol shape: torch.Size([288, 23])
+t shape: torch.Size([32, 1])
+Epoch 0:  65%|██████▍   | 141/217 [00:07<00:03, 19.11it/s, loss=0.9, v_num=1.78e+7]Epoch 0:  65%|██████▍   | 141/217 [00:07<00:03, 19.11it/s, loss=0.91, v_num=1.78e+7]noise_scaling: 1
+t shape: torch.Size([32, 1])
+molecule['x'] shape: torch.Size([288, 3])
+z_x_mol shape: torch.Size([288, 3])
+z_t_mol_x shape: torch.Size([288, 3])
+xh_mol[:,self.x_dim:]): torch.Size([288, 20])
+z_t_mol shape: torch.Size([288, 23])
+z_t_mol shape: torch.Size([288, 23])
+z_t_pro shape: torch.Size([5760, 23])
+v_target_mol shape: torch.Size([288, 23])
+t shape: torch.Size([32, 1])
+Epoch 0:  65%|██████▌   | 142/217 [00:07<00:03, 19.13it/s, loss=0.91, v_num=1.78e+7]Epoch 0:  65%|██████▌   | 142/217 [00:07<00:03, 19.13it/s, loss=0.899, v_num=1.78e+7]noise_scaling: 1
+t shape: torch.Size([32, 1])
+molecule['x'] shape: torch.Size([288, 3])
+z_x_mol shape: torch.Size([288, 3])
+z_t_mol_x shape: torch.Size([288, 3])
+xh_mol[:,self.x_dim:]): torch.Size([288, 20])
+z_t_mol shape: torch.Size([288, 23])
+z_t_mol shape: torch.Size([288, 23])
+z_t_pro shape: torch.Size([5760, 23])
+v_target_mol shape: torch.Size([288, 23])
+t shape: torch.Size([32, 1])
+Epoch 0:  66%|██████▌   | 143/217 [00:07<00:03, 19.15it/s, loss=0.899, v_num=1.78e+7]Epoch 0:  66%|██████▌   | 143/217 [00:07<00:03, 19.15it/s, loss=0.901, v_num=1.78e+7]noise_scaling: 1
+t shape: torch.Size([32, 1])
+molecule['x'] shape: torch.Size([288, 3])
+z_x_mol shape: torch.Size([288, 3])
+z_t_mol_x shape: torch.Size([288, 3])
+xh_mol[:,self.x_dim:]): torch.Size([288, 20])
+z_t_mol shape: torch.Size([288, 23])
+z_t_mol shape: torch.Size([288, 23])
+z_t_pro shape: torch.Size([5760, 23])
+v_target_mol shape: torch.Size([288, 23])
+t shape: torch.Size([32, 1])
+Epoch 0:  66%|██████▋   | 144/217 [00:07<00:03, 19.17it/s, loss=0.901, v_num=1.78e+7]Epoch 0:  66%|██████▋   | 144/217 [00:07<00:03, 19.17it/s, loss=0.885, v_num=1.78e+7]noise_scaling: 1
+t shape: torch.Size([32, 1])
+molecule['x'] shape: torch.Size([288, 3])
+z_x_mol shape: torch.Size([288, 3])
+z_t_mol_x shape: torch.Size([288, 3])
+xh_mol[:,self.x_dim:]): torch.Size([288, 20])
+z_t_mol shape: torch.Size([288, 23])
+z_t_mol shape: torch.Size([288, 23])
+z_t_pro shape: torch.Size([5760, 23])
+v_target_mol shape: torch.Size([288, 23])
+t shape: torch.Size([32, 1])
+Epoch 0:  67%|██████▋   | 145/217 [00:07<00:03, 19.19it/s, loss=0.885, v_num=1.78e+7]Epoch 0:  67%|██████▋   | 145/217 [00:07<00:03, 19.19it/s, loss=0.886, v_num=1.78e+7]noise_scaling: 1
+t shape: torch.Size([32, 1])
+molecule['x'] shape: torch.Size([288, 3])
+z_x_mol shape: torch.Size([288, 3])
+z_t_mol_x shape: torch.Size([288, 3])
+xh_mol[:,self.x_dim:]): torch.Size([288, 20])
+z_t_mol shape: torch.Size([288, 23])
+z_t_mol shape: torch.Size([288, 23])
+z_t_pro shape: torch.Size([5760, 23])
+v_target_mol shape: torch.Size([288, 23])
+t shape: torch.Size([32, 1])
+Epoch 0:  67%|██████▋   | 146/217 [00:07<00:03, 19.21it/s, loss=0.886, v_num=1.78e+7]Epoch 0:  67%|██████▋   | 146/217 [00:07<00:03, 19.21it/s, loss=0.903, v_num=1.78e+7]noise_scaling: 1
+t shape: torch.Size([32, 1])
+molecule['x'] shape: torch.Size([288, 3])
+z_x_mol shape: torch.Size([288, 3])
+z_t_mol_x shape: torch.Size([288, 3])
+xh_mol[:,self.x_dim:]): torch.Size([288, 20])
+z_t_mol shape: torch.Size([288, 23])
+z_t_mol shape: torch.Size([288, 23])
+z_t_pro shape: torch.Size([5760, 23])
+v_target_mol shape: torch.Size([288, 23])
+t shape: torch.Size([32, 1])
+Epoch 0:  68%|██████▊   | 147/217 [00:07<00:03, 19.23it/s, loss=0.903, v_num=1.78e+7]Epoch 0:  68%|██████▊   | 147/217 [00:07<00:03, 19.23it/s, loss=0.909, v_num=1.78e+7]noise_scaling: 1
+t shape: torch.Size([32, 1])
+molecule['x'] shape: torch.Size([288, 3])
+z_x_mol shape: torch.Size([288, 3])
+z_t_mol_x shape: torch.Size([288, 3])
+xh_mol[:,self.x_dim:]): torch.Size([288, 20])
+z_t_mol shape: torch.Size([288, 23])
+z_t_mol shape: torch.Size([288, 23])
+z_t_pro shape: torch.Size([5760, 23])
+v_target_mol shape: torch.Size([288, 23])
+t shape: torch.Size([32, 1])
+Epoch 0:  68%|██████▊   | 148/217 [00:07<00:03, 19.25it/s, loss=0.909, v_num=1.78e+7]Epoch 0:  68%|██████▊   | 148/217 [00:07<00:03, 19.25it/s, loss=0.909, v_num=1.78e+7]noise_scaling: 1
+t shape: torch.Size([32, 1])
+molecule['x'] shape: torch.Size([288, 3])
+z_x_mol shape: torch.Size([288, 3])
+z_t_mol_x shape: torch.Size([288, 3])
+xh_mol[:,self.x_dim:]): torch.Size([288, 20])
+z_t_mol shape: torch.Size([288, 23])
+z_t_mol shape: torch.Size([288, 23])
+z_t_pro shape: torch.Size([5760, 23])
+v_target_mol shape: torch.Size([288, 23])
+t shape: torch.Size([32, 1])
+Epoch 0:  69%|██████▊   | 149/217 [00:07<00:03, 19.27it/s, loss=0.909, v_num=1.78e+7]Epoch 0:  69%|██████▊   | 149/217 [00:07<00:03, 19.27it/s, loss=0.89, v_num=1.78e+7] noise_scaling: 1
+t shape: torch.Size([32, 1])
+molecule['x'] shape: torch.Size([288, 3])
+z_x_mol shape: torch.Size([288, 3])
+z_t_mol_x shape: torch.Size([288, 3])
+xh_mol[:,self.x_dim:]): torch.Size([288, 20])
+z_t_mol shape: torch.Size([288, 23])
+z_t_mol shape: torch.Size([288, 23])
+z_t_pro shape: torch.Size([5760, 23])
+v_target_mol shape: torch.Size([288, 23])
+t shape: torch.Size([32, 1])
+Epoch 0:  69%|██████▉   | 150/217 [00:07<00:03, 19.29it/s, loss=0.89, v_num=1.78e+7]Epoch 0:  69%|██████▉   | 150/217 [00:07<00:03, 19.29it/s, loss=0.88, v_num=1.78e+7]noise_scaling: 1
+t shape: torch.Size([32, 1])
+molecule['x'] shape: torch.Size([288, 3])
+z_x_mol shape: torch.Size([288, 3])
+z_t_mol_x shape: torch.Size([288, 3])
+xh_mol[:,self.x_dim:]): torch.Size([288, 20])
+z_t_mol shape: torch.Size([288, 23])
+z_t_mol shape: torch.Size([288, 23])
+z_t_pro shape: torch.Size([5760, 23])
+v_target_mol shape: torch.Size([288, 23])
+t shape: torch.Size([32, 1])
+Epoch 0:  70%|██████▉   | 151/217 [00:07<00:03, 19.31it/s, loss=0.88, v_num=1.78e+7]Epoch 0:  70%|██████▉   | 151/217 [00:07<00:03, 19.31it/s, loss=0.892, v_num=1.78e+7]noise_scaling: 1
+t shape: torch.Size([32, 1])
+molecule['x'] shape: torch.Size([288, 3])
+z_x_mol shape: torch.Size([288, 3])
+z_t_mol_x shape: torch.Size([288, 3])
+xh_mol[:,self.x_dim:]): torch.Size([288, 20])
+z_t_mol shape: torch.Size([288, 23])
+z_t_mol shape: torch.Size([288, 23])
+z_t_pro shape: torch.Size([5760, 23])
+v_target_mol shape: torch.Size([288, 23])
+t shape: torch.Size([32, 1])
+Epoch 0:  70%|███████   | 152/217 [00:07<00:03, 19.33it/s, loss=0.892, v_num=1.78e+7]Epoch 0:  70%|███████   | 152/217 [00:07<00:03, 19.32it/s, loss=0.903, v_num=1.78e+7]noise_scaling: 1
+t shape: torch.Size([32, 1])
+molecule['x'] shape: torch.Size([288, 3])
+z_x_mol shape: torch.Size([288, 3])
+z_t_mol_x shape: torch.Size([288, 3])
+xh_mol[:,self.x_dim:]): torch.Size([288, 20])
+z_t_mol shape: torch.Size([288, 23])
+z_t_mol shape: torch.Size([288, 23])
+z_t_pro shape: torch.Size([5760, 23])
+v_target_mol shape: torch.Size([288, 23])
+t shape: torch.Size([32, 1])
+Epoch 0:  71%|███████   | 153/217 [00:07<00:03, 19.34it/s, loss=0.903, v_num=1.78e+7]Epoch 0:  71%|███████   | 153/217 [00:07<00:03, 19.34it/s, loss=0.893, v_num=1.78e+7]noise_scaling: 1
+t shape: torch.Size([32, 1])
+molecule['x'] shape: torch.Size([288, 3])
+z_x_mol shape: torch.Size([288, 3])
+z_t_mol_x shape: torch.Size([288, 3])
+xh_mol[:,self.x_dim:]): torch.Size([288, 20])
+z_t_mol shape: torch.Size([288, 23])
+z_t_mol shape: torch.Size([288, 23])
+z_t_pro shape: torch.Size([5760, 23])
+v_target_mol shape: torch.Size([288, 23])
+t shape: torch.Size([32, 1])
+Epoch 0:  71%|███████   | 154/217 [00:07<00:03, 19.36it/s, loss=0.893, v_num=1.78e+7]Epoch 0:  71%|███████   | 154/217 [00:07<00:03, 19.36it/s, loss=0.879, v_num=1.78e+7]noise_scaling: 1
+t shape: torch.Size([32, 1])
+molecule['x'] shape: torch.Size([288, 3])
+z_x_mol shape: torch.Size([288, 3])
+z_t_mol_x shape: torch.Size([288, 3])
+xh_mol[:,self.x_dim:]): torch.Size([288, 20])
+z_t_mol shape: torch.Size([288, 23])
+z_t_mol shape: torch.Size([288, 23])
+z_t_pro shape: torch.Size([5760, 23])
+v_target_mol shape: torch.Size([288, 23])
+t shape: torch.Size([32, 1])
+Epoch 0:  71%|███████▏  | 155/217 [00:08<00:03, 19.37it/s, loss=0.879, v_num=1.78e+7]Epoch 0:  71%|███████▏  | 155/217 [00:08<00:03, 19.37it/s, loss=0.877, v_num=1.78e+7]noise_scaling: 1
+t shape: torch.Size([32, 1])
+molecule['x'] shape: torch.Size([288, 3])
+z_x_mol shape: torch.Size([288, 3])
+z_t_mol_x shape: torch.Size([288, 3])
+xh_mol[:,self.x_dim:]): torch.Size([288, 20])
+z_t_mol shape: torch.Size([288, 23])
+z_t_mol shape: torch.Size([288, 23])
+z_t_pro shape: torch.Size([5760, 23])
+v_target_mol shape: torch.Size([288, 23])
+t shape: torch.Size([32, 1])
+Epoch 0:  72%|███████▏  | 156/217 [00:08<00:03, 19.38it/s, loss=0.877, v_num=1.78e+7]Epoch 0:  72%|███████▏  | 156/217 [00:08<00:03, 19.38it/s, loss=0.846, v_num=1.78e+7]noise_scaling: 1
+t shape: torch.Size([32, 1])
+molecule['x'] shape: torch.Size([288, 3])
+z_x_mol shape: torch.Size([288, 3])
+z_t_mol_x shape: torch.Size([288, 3])
+xh_mol[:,self.x_dim:]): torch.Size([288, 20])
+z_t_mol shape: torch.Size([288, 23])
+z_t_mol shape: torch.Size([288, 23])
+z_t_pro shape: torch.Size([5760, 23])
+v_target_mol shape: torch.Size([288, 23])
+t shape: torch.Size([32, 1])
+Epoch 0:  72%|███████▏  | 157/217 [00:08<00:03, 19.40it/s, loss=0.846, v_num=1.78e+7]Epoch 0:  72%|███████▏  | 157/217 [00:08<00:03, 19.40it/s, loss=0.846, v_num=1.78e+7]noise_scaling: 1
+t shape: torch.Size([32, 1])
+molecule['x'] shape: torch.Size([288, 3])
+z_x_mol shape: torch.Size([288, 3])
+z_t_mol_x shape: torch.Size([288, 3])
+xh_mol[:,self.x_dim:]): torch.Size([288, 20])
+z_t_mol shape: torch.Size([288, 23])
+z_t_mol shape: torch.Size([288, 23])
+z_t_pro shape: torch.Size([5760, 23])
+v_target_mol shape: torch.Size([288, 23])
+t shape: torch.Size([32, 1])
+Epoch 0:  73%|███████▎  | 158/217 [00:08<00:03, 19.42it/s, loss=0.846, v_num=1.78e+7]Epoch 0:  73%|███████▎  | 158/217 [00:08<00:03, 19.42it/s, loss=0.835, v_num=1.78e+7]noise_scaling: 1
+t shape: torch.Size([32, 1])
+molecule['x'] shape: torch.Size([288, 3])
+z_x_mol shape: torch.Size([288, 3])
+z_t_mol_x shape: torch.Size([288, 3])
+xh_mol[:,self.x_dim:]): torch.Size([288, 20])
+z_t_mol shape: torch.Size([288, 23])
+z_t_mol shape: torch.Size([288, 23])
+z_t_pro shape: torch.Size([5760, 23])
+v_target_mol shape: torch.Size([288, 23])
+t shape: torch.Size([32, 1])
+Epoch 0:  73%|███████▎  | 159/217 [00:08<00:02, 19.44it/s, loss=0.835, v_num=1.78e+7]Epoch 0:  73%|███████▎  | 159/217 [00:08<00:02, 19.43it/s, loss=0.846, v_num=1.78e+7]noise_scaling: 1
+t shape: torch.Size([32, 1])
+molecule['x'] shape: torch.Size([288, 3])
+z_x_mol shape: torch.Size([288, 3])
+z_t_mol_x shape: torch.Size([288, 3])
+xh_mol[:,self.x_dim:]): torch.Size([288, 20])
+z_t_mol shape: torch.Size([288, 23])
+z_t_mol shape: torch.Size([288, 23])
+z_t_pro shape: torch.Size([5760, 23])
+v_target_mol shape: torch.Size([288, 23])
+t shape: torch.Size([32, 1])
+Epoch 0:  74%|███████▎  | 160/217 [00:08<00:02, 19.45it/s, loss=0.846, v_num=1.78e+7]Epoch 0:  74%|███████▎  | 160/217 [00:08<00:02, 19.45it/s, loss=0.861, v_num=1.78e+7]noise_scaling: 1
+t shape: torch.Size([32, 1])
+molecule['x'] shape: torch.Size([288, 3])
+z_x_mol shape: torch.Size([288, 3])
+z_t_mol_x shape: torch.Size([288, 3])
+xh_mol[:,self.x_dim:]): torch.Size([288, 20])
+z_t_mol shape: torch.Size([288, 23])
+z_t_mol shape: torch.Size([288, 23])
+z_t_pro shape: torch.Size([5760, 23])
+v_target_mol shape: torch.Size([288, 23])
+t shape: torch.Size([32, 1])
+Epoch 0:  74%|███████▍  | 161/217 [00:08<00:02, 19.47it/s, loss=0.861, v_num=1.78e+7]Epoch 0:  74%|███████▍  | 161/217 [00:08<00:02, 19.46it/s, loss=0.858, v_num=1.78e+7]noise_scaling: 1
+t shape: torch.Size([32, 1])
+molecule['x'] shape: torch.Size([288, 3])
+z_x_mol shape: torch.Size([288, 3])
+z_t_mol_x shape: torch.Size([288, 3])
+xh_mol[:,self.x_dim:]): torch.Size([288, 20])
+z_t_mol shape: torch.Size([288, 23])
+z_t_mol shape: torch.Size([288, 23])
+z_t_pro shape: torch.Size([5760, 23])
+v_target_mol shape: torch.Size([288, 23])
+t shape: torch.Size([32, 1])
+Epoch 0:  75%|███████▍  | 162/217 [00:08<00:02, 19.48it/s, loss=0.858, v_num=1.78e+7]Epoch 0:  75%|███████▍  | 162/217 [00:08<00:02, 19.48it/s, loss=0.848, v_num=1.78e+7]noise_scaling: 1
+t shape: torch.Size([32, 1])
+molecule['x'] shape: torch.Size([288, 3])
+z_x_mol shape: torch.Size([288, 3])
+z_t_mol_x shape: torch.Size([288, 3])
+xh_mol[:,self.x_dim:]): torch.Size([288, 20])
+z_t_mol shape: torch.Size([288, 23])
+z_t_mol shape: torch.Size([288, 23])
+z_t_pro shape: torch.Size([5760, 23])
+v_target_mol shape: torch.Size([288, 23])
+t shape: torch.Size([32, 1])
+Epoch 0:  75%|███████▌  | 163/217 [00:08<00:02, 19.50it/s, loss=0.848, v_num=1.78e+7]Epoch 0:  75%|███████▌  | 163/217 [00:08<00:02, 19.50it/s, loss=0.841, v_num=1.78e+7]noise_scaling: 1
+t shape: torch.Size([32, 1])
+molecule['x'] shape: torch.Size([288, 3])
+z_x_mol shape: torch.Size([288, 3])
+z_t_mol_x shape: torch.Size([288, 3])
+xh_mol[:,self.x_dim:]): torch.Size([288, 20])
+z_t_mol shape: torch.Size([288, 23])
+z_t_mol shape: torch.Size([288, 23])
+z_t_pro shape: torch.Size([5760, 23])
+v_target_mol shape: torch.Size([288, 23])
+t shape: torch.Size([32, 1])
+Epoch 0:  76%|███████▌  | 164/217 [00:08<00:02, 19.52it/s, loss=0.841, v_num=1.78e+7]Epoch 0:  76%|███████▌  | 164/217 [00:08<00:02, 19.52it/s, loss=0.839, v_num=1.78e+7]noise_scaling: 1
+t shape: torch.Size([32, 1])
+molecule['x'] shape: torch.Size([288, 3])
+z_x_mol shape: torch.Size([288, 3])
+z_t_mol_x shape: torch.Size([288, 3])
+xh_mol[:,self.x_dim:]): torch.Size([288, 20])
+z_t_mol shape: torch.Size([288, 23])
+z_t_mol shape: torch.Size([288, 23])
+z_t_pro shape: torch.Size([5760, 23])
+v_target_mol shape: torch.Size([288, 23])
+t shape: torch.Size([32, 1])
+Epoch 0:  76%|███████▌  | 165/217 [00:08<00:02, 19.54it/s, loss=0.839, v_num=1.78e+7]Epoch 0:  76%|███████▌  | 165/217 [00:08<00:02, 19.54it/s, loss=0.859, v_num=1.78e+7]noise_scaling: 1
+t shape: torch.Size([32, 1])
+molecule['x'] shape: torch.Size([288, 3])
+z_x_mol shape: torch.Size([288, 3])
+z_t_mol_x shape: torch.Size([288, 3])
+xh_mol[:,self.x_dim:]): torch.Size([288, 20])
+z_t_mol shape: torch.Size([288, 23])
+z_t_mol shape: torch.Size([288, 23])
+z_t_pro shape: torch.Size([5760, 23])
+v_target_mol shape: torch.Size([288, 23])
+t shape: torch.Size([32, 1])
+Epoch 0:  76%|███████▋  | 166/217 [00:08<00:02, 19.56it/s, loss=0.859, v_num=1.78e+7]Epoch 0:  76%|███████▋  | 166/217 [00:08<00:02, 19.56it/s, loss=0.845, v_num=1.78e+7]noise_scaling: 1
+t shape: torch.Size([32, 1])
+molecule['x'] shape: torch.Size([288, 3])
+z_x_mol shape: torch.Size([288, 3])
+z_t_mol_x shape: torch.Size([288, 3])
+xh_mol[:,self.x_dim:]): torch.Size([288, 20])
+z_t_mol shape: torch.Size([288, 23])
+z_t_mol shape: torch.Size([288, 23])
+z_t_pro shape: torch.Size([5760, 23])
+v_target_mol shape: torch.Size([288, 23])
+t shape: torch.Size([32, 1])
+Epoch 0:  77%|███████▋  | 167/217 [00:08<00:02, 19.58it/s, loss=0.845, v_num=1.78e+7]Epoch 0:  77%|███████▋  | 167/217 [00:08<00:02, 19.58it/s, loss=0.837, v_num=1.78e+7]noise_scaling: 1
+t shape: torch.Size([32, 1])
+molecule['x'] shape: torch.Size([288, 3])
+z_x_mol shape: torch.Size([288, 3])
+z_t_mol_x shape: torch.Size([288, 3])
+xh_mol[:,self.x_dim:]): torch.Size([288, 20])
+z_t_mol shape: torch.Size([288, 23])
+z_t_mol shape: torch.Size([288, 23])
+z_t_pro shape: torch.Size([5760, 23])
+v_target_mol shape: torch.Size([288, 23])
+t shape: torch.Size([32, 1])
+Epoch 0:  77%|███████▋  | 168/217 [00:08<00:02, 19.60it/s, loss=0.837, v_num=1.78e+7]Epoch 0:  77%|███████▋  | 168/217 [00:08<00:02, 19.60it/s, loss=0.83, v_num=1.78e+7] noise_scaling: 1
+t shape: torch.Size([32, 1])
+molecule['x'] shape: torch.Size([288, 3])
+z_x_mol shape: torch.Size([288, 3])
+z_t_mol_x shape: torch.Size([288, 3])
+xh_mol[:,self.x_dim:]): torch.Size([288, 20])
+z_t_mol shape: torch.Size([288, 23])
+z_t_mol shape: torch.Size([288, 23])
+z_t_pro shape: torch.Size([5760, 23])
+v_target_mol shape: torch.Size([288, 23])
+t shape: torch.Size([32, 1])
+Epoch 0:  78%|███████▊  | 169/217 [00:08<00:02, 19.62it/s, loss=0.83, v_num=1.78e+7]Epoch 0:  78%|███████▊  | 169/217 [00:08<00:02, 19.62it/s, loss=0.833, v_num=1.78e+7]noise_scaling: 1
+t shape: torch.Size([32, 1])
+molecule['x'] shape: torch.Size([288, 3])
+z_x_mol shape: torch.Size([288, 3])
+z_t_mol_x shape: torch.Size([288, 3])
+xh_mol[:,self.x_dim:]): torch.Size([288, 20])
+z_t_mol shape: torch.Size([288, 23])
+z_t_mol shape: torch.Size([288, 23])
+z_t_pro shape: torch.Size([5760, 23])
+v_target_mol shape: torch.Size([288, 23])
+t shape: torch.Size([32, 1])
+Epoch 0:  78%|███████▊  | 170/217 [00:08<00:02, 19.64it/s, loss=0.833, v_num=1.78e+7]Epoch 0:  78%|███████▊  | 170/217 [00:08<00:02, 19.63it/s, loss=0.821, v_num=1.78e+7]noise_scaling: 1
+t shape: torch.Size([32, 1])
+molecule['x'] shape: torch.Size([288, 3])
+z_x_mol shape: torch.Size([288, 3])
+z_t_mol_x shape: torch.Size([288, 3])
+xh_mol[:,self.x_dim:]): torch.Size([288, 20])
+z_t_mol shape: torch.Size([288, 23])
+z_t_mol shape: torch.Size([288, 23])
+z_t_pro shape: torch.Size([5760, 23])
+v_target_mol shape: torch.Size([288, 23])
+t shape: torch.Size([32, 1])
+Epoch 0:  79%|███████▉  | 171/217 [00:08<00:02, 19.65it/s, loss=0.821, v_num=1.78e+7]Epoch 0:  79%|███████▉  | 171/217 [00:08<00:02, 19.65it/s, loss=0.819, v_num=1.78e+7]noise_scaling: 1
+t shape: torch.Size([32, 1])
+molecule['x'] shape: torch.Size([288, 3])
+z_x_mol shape: torch.Size([288, 3])
+z_t_mol_x shape: torch.Size([288, 3])
+xh_mol[:,self.x_dim:]): torch.Size([288, 20])
+z_t_mol shape: torch.Size([288, 23])
+z_t_mol shape: torch.Size([288, 23])
+z_t_pro shape: torch.Size([5760, 23])
+v_target_mol shape: torch.Size([288, 23])
+t shape: torch.Size([32, 1])
+Epoch 0:  79%|███████▉  | 172/217 [00:08<00:02, 19.67it/s, loss=0.819, v_num=1.78e+7]Epoch 0:  79%|███████▉  | 172/217 [00:08<00:02, 19.67it/s, loss=0.802, v_num=1.78e+7]noise_scaling: 1
+t shape: torch.Size([32, 1])
+molecule['x'] shape: torch.Size([288, 3])
+z_x_mol shape: torch.Size([288, 3])
+z_t_mol_x shape: torch.Size([288, 3])
+xh_mol[:,self.x_dim:]): torch.Size([288, 20])
+z_t_mol shape: torch.Size([288, 23])
+z_t_mol shape: torch.Size([288, 23])
+z_t_pro shape: torch.Size([5760, 23])
+v_target_mol shape: torch.Size([288, 23])
+t shape: torch.Size([32, 1])
+Epoch 0:  80%|███████▉  | 173/217 [00:08<00:02, 19.69it/s, loss=0.802, v_num=1.78e+7]Epoch 0:  80%|███████▉  | 173/217 [00:08<00:02, 19.69it/s, loss=0.788, v_num=1.78e+7]noise_scaling: 1
+t shape: torch.Size([32, 1])
+molecule['x'] shape: torch.Size([288, 3])
+z_x_mol shape: torch.Size([288, 3])
+z_t_mol_x shape: torch.Size([288, 3])
+xh_mol[:,self.x_dim:]): torch.Size([288, 20])
+z_t_mol shape: torch.Size([288, 23])
+z_t_mol shape: torch.Size([288, 23])
+z_t_pro shape: torch.Size([5760, 23])
+v_target_mol shape: torch.Size([288, 23])
+t shape: torch.Size([32, 1])
+Epoch 0:  80%|████████  | 174/217 [00:08<00:02, 19.71it/s, loss=0.788, v_num=1.78e+7]Epoch 0:  80%|████████  | 174/217 [00:08<00:02, 19.71it/s, loss=0.807, v_num=1.78e+7]noise_scaling: 1
+t shape: torch.Size([32, 1])
+molecule['x'] shape: torch.Size([288, 3])
+z_x_mol shape: torch.Size([288, 3])
+z_t_mol_x shape: torch.Size([288, 3])
+xh_mol[:,self.x_dim:]): torch.Size([288, 20])
+z_t_mol shape: torch.Size([288, 23])
+z_t_mol shape: torch.Size([288, 23])
+z_t_pro shape: torch.Size([5760, 23])
+v_target_mol shape: torch.Size([288, 23])
+t shape: torch.Size([32, 1])
+Epoch 0:  81%|████████  | 175/217 [00:08<00:02, 19.73it/s, loss=0.807, v_num=1.78e+7]Epoch 0:  81%|████████  | 175/217 [00:08<00:02, 19.72it/s, loss=0.824, v_num=1.78e+7]noise_scaling: 1
+t shape: torch.Size([32, 1])
+molecule['x'] shape: torch.Size([288, 3])
+z_x_mol shape: torch.Size([288, 3])
+z_t_mol_x shape: torch.Size([288, 3])
+xh_mol[:,self.x_dim:]): torch.Size([288, 20])
+z_t_mol shape: torch.Size([288, 23])
+z_t_mol shape: torch.Size([288, 23])
+z_t_pro shape: torch.Size([5760, 23])
+v_target_mol shape: torch.Size([288, 23])
+t shape: torch.Size([32, 1])
+Epoch 0:  81%|████████  | 176/217 [00:08<00:02, 19.74it/s, loss=0.824, v_num=1.78e+7]Epoch 0:  81%|████████  | 176/217 [00:08<00:02, 19.74it/s, loss=0.815, v_num=1.78e+7]noise_scaling: 1
+t shape: torch.Size([32, 1])
+molecule['x'] shape: torch.Size([288, 3])
+z_x_mol shape: torch.Size([288, 3])
+z_t_mol_x shape: torch.Size([288, 3])
+xh_mol[:,self.x_dim:]): torch.Size([288, 20])
+z_t_mol shape: torch.Size([288, 23])
+z_t_mol shape: torch.Size([288, 23])
+z_t_pro shape: torch.Size([5760, 23])
+v_target_mol shape: torch.Size([288, 23])
+t shape: torch.Size([32, 1])
+Epoch 0:  82%|████████▏ | 177/217 [00:08<00:02, 19.76it/s, loss=0.815, v_num=1.78e+7]Epoch 0:  82%|████████▏ | 177/217 [00:08<00:02, 19.76it/s, loss=0.832, v_num=1.78e+7]noise_scaling: 1
+t shape: torch.Size([32, 1])
+molecule['x'] shape: torch.Size([288, 3])
+z_x_mol shape: torch.Size([288, 3])
+z_t_mol_x shape: torch.Size([288, 3])
+xh_mol[:,self.x_dim:]): torch.Size([288, 20])
+z_t_mol shape: torch.Size([288, 23])
+z_t_mol shape: torch.Size([288, 23])
+z_t_pro shape: torch.Size([5760, 23])
+v_target_mol shape: torch.Size([288, 23])
+t shape: torch.Size([32, 1])
+Epoch 0:  82%|████████▏ | 178/217 [00:09<00:01, 19.78it/s, loss=0.832, v_num=1.78e+7]Epoch 0:  82%|████████▏ | 178/217 [00:09<00:01, 19.78it/s, loss=0.832, v_num=1.78e+7]noise_scaling: 1
+t shape: torch.Size([32, 1])
+molecule['x'] shape: torch.Size([288, 3])
+z_x_mol shape: torch.Size([288, 3])
+z_t_mol_x shape: torch.Size([288, 3])
+xh_mol[:,self.x_dim:]): torch.Size([288, 20])
+z_t_mol shape: torch.Size([288, 23])
+z_t_mol shape: torch.Size([288, 23])
+z_t_pro shape: torch.Size([5760, 23])
+v_target_mol shape: torch.Size([288, 23])
+t shape: torch.Size([32, 1])
+Epoch 0:  82%|████████▏ | 179/217 [00:09<00:01, 19.79it/s, loss=0.832, v_num=1.78e+7]Epoch 0:  82%|████████▏ | 179/217 [00:09<00:01, 19.79it/s, loss=0.832, v_num=1.78e+7]noise_scaling: 1
+t shape: torch.Size([32, 1])
+molecule['x'] shape: torch.Size([288, 3])
+z_x_mol shape: torch.Size([288, 3])
+z_t_mol_x shape: torch.Size([288, 3])
+xh_mol[:,self.x_dim:]): torch.Size([288, 20])
+z_t_mol shape: torch.Size([288, 23])
+z_t_mol shape: torch.Size([288, 23])
+z_t_pro shape: torch.Size([5760, 23])
+v_target_mol shape: torch.Size([288, 23])
+t shape: torch.Size([32, 1])
+Epoch 0:  83%|████████▎ | 180/217 [00:09<00:01, 19.81it/s, loss=0.832, v_num=1.78e+7]Epoch 0:  83%|████████▎ | 180/217 [00:09<00:01, 19.81it/s, loss=0.822, v_num=1.78e+7]noise_scaling: 1
+t shape: torch.Size([32, 1])
+molecule['x'] shape: torch.Size([288, 3])
+z_x_mol shape: torch.Size([288, 3])
+z_t_mol_x shape: torch.Size([288, 3])
+xh_mol[:,self.x_dim:]): torch.Size([288, 20])
+z_t_mol shape: torch.Size([288, 23])
+z_t_mol shape: torch.Size([288, 23])
+z_t_pro shape: torch.Size([5760, 23])
+v_target_mol shape: torch.Size([288, 23])
+t shape: torch.Size([32, 1])
+Epoch 0:  83%|████████▎ | 181/217 [00:09<00:01, 19.83it/s, loss=0.822, v_num=1.78e+7]Epoch 0:  83%|████████▎ | 181/217 [00:09<00:01, 19.83it/s, loss=0.818, v_num=1.78e+7]noise_scaling: 1
+t shape: torch.Size([32, 1])
+molecule['x'] shape: torch.Size([288, 3])
+z_x_mol shape: torch.Size([288, 3])
+z_t_mol_x shape: torch.Size([288, 3])
+xh_mol[:,self.x_dim:]): torch.Size([288, 20])
+z_t_mol shape: torch.Size([288, 23])
+z_t_mol shape: torch.Size([288, 23])
+z_t_pro shape: torch.Size([5760, 23])
+v_target_mol shape: torch.Size([288, 23])
+t shape: torch.Size([32, 1])
+Epoch 0:  84%|████████▍ | 182/217 [00:09<00:01, 19.84it/s, loss=0.818, v_num=1.78e+7]Epoch 0:  84%|████████▍ | 182/217 [00:09<00:01, 19.84it/s, loss=0.826, v_num=1.78e+7]noise_scaling: 1
+t shape: torch.Size([32, 1])
+molecule['x'] shape: torch.Size([288, 3])
+z_x_mol shape: torch.Size([288, 3])
+z_t_mol_x shape: torch.Size([288, 3])
+xh_mol[:,self.x_dim:]): torch.Size([288, 20])
+z_t_mol shape: torch.Size([288, 23])
+z_t_mol shape: torch.Size([288, 23])
+z_t_pro shape: torch.Size([5760, 23])
+v_target_mol shape: torch.Size([288, 23])
+t shape: torch.Size([32, 1])
+Epoch 0:  84%|████████▍ | 183/217 [00:09<00:01, 19.86it/s, loss=0.826, v_num=1.78e+7]Epoch 0:  84%|████████▍ | 183/217 [00:09<00:01, 19.86it/s, loss=0.828, v_num=1.78e+7]noise_scaling: 1
+t shape: torch.Size([32, 1])
+molecule['x'] shape: torch.Size([288, 3])
+z_x_mol shape: torch.Size([288, 3])
+z_t_mol_x shape: torch.Size([288, 3])
+xh_mol[:,self.x_dim:]): torch.Size([288, 20])
+z_t_mol shape: torch.Size([288, 23])
+z_t_mol shape: torch.Size([288, 23])
+z_t_pro shape: torch.Size([5760, 23])
+v_target_mol shape: torch.Size([288, 23])
+t shape: torch.Size([32, 1])
+Epoch 0:  85%|████████▍ | 184/217 [00:09<00:01, 19.88it/s, loss=0.828, v_num=1.78e+7]Epoch 0:  85%|████████▍ | 184/217 [00:09<00:01, 19.87it/s, loss=0.843, v_num=1.78e+7]noise_scaling: 1
+t shape: torch.Size([32, 1])
+molecule['x'] shape: torch.Size([288, 3])
+z_x_mol shape: torch.Size([288, 3])
+z_t_mol_x shape: torch.Size([288, 3])
+xh_mol[:,self.x_dim:]): torch.Size([288, 20])
+z_t_mol shape: torch.Size([288, 23])
+z_t_mol shape: torch.Size([288, 23])
+z_t_pro shape: torch.Size([5760, 23])
+v_target_mol shape: torch.Size([288, 23])
+t shape: torch.Size([32, 1])
+Epoch 0:  85%|████████▌ | 185/217 [00:09<00:01, 19.89it/s, loss=0.843, v_num=1.78e+7]Epoch 0:  85%|████████▌ | 185/217 [00:09<00:01, 19.89it/s, loss=0.833, v_num=1.78e+7]noise_scaling: 1
+t shape: torch.Size([32, 1])
+molecule['x'] shape: torch.Size([288, 3])
+z_x_mol shape: torch.Size([288, 3])
+z_t_mol_x shape: torch.Size([288, 3])
+xh_mol[:,self.x_dim:]): torch.Size([288, 20])
+z_t_mol shape: torch.Size([288, 23])
+z_t_mol shape: torch.Size([288, 23])
+z_t_pro shape: torch.Size([5760, 23])
+v_target_mol shape: torch.Size([288, 23])
+t shape: torch.Size([32, 1])
+Epoch 0:  86%|████████▌ | 186/217 [00:09<00:01, 19.91it/s, loss=0.833, v_num=1.78e+7]Epoch 0:  86%|████████▌ | 186/217 [00:09<00:01, 19.91it/s, loss=0.821, v_num=1.78e+7]noise_scaling: 1
+t shape: torch.Size([32, 1])
+molecule['x'] shape: torch.Size([288, 3])
+z_x_mol shape: torch.Size([288, 3])
+z_t_mol_x shape: torch.Size([288, 3])
+xh_mol[:,self.x_dim:]): torch.Size([288, 20])
+z_t_mol shape: torch.Size([288, 23])
+z_t_mol shape: torch.Size([288, 23])
+z_t_pro shape: torch.Size([5760, 23])
+v_target_mol shape: torch.Size([288, 23])
+t shape: torch.Size([32, 1])
+Epoch 0:  86%|████████▌ | 187/217 [00:09<00:01, 19.92it/s, loss=0.821, v_num=1.78e+7]Epoch 0:  86%|████████▌ | 187/217 [00:09<00:01, 19.92it/s, loss=0.832, v_num=1.78e+7]noise_scaling: 1
+t shape: torch.Size([32, 1])
+molecule['x'] shape: torch.Size([288, 3])
+z_x_mol shape: torch.Size([288, 3])
+z_t_mol_x shape: torch.Size([288, 3])
+xh_mol[:,self.x_dim:]): torch.Size([288, 20])
+z_t_mol shape: torch.Size([288, 23])
+z_t_mol shape: torch.Size([288, 23])
+z_t_pro shape: torch.Size([5760, 23])
+v_target_mol shape: torch.Size([288, 23])
+t shape: torch.Size([32, 1])
+Epoch 0:  87%|████████▋ | 188/217 [00:09<00:01, 19.94it/s, loss=0.832, v_num=1.78e+7]Epoch 0:  87%|████████▋ | 188/217 [00:09<00:01, 19.94it/s, loss=0.837, v_num=1.78e+7]noise_scaling: 1
+t shape: torch.Size([32, 1])
+molecule['x'] shape: torch.Size([288, 3])
+z_x_mol shape: torch.Size([288, 3])
+z_t_mol_x shape: torch.Size([288, 3])
+xh_mol[:,self.x_dim:]): torch.Size([288, 20])
+z_t_mol shape: torch.Size([288, 23])
+z_t_mol shape: torch.Size([288, 23])
+z_t_pro shape: torch.Size([5760, 23])
+v_target_mol shape: torch.Size([288, 23])
+t shape: torch.Size([32, 1])
+Epoch 0:  87%|████████▋ | 189/217 [00:09<00:01, 19.95it/s, loss=0.837, v_num=1.78e+7]Epoch 0:  87%|████████▋ | 189/217 [00:09<00:01, 19.95it/s, loss=0.845, v_num=1.78e+7]noise_scaling: 1
+t shape: torch.Size([32, 1])
+molecule['x'] shape: torch.Size([288, 3])
+z_x_mol shape: torch.Size([288, 3])
+z_t_mol_x shape: torch.Size([288, 3])
+xh_mol[:,self.x_dim:]): torch.Size([288, 20])
+z_t_mol shape: torch.Size([288, 23])
+z_t_mol shape: torch.Size([288, 23])
+z_t_pro shape: torch.Size([5760, 23])
+v_target_mol shape: torch.Size([288, 23])
+t shape: torch.Size([32, 1])
+Epoch 0:  88%|████████▊ | 190/217 [00:09<00:01, 19.97it/s, loss=0.845, v_num=1.78e+7]Epoch 0:  88%|████████▊ | 190/217 [00:09<00:01, 19.97it/s, loss=0.863, v_num=1.78e+7]noise_scaling: 1
+t shape: torch.Size([32, 1])
+molecule['x'] shape: torch.Size([288, 3])
+z_x_mol shape: torch.Size([288, 3])
+z_t_mol_x shape: torch.Size([288, 3])
+xh_mol[:,self.x_dim:]): torch.Size([288, 20])
+z_t_mol shape: torch.Size([288, 23])
+z_t_mol shape: torch.Size([288, 23])
+z_t_pro shape: torch.Size([5760, 23])
+v_target_mol shape: torch.Size([288, 23])
+t shape: torch.Size([32, 1])
+Epoch 0:  88%|████████▊ | 191/217 [00:09<00:01, 19.98it/s, loss=0.863, v_num=1.78e+7]Epoch 0:  88%|████████▊ | 191/217 [00:09<00:01, 19.98it/s, loss=0.848, v_num=1.78e+7]noise_scaling: 1
+t shape: torch.Size([32, 1])
+molecule['x'] shape: torch.Size([288, 3])
+z_x_mol shape: torch.Size([288, 3])
+z_t_mol_x shape: torch.Size([288, 3])
+xh_mol[:,self.x_dim:]): torch.Size([288, 20])
+z_t_mol shape: torch.Size([288, 23])
+z_t_mol shape: torch.Size([288, 23])
+z_t_pro shape: torch.Size([5760, 23])
+v_target_mol shape: torch.Size([288, 23])
+t shape: torch.Size([32, 1])
+Epoch 0:  88%|████████▊ | 192/217 [00:09<00:01, 20.00it/s, loss=0.848, v_num=1.78e+7]Epoch 0:  88%|████████▊ | 192/217 [00:09<00:01, 20.00it/s, loss=0.838, v_num=1.78e+7]noise_scaling: 1
+t shape: torch.Size([32, 1])
+molecule['x'] shape: torch.Size([288, 3])
+z_x_mol shape: torch.Size([288, 3])
+z_t_mol_x shape: torch.Size([288, 3])
+xh_mol[:,self.x_dim:]): torch.Size([288, 20])
+z_t_mol shape: torch.Size([288, 23])
+z_t_mol shape: torch.Size([288, 23])
+z_t_pro shape: torch.Size([5760, 23])
+v_target_mol shape: torch.Size([288, 23])
+t shape: torch.Size([32, 1])
+Epoch 0:  89%|████████▉ | 193/217 [00:09<00:01, 20.01it/s, loss=0.838, v_num=1.78e+7]Epoch 0:  89%|████████▉ | 193/217 [00:09<00:01, 20.01it/s, loss=0.839, v_num=1.78e+7]noise_scaling: 1
+t shape: torch.Size([32, 1])
+molecule['x'] shape: torch.Size([288, 3])
+z_x_mol shape: torch.Size([288, 3])
+z_t_mol_x shape: torch.Size([288, 3])
+xh_mol[:,self.x_dim:]): torch.Size([288, 20])
+z_t_mol shape: torch.Size([288, 23])
+z_t_mol shape: torch.Size([288, 23])
+z_t_pro shape: torch.Size([5760, 23])
+v_target_mol shape: torch.Size([288, 23])
+t shape: torch.Size([32, 1])
+Epoch 0:  89%|████████▉ | 194/217 [00:09<00:01, 20.03it/s, loss=0.839, v_num=1.78e+7]Epoch 0:  89%|████████▉ | 194/217 [00:09<00:01, 20.03it/s, loss=0.816, v_num=1.78e+7]noise_scaling: 1
+t shape: torch.Size([31, 1])
+molecule['x'] shape: torch.Size([279, 3])
+z_x_mol shape: torch.Size([279, 3])
+z_t_mol_x shape: torch.Size([279, 3])
+xh_mol[:,self.x_dim:]): torch.Size([279, 20])
+z_t_mol shape: torch.Size([279, 23])
+z_t_mol shape: torch.Size([279, 23])
+z_t_pro shape: torch.Size([5580, 23])
+v_target_mol shape: torch.Size([279, 23])
+t shape: torch.Size([31, 1])
+Epoch 0:  90%|████████▉ | 195/217 [00:09<00:01, 20.04it/s, loss=0.816, v_num=1.78e+7]Epoch 0:  90%|████████▉ | 195/217 [00:09<00:01, 20.04it/s, loss=0.799, v_num=1.78e+7]
+Validation: 0it [00:00, ?it/s][A
+Validation:   0%|          | 0/22 [00:00<?, ?it/s][A
+Validation DataLoader 0:   0%|          | 0/22 [00:00<?, ?it/s][Anoise_scaling: 1
+t shape: torch.Size([32, 1])
+molecule['x'] shape: torch.Size([288, 3])
+z_x_mol shape: torch.Size([288, 3])
+z_t_mol_x shape: torch.Size([288, 3])
+xh_mol[:,self.x_dim:]): torch.Size([288, 20])
+z_t_mol shape: torch.Size([288, 23])
+z_t_mol shape: torch.Size([288, 23])
+z_t_pro shape: torch.Size([5760, 23])
+v_target_mol shape: torch.Size([288, 23])
+t shape: torch.Size([32, 1])
+
+Validation DataLoader 0:   5%|▍         | 1/22 [00:00<00:00, 45.51it/s][AEpoch 0:  90%|█████████ | 196/217 [00:10<00:01, 18.57it/s, loss=0.799, v_num=1.78e+7]noise_scaling: 1
+t shape: torch.Size([32, 1])
+molecule['x'] shape: torch.Size([288, 3])
+z_x_mol shape: torch.Size([288, 3])
+z_t_mol_x shape: torch.Size([288, 3])
+xh_mol[:,self.x_dim:]): torch.Size([288, 20])
+z_t_mol shape: torch.Size([288, 23])
+z_t_mol shape: torch.Size([288, 23])
+z_t_pro shape: torch.Size([5760, 23])
+v_target_mol shape: torch.Size([288, 23])
+t shape: torch.Size([32, 1])
+
+Validation DataLoader 0:   9%|▉         | 2/22 [00:00<00:00, 50.80it/s][AEpoch 0:  91%|█████████ | 197/217 [00:10<00:01, 18.63it/s, loss=0.799, v_num=1.78e+7]noise_scaling: 1
+t shape: torch.Size([32, 1])
+molecule['x'] shape: torch.Size([288, 3])
+z_x_mol shape: torch.Size([288, 3])
+z_t_mol_x shape: torch.Size([288, 3])
+xh_mol[:,self.x_dim:]): torch.Size([288, 20])
+z_t_mol shape: torch.Size([288, 23])
+z_t_mol shape: torch.Size([288, 23])
+z_t_pro shape: torch.Size([5760, 23])
+v_target_mol shape: torch.Size([288, 23])
+t shape: torch.Size([32, 1])
+
+Validation DataLoader 0:  14%|█▎        | 3/22 [00:00<00:00, 51.67it/s][AEpoch 0:  91%|█████████ | 198/217 [00:10<00:01, 18.69it/s, loss=0.799, v_num=1.78e+7]noise_scaling: 1
+t shape: torch.Size([32, 1])
+molecule['x'] shape: torch.Size([288, 3])
+z_x_mol shape: torch.Size([288, 3])
+z_t_mol_x shape: torch.Size([288, 3])
+xh_mol[:,self.x_dim:]): torch.Size([288, 20])
+z_t_mol shape: torch.Size([288, 23])
+z_t_mol shape: torch.Size([288, 23])
+z_t_pro shape: torch.Size([5760, 23])
+v_target_mol shape: torch.Size([288, 23])
+t shape: torch.Size([32, 1])
+
+Validation DataLoader 0:  18%|█▊        | 4/22 [00:00<00:00, 52.91it/s][AEpoch 0:  92%|█████████▏| 199/217 [00:10<00:00, 18.76it/s, loss=0.799, v_num=1.78e+7]noise_scaling: 1
+t shape: torch.Size([32, 1])
+molecule['x'] shape: torch.Size([288, 3])
+z_x_mol shape: torch.Size([288, 3])
+z_t_mol_x shape: torch.Size([288, 3])
+xh_mol[:,self.x_dim:]): torch.Size([288, 20])
+z_t_mol shape: torch.Size([288, 23])
+z_t_mol shape: torch.Size([288, 23])
+z_t_pro shape: torch.Size([5760, 23])
+v_target_mol shape: torch.Size([288, 23])
+t shape: torch.Size([32, 1])
+
+Validation DataLoader 0:  23%|██▎       | 5/22 [00:00<00:00, 54.02it/s][AEpoch 0:  92%|█████████▏| 200/217 [00:10<00:00, 18.82it/s, loss=0.799, v_num=1.78e+7]noise_scaling: 1
+t shape: torch.Size([32, 1])
+molecule['x'] shape: torch.Size([288, 3])
+z_x_mol shape: torch.Size([288, 3])
+z_t_mol_x shape: torch.Size([288, 3])
+xh_mol[:,self.x_dim:]): torch.Size([288, 20])
+z_t_mol shape: torch.Size([288, 23])
+z_t_mol shape: torch.Size([288, 23])
+z_t_pro shape: torch.Size([5760, 23])
+v_target_mol shape: torch.Size([288, 23])
+t shape: torch.Size([32, 1])
+
+Validation DataLoader 0:  27%|██▋       | 6/22 [00:00<00:00, 54.80it/s][AEpoch 0:  93%|█████████▎| 201/217 [00:10<00:00, 18.88it/s, loss=0.799, v_num=1.78e+7]noise_scaling: 1
+t shape: torch.Size([32, 1])
+molecule['x'] shape: torch.Size([288, 3])
+z_x_mol shape: torch.Size([288, 3])
+z_t_mol_x shape: torch.Size([288, 3])
+xh_mol[:,self.x_dim:]): torch.Size([288, 20])
+z_t_mol shape: torch.Size([288, 23])
+z_t_mol shape: torch.Size([288, 23])
+z_t_pro shape: torch.Size([5760, 23])
+v_target_mol shape: torch.Size([288, 23])
+t shape: torch.Size([32, 1])
+
+Validation DataLoader 0:  32%|███▏      | 7/22 [00:00<00:00, 55.37it/s][AEpoch 0:  93%|█████████▎| 202/217 [00:10<00:00, 18.95it/s, loss=0.799, v_num=1.78e+7]noise_scaling: 1
+t shape: torch.Size([32, 1])
+molecule['x'] shape: torch.Size([288, 3])
+z_x_mol shape: torch.Size([288, 3])
+z_t_mol_x shape: torch.Size([288, 3])
+xh_mol[:,self.x_dim:]): torch.Size([288, 20])
+z_t_mol shape: torch.Size([288, 23])
+z_t_mol shape: torch.Size([288, 23])
+z_t_pro shape: torch.Size([5760, 23])
+v_target_mol shape: torch.Size([288, 23])
+t shape: torch.Size([32, 1])
+
+Validation DataLoader 0:  36%|███▋      | 8/22 [00:00<00:00, 55.78it/s][AEpoch 0:  94%|█████████▎| 203/217 [00:10<00:00, 19.01it/s, loss=0.799, v_num=1.78e+7]noise_scaling: 1
+t shape: torch.Size([32, 1])
+molecule['x'] shape: torch.Size([288, 3])
+z_x_mol shape: torch.Size([288, 3])
+z_t_mol_x shape: torch.Size([288, 3])
+xh_mol[:,self.x_dim:]): torch.Size([288, 20])
+z_t_mol shape: torch.Size([288, 23])
+z_t_mol shape: torch.Size([288, 23])
+z_t_pro shape: torch.Size([5760, 23])
+v_target_mol shape: torch.Size([288, 23])
+t shape: torch.Size([32, 1])
+
+Validation DataLoader 0:  41%|████      | 9/22 [00:00<00:00, 56.10it/s][AEpoch 0:  94%|█████████▍| 204/217 [00:10<00:00, 19.07it/s, loss=0.799, v_num=1.78e+7]noise_scaling: 1
+t shape: torch.Size([32, 1])
+molecule['x'] shape: torch.Size([288, 3])
+z_x_mol shape: torch.Size([288, 3])
+z_t_mol_x shape: torch.Size([288, 3])
+xh_mol[:,self.x_dim:]): torch.Size([288, 20])
+z_t_mol shape: torch.Size([288, 23])
+z_t_mol shape: torch.Size([288, 23])
+z_t_pro shape: torch.Size([5760, 23])
+v_target_mol shape: torch.Size([288, 23])
+t shape: torch.Size([32, 1])
+
+Validation DataLoader 0:  45%|████▌     | 10/22 [00:00<00:00, 56.33it/s][AEpoch 0:  94%|█████████▍| 205/217 [00:10<00:00, 19.14it/s, loss=0.799, v_num=1.78e+7]noise_scaling: 1
+t shape: torch.Size([32, 1])
+molecule['x'] shape: torch.Size([288, 3])
+z_x_mol shape: torch.Size([288, 3])
+z_t_mol_x shape: torch.Size([288, 3])
+xh_mol[:,self.x_dim:]): torch.Size([288, 20])
+z_t_mol shape: torch.Size([288, 23])
+z_t_mol shape: torch.Size([288, 23])
+z_t_pro shape: torch.Size([5760, 23])
+v_target_mol shape: torch.Size([288, 23])
+t shape: torch.Size([32, 1])
+
+Validation DataLoader 0:  50%|█████     | 11/22 [00:00<00:00, 56.57it/s][AEpoch 0:  95%|█████████▍| 206/217 [00:10<00:00, 19.20it/s, loss=0.799, v_num=1.78e+7]noise_scaling: 1
+t shape: torch.Size([32, 1])
+molecule['x'] shape: torch.Size([288, 3])
+z_x_mol shape: torch.Size([288, 3])
+z_t_mol_x shape: torch.Size([288, 3])
+xh_mol[:,self.x_dim:]): torch.Size([288, 20])
+z_t_mol shape: torch.Size([288, 23])
+z_t_mol shape: torch.Size([288, 23])
+z_t_pro shape: torch.Size([5760, 23])
+v_target_mol shape: torch.Size([288, 23])
+t shape: torch.Size([32, 1])
+
+Validation DataLoader 0:  55%|█████▍    | 12/22 [00:00<00:00, 56.79it/s][AEpoch 0:  95%|█████████▌| 207/217 [00:10<00:00, 19.26it/s, loss=0.799, v_num=1.78e+7]noise_scaling: 1
+t shape: torch.Size([32, 1])
+molecule['x'] shape: torch.Size([288, 3])
+z_x_mol shape: torch.Size([288, 3])
+z_t_mol_x shape: torch.Size([288, 3])
+xh_mol[:,self.x_dim:]): torch.Size([288, 20])
+z_t_mol shape: torch.Size([288, 23])
+z_t_mol shape: torch.Size([288, 23])
+z_t_pro shape: torch.Size([5760, 23])
+v_target_mol shape: torch.Size([288, 23])
+t shape: torch.Size([32, 1])
+
+Validation DataLoader 0:  59%|█████▉    | 13/22 [00:00<00:00, 56.96it/s][AEpoch 0:  96%|█████████▌| 208/217 [00:10<00:00, 19.33it/s, loss=0.799, v_num=1.78e+7]noise_scaling: 1
+t shape: torch.Size([32, 1])
+molecule['x'] shape: torch.Size([288, 3])
+z_x_mol shape: torch.Size([288, 3])
+z_t_mol_x shape: torch.Size([288, 3])
+xh_mol[:,self.x_dim:]): torch.Size([288, 20])
+z_t_mol shape: torch.Size([288, 23])
+z_t_mol shape: torch.Size([288, 23])
+z_t_pro shape: torch.Size([5760, 23])
+v_target_mol shape: torch.Size([288, 23])
+t shape: torch.Size([32, 1])
+
+Validation DataLoader 0:  64%|██████▎   | 14/22 [00:00<00:00, 57.10it/s][AEpoch 0:  96%|█████████▋| 209/217 [00:10<00:00, 19.39it/s, loss=0.799, v_num=1.78e+7]noise_scaling: 1
+t shape: torch.Size([32, 1])
+molecule['x'] shape: torch.Size([288, 3])
+z_x_mol shape: torch.Size([288, 3])
+z_t_mol_x shape: torch.Size([288, 3])
+xh_mol[:,self.x_dim:]): torch.Size([288, 20])
+z_t_mol shape: torch.Size([288, 23])
+z_t_mol shape: torch.Size([288, 23])
+z_t_pro shape: torch.Size([5760, 23])
+v_target_mol shape: torch.Size([288, 23])
+t shape: torch.Size([32, 1])
+
+Validation DataLoader 0:  68%|██████▊   | 15/22 [00:00<00:00, 57.19it/s][AEpoch 0:  97%|█████████▋| 210/217 [00:10<00:00, 19.45it/s, loss=0.799, v_num=1.78e+7]noise_scaling: 1
+t shape: torch.Size([32, 1])
+molecule['x'] shape: torch.Size([288, 3])
+z_x_mol shape: torch.Size([288, 3])
+z_t_mol_x shape: torch.Size([288, 3])
+xh_mol[:,self.x_dim:]): torch.Size([288, 20])
+z_t_mol shape: torch.Size([288, 23])
+z_t_mol shape: torch.Size([288, 23])
+z_t_pro shape: torch.Size([5760, 23])
+v_target_mol shape: torch.Size([288, 23])
+t shape: torch.Size([32, 1])
+
+Validation DataLoader 0:  73%|███████▎  | 16/22 [00:00<00:00, 57.28it/s][AEpoch 0:  97%|█████████▋| 211/217 [00:10<00:00, 19.51it/s, loss=0.799, v_num=1.78e+7]noise_scaling: 1
+t shape: torch.Size([32, 1])
+molecule['x'] shape: torch.Size([288, 3])
+z_x_mol shape: torch.Size([288, 3])
+z_t_mol_x shape: torch.Size([288, 3])
+xh_mol[:,self.x_dim:]): torch.Size([288, 20])
+z_t_mol shape: torch.Size([288, 23])
+z_t_mol shape: torch.Size([288, 23])
+z_t_pro shape: torch.Size([5760, 23])
+v_target_mol shape: torch.Size([288, 23])
+t shape: torch.Size([32, 1])
+
+Validation DataLoader 0:  77%|███████▋  | 17/22 [00:00<00:00, 57.37it/s][AEpoch 0:  98%|█████████▊| 212/217 [00:10<00:00, 19.57it/s, loss=0.799, v_num=1.78e+7]noise_scaling: 1
+t shape: torch.Size([32, 1])
+molecule['x'] shape: torch.Size([288, 3])
+z_x_mol shape: torch.Size([288, 3])
+z_t_mol_x shape: torch.Size([288, 3])
+xh_mol[:,self.x_dim:]): torch.Size([288, 20])
+z_t_mol shape: torch.Size([288, 23])
+z_t_mol shape: torch.Size([288, 23])
+z_t_pro shape: torch.Size([5760, 23])
+v_target_mol shape: torch.Size([288, 23])
+t shape: torch.Size([32, 1])
+
+Validation DataLoader 0:  82%|████████▏ | 18/22 [00:00<00:00, 57.46it/s][AEpoch 0:  98%|█████████▊| 213/217 [00:10<00:00, 19.64it/s, loss=0.799, v_num=1.78e+7]noise_scaling: 1
+t shape: torch.Size([32, 1])
+molecule['x'] shape: torch.Size([288, 3])
+z_x_mol shape: torch.Size([288, 3])
+z_t_mol_x shape: torch.Size([288, 3])
+xh_mol[:,self.x_dim:]): torch.Size([288, 20])
+z_t_mol shape: torch.Size([288, 23])
+z_t_mol shape: torch.Size([288, 23])
+z_t_pro shape: torch.Size([5760, 23])
+v_target_mol shape: torch.Size([288, 23])
+t shape: torch.Size([32, 1])
+
+Validation DataLoader 0:  86%|████████▋ | 19/22 [00:00<00:00, 57.54it/s][AEpoch 0:  99%|█████████▊| 214/217 [00:10<00:00, 19.70it/s, loss=0.799, v_num=1.78e+7]noise_scaling: 1
+t shape: torch.Size([32, 1])
+molecule['x'] shape: torch.Size([288, 3])
+z_x_mol shape: torch.Size([288, 3])
+z_t_mol_x shape: torch.Size([288, 3])
+xh_mol[:,self.x_dim:]): torch.Size([288, 20])
+z_t_mol shape: torch.Size([288, 23])
+z_t_mol shape: torch.Size([288, 23])
+z_t_pro shape: torch.Size([5760, 23])
+v_target_mol shape: torch.Size([288, 23])
+t shape: torch.Size([32, 1])
+
+Validation DataLoader 0:  91%|█████████ | 20/22 [00:00<00:00, 57.59it/s][AEpoch 0:  99%|█████████▉| 215/217 [00:10<00:00, 19.76it/s, loss=0.799, v_num=1.78e+7]noise_scaling: 1
+t shape: torch.Size([32, 1])
+molecule['x'] shape: torch.Size([288, 3])
+z_x_mol shape: torch.Size([288, 3])
+z_t_mol_x shape: torch.Size([288, 3])
+xh_mol[:,self.x_dim:]): torch.Size([288, 20])
+z_t_mol shape: torch.Size([288, 23])
+z_t_mol shape: torch.Size([288, 23])
+z_t_pro shape: torch.Size([5760, 23])
+v_target_mol shape: torch.Size([288, 23])
+t shape: torch.Size([32, 1])
+
+Validation DataLoader 0:  95%|█████████▌| 21/22 [00:00<00:00, 57.67it/s][AEpoch 0: 100%|█████████▉| 216/217 [00:10<00:00, 19.82it/s, loss=0.799, v_num=1.78e+7]noise_scaling: 1
+t shape: torch.Size([28, 1])
+molecule['x'] shape: torch.Size([252, 3])
+z_x_mol shape: torch.Size([252, 3])
+z_t_mol_x shape: torch.Size([252, 3])
+xh_mol[:,self.x_dim:]): torch.Size([252, 20])
+z_t_mol shape: torch.Size([252, 23])
+z_t_mol shape: torch.Size([252, 23])
+z_t_pro shape: torch.Size([5040, 23])
+v_target_mol shape: torch.Size([252, 23])
+t shape: torch.Size([28, 1])
+/home/rhutter/.conda/envs/mhcdiff/lib/python3.10/site-packages/pytorch_lightning/utilities/data.py:85: UserWarning: Trying to infer the `batch_size` from an ambiguous collection. The batch size we found is 28. To avoid any miscalculations, use `self.log(..., batch_size=batch_size)`.
+  warning_cache.warn(
+
+Validation DataLoader 0: 100%|██████████| 22/22 [00:00<00:00, 57.93it/s][AEpoch 0: 100%|██████████| 217/217 [00:10<00:00, 19.88it/s, loss=0.799, v_num=1.78e+7]Epoch 0: 100%|██████████| 217/217 [00:10<00:00, 19.88it/s, loss=0.799, v_num=1.78e+7]
+Traceback (most recent call last):
+  File "/gpfs/home3/rhutter/MHC-Diff/train.py", line 84, in <module>
+    trainer.fit(model)
+  File "/home/rhutter/.conda/envs/mhcdiff/lib/python3.10/site-packages/pytorch_lightning/trainer/trainer.py", line 603, in fit
+    call._call_and_handle_interrupt(
+  File "/home/rhutter/.conda/envs/mhcdiff/lib/python3.10/site-packages/pytorch_lightning/trainer/call.py", line 38, in _call_and_handle_interrupt
+    return trainer_fn(*args, **kwargs)
+  File "/home/rhutter/.conda/envs/mhcdiff/lib/python3.10/site-packages/pytorch_lightning/trainer/trainer.py", line 645, in _fit_impl
+    self._run(model, ckpt_path=self.ckpt_path)
+  File "/home/rhutter/.conda/envs/mhcdiff/lib/python3.10/site-packages/pytorch_lightning/trainer/trainer.py", line 1098, in _run
+    results = self._run_stage()
+  File "/home/rhutter/.conda/envs/mhcdiff/lib/python3.10/site-packages/pytorch_lightning/trainer/trainer.py", line 1177, in _run_stage
+    self._run_train()
+  File "/home/rhutter/.conda/envs/mhcdiff/lib/python3.10/site-packages/pytorch_lightning/trainer/trainer.py", line 1200, in _run_train
+    self.fit_loop.run()
+  File "/home/rhutter/.conda/envs/mhcdiff/lib/python3.10/site-packages/pytorch_lightning/loops/loop.py", line 200, in run
+    self.on_advance_end()
+  File "/home/rhutter/.conda/envs/mhcdiff/lib/python3.10/site-packages/pytorch_lightning/loops/fit_loop.py", line 295, in on_advance_end
+    self.trainer._call_callback_hooks("on_train_epoch_end")
+  File "/home/rhutter/.conda/envs/mhcdiff/lib/python3.10/site-packages/pytorch_lightning/trainer/trainer.py", line 1380, in _call_callback_hooks
+    fn(self, self.lightning_module, *args, **kwargs)
+  File "/home/rhutter/.conda/envs/mhcdiff/lib/python3.10/site-packages/pytorch_lightning/callbacks/model_checkpoint.py", line 312, in on_train_epoch_end
+    self._save_topk_checkpoint(trainer, monitor_candidates)
+  File "/home/rhutter/.conda/envs/mhcdiff/lib/python3.10/site-packages/pytorch_lightning/callbacks/model_checkpoint.py", line 367, in _save_topk_checkpoint
+    raise MisconfigurationException(m)
+lightning_lite.utilities.exceptions.MisconfigurationException: `ModelCheckpoint(monitor='error_mol_val')` could not find the monitored key in the returned metrics: ['train_loss', 'loss', 'confidence', 'loss_with_conf', 'val_loss', 'loss_val', 'confidence_val', 'loss_with_conf_val', 'epoch', 'step']. HINT: Did you call `log('error_mol_val', value)` in the `LightningModule`?
+                                                                        [AEpoch 0: 100%|██████████| 217/217 [00:10<00:00, 19.87it/s, loss=0.799, v_num=1.78e+7]Epoch 0: 100%|██████████| 217/217 [00:11<00:00, 19.23it/s, loss=0.799, v_num=1.78e+7]
+srun: error: gcn20: task 0: Exited with exit code 1
+srun: Terminating StepId=17754552.0

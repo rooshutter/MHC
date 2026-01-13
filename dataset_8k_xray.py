@@ -20,6 +20,139 @@ def one_hot_encode_sequence(sequence):
     return encoding
 
 class PDB_Dataset(Dataset):
+
+    def __init__(self, datadir, split='train', fold="1"):
+        """
+        Args:
+            datadir (str): Path to the directory where HDF5 files are located.
+            split (str): Dataset split, one of 'train', 'valid', 'test'.
+        """
+
+        if split == 'test': # roos
+            self.hdf5_path = os.path.join(datadir, f'BA_cluster{fold}.hdf5')
+        else:
+            self.hdf5_path = os.path.join(datadir, f'{split}_fold{fold}.hdf5')
+        print(f"Loading dataset from {self.hdf5_path}...")
+
+        # Open file to get the list of keys (Entry IDs like 'BA-55224')
+        with h5py.File(self.hdf5_path, 'r') as f5:
+            # Instead of looking for 'pdb_strings', we get the group keys
+            self.entry_names = list(f5.keys())
+            
+        print(f"Loaded {len(self.entry_names)} entries from {split} split.")
+
+    def __len__(self) -> int:
+        return len(self.entry_names)
+
+    def __getitem__(self, index: int) -> Dict[str, torch.Tensor]:
+        return self.get_entry(index)
+
+    def get_entry(self, index: int) -> Dict[str, torch.Tensor]:
+        """
+        Retrieves pre-processed tensors and forces them to 20 dimensions.
+        """
+        entry_name = self.entry_names[index]
+        data = {}
+
+        with h5py.File(self.hdf5_path, 'r') as f5:
+            group = f5[entry_name]
+            
+            # --- 1. Load Peptide Data ---
+            # Position: Take C-alpha (index 1)
+            pep_all_pos = group['peptide']['all_atom_positions'][:]
+            peptide_coords = torch.tensor(pep_all_pos[:, 1, :], dtype=torch.float32)
+            
+            # Features: SLICE the first 20 columns only
+            full_pep_onehot = group['peptide']['sequence_onehot'][:]
+            # Force shape (N, 20)
+            peptide_onehot = torch.tensor(full_pep_onehot[:, :20], dtype=torch.float32)
+            
+            pep_pos_in_seq = torch.tensor(group['peptide']['residue_numbers'][:], dtype=torch.long)
+
+            # --- 2. Load Protein Data ---
+            pro_all_pos = group['protein']['all_atom_positions'][:]
+            protein_coords = torch.tensor(pro_all_pos[:, 1, :], dtype=torch.float32)
+            
+            # Features: SLICE the first 20 columns only
+            full_pro_onehot = group['protein']['sequence_onehot'][:]
+            # Force shape (N, 20)
+            protein_onehot = torch.tensor(full_pro_onehot[:, :20], dtype=torch.float32)
+
+            # --- 3. Create Masks ---
+            peptide_len = peptide_coords.shape[0]
+            protein_len = protein_coords.shape[0]
+            
+            peptide_mask = torch.ones(peptide_len, dtype=torch.bool)
+            protein_mask = torch.ones(protein_len, dtype=torch.bool)
+
+            # --- 4. Package ---
+            data['graph_name'] = entry_name
+            
+            # Peptide
+            data['peptide_idx'] = peptide_mask
+            data['peptide_positions'] = peptide_coords
+            data['peptide_features'] = peptide_onehot  # Now guaranteed to be 20 dims
+            data['num_peptide_residues'] = torch.tensor(peptide_len)
+            data['pos_in_seq'] = pep_pos_in_seq 
+
+            # Protein Pocket
+            data['protein_pocket_idx'] = protein_mask
+            data['protein_pocket_positions'] = protein_coords
+            data['protein_pocket_features'] = protein_onehot  # Now guaranteed to be 20 dims
+            data['num_protein_pocket_residues'] = torch.tensor(protein_len)
+
+            # Batch index placeholders
+            data['peptide_batch_idx'] = torch.zeros(peptide_len, dtype=torch.long)
+            data['protein_batch_idx'] = torch.zeros(protein_len, dtype=torch.long)
+
+        return data
+    
+    @staticmethod
+    def collate_fn(batch):
+        """
+        Collation function to combine batch data into a single batch.
+        """
+        data_batch = {}
+        
+        # Keys that are lists of strings
+        data_batch['graph_name'] = [x['graph_name'] for x in batch]
+        
+        # Keys that are single values per graph (1D tensor)
+        for key in ['num_peptide_residues', 'num_protein_pocket_residues']:
+             data_batch[key] = torch.stack([x[key] for x in batch])
+
+        # Keys that need concatenation (Node features/positions)
+        cat_keys = [
+            'peptide_idx', 'peptide_positions', 'peptide_features', 'pos_in_seq',
+            'protein_pocket_idx', 'protein_pocket_positions', 'protein_pocket_features'
+        ]
+        
+        for key in cat_keys:
+            data_batch[key] = torch.cat([x[key] for x in batch], dim=0)
+
+        # Handle Batch Indices (needed for torch_scatter usually)
+        # We create a new 'idx' key that maps every node to its graph index in the batch
+        peptide_batch_indices = []
+        protein_batch_indices = []
+        
+        for i, item in enumerate(batch):
+            peptide_batch_indices.append(torch.full((item['num_peptide_residues'],), i, dtype=torch.long))
+            protein_batch_indices.append(torch.full((item['num_protein_pocket_residues'],), i, dtype=torch.long))
+            
+        data_batch['idx_peptide'] = torch.cat(peptide_batch_indices)
+        data_batch['idx_protein'] = torch.cat(protein_batch_indices)
+        
+        # Map back to generic 'idx' if your model uses that specific name
+        # (Assuming your model looks for 'peptide_idx' as the scatter index, 
+        # usually usually usually named 'batch' or 'idx' in PyG)
+        data_batch['peptide_idx'] = data_batch['idx_peptide'] 
+        data_batch['protein_pocket_idx'] = data_batch['idx_protein']
+
+        return data_batch
+    
+
+
+class PDB_Dataset2(Dataset):
     
     def __init__(self, datadir, split='train', fold="1"): # Roos: fold hardcoded to 1 for now
         """
@@ -28,34 +161,38 @@ class PDB_Dataset(Dataset):
             split (str): Dataset split, one of 'train', 'valid', 'test'.
         """
         # Define the HDF5 file paths for the dataset split
-        self.hdf5_path = os.path.join(datadir, f'{split}_fold{fold}.hdf5')
+        if split == 'test': # roos
+            self.hdf5_path = os.path.join(datadir, f'BA_cluster{fold}.hdf5')
+        else:
+            self.hdf5_path = os.path.join(datadir, f'{split}_fold{fold}.hdf5')
 
         print(f"Loading dataset from {self.hdf5_path}...")
 
         # Open the HDF5 file and load the pdb_strings dataset directly
         with h5py.File(self.hdf5_path, 'r') as f5:
             #####################################################################
-            group = f5['BA-55224']
-
-            for name, dataset in group.items():
+            # self.entry_names = list(f5.keys())
+            # print(f"Entries in the HDF5 file: {self.entry_names}")
             
-                # Skip if it's a nested group, only print datasets
-                if not isinstance(dataset, h5py.Dataset):
-                    print(f"Skipping: {name} is a nested group.")
-                    for sub_name, sub_dataset in dataset.items():
-                        print(f"  - {sub_name}: shape {sub_dataset.shape}, dtype {sub_dataset.dtype}")
-                        print(sub_dataset)
-                    continue
+            # group = f5['BA-55224']
 
-                print(f"\n[DATASET: {name}]")
-                print(f"  Shape: {dataset.shape}")
-                print(f"  Data Type: {dataset.dtype}")
-                print(dataset)
+            # for name, dataset in group.items():
+            
+            #     # Skip if it's a nested group, only print datasets
+            #     if not isinstance(dataset, h5py.Dataset):
+            #         print(f"Skipping: {name} is a nested group.")
+            #         for sub_name, sub_dataset in dataset.items():
+            #             print(f"  - {sub_name}: shape {sub_dataset.shape}, dtype {sub_dataset.dtype}")
+            #             print(sub_dataset)
+            #         continue
+
+            #     print(f"\n[DATASET: {name}]")
+            #     print(f"  Shape: {dataset.shape}")
+            #     print(f"  Data Type: {dataset.dtype}")
+            #     print(dataset)
 
             ####################################################################
 
-            # for key in f5.values():
-            #     print(f"- {key}")
             self.pdb_strings = f5['pdb_strings'][:]  # Load the pdb_strings array directly
             self.pdb_names = f5['pdb_names'][:]  # Load the pdb_names array
             print(f"Loaded {len(self.pdb_strings)} pdb strings and names from {split} split.")

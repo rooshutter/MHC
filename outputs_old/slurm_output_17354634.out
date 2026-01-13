@@ -1,0 +1,48 @@
+============================================================================================== 
+Warning! Mixing Conda and module environments may lead to corruption of the
+user environment. 
+We do not recommend users mixing those two environments unless absolutely
+necessary. Note that 
+SURF does not provide any support for Conda environment.
+For more information, please refer to our software policy page:
+https://servicedesk.surf.nl/wiki/display/WIKI/Software+policy+Snellius#SoftwarepolicySnellius-UseofAnacondaandMinicondaenvironmentsonSnellius 
+
+Remember that many packages have already been installed on the system and can
+be loaded using 
+the 'module load <package__name>' command. If you are uncertain if a package is
+already available 
+on the system, please use 'module avail' or 'module spider' to search for it.
+============================================================================================== 
+/home/rhutter/.conda/envs/mhcdiff/lib/python3.10/site-packages/lightning_lite/__init__.py:29: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
+  __import__("pkg_resources").declare_namespace(__name__)
+wandb: WARNING `wandb.require('service')` is a no-op as it is now the default behavior.
+wandb: WARNING The anonymous setting has no effect and will be removed in a future version.
+wandb: Currently logged in as: roos-hutter (roos-hutter-university-of-amsterdam) to https://api.wandb.ai. Use `wandb login --relogin` to force relogin
+wandb: setting up run 5lqwqmg8
+wandb: ERROR Error uploading run: returned error 403: {"data":{"upsertBucket":null},"errors":[{"message":"permission denied","path":["upsertBucket"],"extensions":{"code":"PERMISSION_ERROR"}}]}
+Traceback (most recent call last):
+  File "/gpfs/home3/rhutter/MHC-Diff/train.py", line 58, in <module>
+    logger = pl.loggers.WandbLogger(
+  File "/home/rhutter/.conda/envs/mhcdiff/lib/python3.10/site-packages/pytorch_lightning/loggers/wandb.py", line 360, in __init__
+    _ = self.experiment
+  File "/home/rhutter/.conda/envs/mhcdiff/lib/python3.10/site-packages/pytorch_lightning/loggers/logger.py", line 53, in experiment
+    return get_experiment() or DummyExperiment()
+  File "/home/rhutter/.conda/envs/mhcdiff/lib/python3.10/site-packages/lightning_utilities/core/rank_zero.py", line 41, in wrapped_fn
+    return fn(*args, **kwargs)
+  File "/home/rhutter/.conda/envs/mhcdiff/lib/python3.10/site-packages/pytorch_lightning/loggers/logger.py", line 51, in get_experiment
+    return fn(self)
+  File "/home/rhutter/.conda/envs/mhcdiff/lib/python3.10/site-packages/pytorch_lightning/loggers/wandb.py", line 406, in experiment
+    self._experiment = wandb.init(**self._wandb_init)
+  File "/home/rhutter/.conda/envs/mhcdiff/lib/python3.10/site-packages/wandb/sdk/wandb_init.py", line 1594, in init
+    get_sentry().reraise(e)
+  File "/home/rhutter/.conda/envs/mhcdiff/lib/python3.10/site-packages/wandb/analytics/sentry.py", line 190, in reraise
+    raise exc.with_traceback(tb)
+  File "/home/rhutter/.conda/envs/mhcdiff/lib/python3.10/site-packages/wandb/sdk/wandb_init.py", line 1577, in init
+    run = wi.init(run_settings, run_config, run_printer)
+  File "/home/rhutter/.conda/envs/mhcdiff/lib/python3.10/site-packages/wandb/sdk/wandb_init.py", line 1030, in init
+    raise error
+wandb.errors.errors.CommError: Error uploading run: returned error 403: {"data":{"upsertBucket":null},"errors":[{"message":"permission denied","path":["upsertBucket"],"extensions":{"code":"PERMISSION_ERROR"}}]}
+[1;34mwandb[0m: 
+[1;34mwandb[0m: 🚀 View run [33mpmhc_8K_xray_aligned_egnn_1_test_2[0m at: [34mhttps://wandb.ai/neuro-ai-scientist/Structur_prediction_Experiments/runs/5lqwqmg8[0m
+srun: error: gcn2: task 0: Exited with exit code 1
+srun: Terminating StepId=17354634.0

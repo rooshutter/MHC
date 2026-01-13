@@ -11,6 +11,7 @@ from dataset_100k_xray import PDB_Dataset_Mixed
 
 from model.diffusion_model import Conditional_Diffusion_Model
 from model.architecture import NN_Model
+from model.flow_matching_model import Flow_Matching_Model
 
 """
 This file implements the 3D-structure prediction for a moelcule 
@@ -64,7 +65,7 @@ class Structure_Prediction_Model(pl.LightningModule):
         torch.manual_seed(42)
 
         # choose the generative framework
-        frameworks = {'conditional_diffusion': Conditional_Diffusion_Model}
+        frameworks = {'conditional_diffusion': Conditional_Diffusion_Model, 'flow_matching': Flow_Matching_Model}
         assert generative_model in frameworks
 
         # choose the neural net architecture

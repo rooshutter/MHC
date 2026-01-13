@@ -1,0 +1,59 @@
+============================================================================================== 
+Warning! Mixing Conda and module environments may lead to corruption of the
+user environment. 
+We do not recommend users mixing those two environments unless absolutely
+necessary. Note that 
+SURF does not provide any support for Conda environment.
+For more information, please refer to our software policy page:
+https://servicedesk.surf.nl/wiki/display/WIKI/Software+policy+Snellius#SoftwarepolicySnellius-UseofAnacondaandMinicondaenvironmentsonSnellius 
+
+Remember that many packages have already been installed on the system and can
+be loaded using 
+the 'module load <package__name>' command. If you are uncertain if a package is
+already available 
+on the system, please use 'module avail' or 'module spider' to search for it.
+============================================================================================== 
+/home/rhutter/.conda/envs/mhcdiff/lib/python3.10/site-packages/lightning_lite/__init__.py:29: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
+  __import__("pkg_resources").declare_namespace(__name__)
+wandb: WARNING `wandb.require('service')` is a no-op as it is now the default behavior.
+wandb: WARNING The anonymous setting has no effect and will be removed in a future version.
+wandb: Currently logged in as: roos-hutter (roos-hutter-university-of-amsterdam) to https://api.wandb.ai. Use `wandb login --relogin` to force relogin
+wandb: setting up run zm6qithk
+wandb: Tracking run with wandb version 0.23.1
+wandb: Run data is saved locally in checkpoints/fold_1_t_1000/wandb/run-20260113_120838-zm6qithk
+wandb: Run `wandb offline` to turn off syncing.
+wandb: Syncing run pmhc_8K_xray_diffusion_timesteps_1000
+wandb: ⭐️ View project at https://wandb.ai/roos-hutter-university-of-amsterdam/Structur_prediction_Experiments
+wandb: 🚀 View run at https://wandb.ai/roos-hutter-university-of-amsterdam/Structur_prediction_Experiments/runs/zm6qithk
+Loading dataset from /scratch-shared/roos/preprocessed/BA_cluster1.hdf5...
+Loaded 787 entries from test split.
+dataset_variance=tensor([47.1587,  5.7372,  1.9015])
+len(test_dataset)=787
+Prior to sampling time 0.23318791389465332
+After sampling time 47.13688516616821
+len(saved_samples['rmse'])=10, rmse.shape=torch.Size([100])
+Time: 47.14342641830444
+Prior to sampling time 0.23643732070922852
+After sampling time 45.64514088630676
+len(saved_samples['rmse'])=20, rmse.shape=torch.Size([100])
+Time: 45.64934420585632
+Prior to sampling time 0.23647356033325195
+After sampling time 45.873905420303345
+len(saved_samples['rmse'])=30, rmse.shape=torch.Size([100])
+Time: 45.87810754776001
+Prior to sampling time 0.2357022762298584
+After sampling time 45.551656007766724
+len(saved_samples['rmse'])=40, rmse.shape=torch.Size([100])
+Time: 45.55571675300598
+Prior to sampling time 0.23591923713684082
+After sampling time 46.21473550796509
+len(saved_samples['rmse'])=50, rmse.shape=torch.Size([100])
+Time: 46.21889662742615
+Prior to sampling time 0.23587489128112793
+After sampling time 46.32436537742615
+len(saved_samples['rmse'])=60, rmse.shape=torch.Size([100])
+Time: 46.328460454940796
+Prior to sampling time 0.3679795265197754
+srun: Job step aborted: Waiting up to 32 seconds for job step to finish.
+[2026-01-13T12:14:11.594] error: *** JOB 18287019 ON gcn17 CANCELLED AT 2026-01-13T12:14:11 DUE to SIGNAL Terminated ***
+[2026-01-13T12:14:11.594] error: *** STEP 18287019.0 ON gcn17 CANCELLED AT 2026-01-13T12:14:11 DUE to SIGNAL Terminated ***

@@ -14,12 +14,14 @@ import torch
 import pytorch_lightning as pl
 from torch_scatter import scatter_add
 
+import wandb
+
 if __name__ == "__main__":
 
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
     # set working directory and import modules
-    desired_directory = '/gpfs/home4/dfruhbus/MHC-Diff/'
+    desired_directory = '/home/rhutter/MHC-Diff/'
     os.chdir(desired_directory)
     sys.path.insert(0, desired_directory)
     from model.lightning_module import Structure_Prediction_Model
@@ -40,8 +42,18 @@ if __name__ == "__main__":
         else:
             args_dict[key] = value
 
+    logger = pl.loggers.WandbLogger(
+        save_dir=args.logdir,
+        project=args.project,
+        name=args.run_name,
+        entity=args.entity,
+        config=args_dict  
+    )
+
     num_samples = args.num_samples
     sample_batch_size = args.sample_batch_size
+    print(f"{num_samples=}, {sample_batch_size=}")
+    print(f"{sample_batch_size=}")
     sample_savepath = args.sample_savepath
 
     lightning_model = Structure_Prediction_Model.load_from_checkpoint(
@@ -70,7 +82,7 @@ if __name__ == "__main__":
         pos = data['peptide_positions'].to(torch.float32)
         var += [torch.sum((pos - torch.mean(pos, dim=0))**2, dim=0) / len(pos)]
     dataset_variance = sum(var) / len(var)
-    print(dataset_variance)
+    print(f"{dataset_variance=}")
 
     results = []
     saved_samples = {}
@@ -84,7 +96,8 @@ if __name__ == "__main__":
 
     start_time_total = time.time()
 
-    print(len(test_dataset))
+    print(f"{len(test_dataset)=}")
+    # print(f"{test_dataset.shape=}")
 
     for i in range(0, len(test_dataset), sample_batch_size):
 
@@ -129,7 +142,7 @@ if __name__ == "__main__":
         end_time = time.time()
 
         saved_samples['rmse'] += [rmse[j*num_samples:(j+1)*num_samples] for j in range(sample_batch_size)]
-        print(len(saved_samples['rmse']), rmse.shape)
+        print(f"{len(saved_samples['rmse'])=}, {rmse.shape=}")
         # print(f'RMSE: {[rmse[j*num_samples:(j+1)*num_samples] for j in range(sample_batch_size)]}')
         saved_samples['rmse_mean'] += [rmse_sample_mean[j] for j in range(sample_batch_size)]
         saved_samples['rmse_best'] += [rmse_sample_best[j] for j in range(sample_batch_size)]
@@ -144,16 +157,31 @@ if __name__ == "__main__":
     rmse_mean = saved_samples['rmse_mean'].mean(0)
     rmse_best = saved_samples['rmse_best'].mean(0)
 
-    print(saved_samples['rmse_mean'])
-    print(saved_samples['rmse_best'])
+    print(f"{saved_samples['rmse_mean']=}")
+    print(f"{saved_samples['rmse_best']=}")
 
     print(f'Mean RMSE across all mean/best sample: mean {round(rmse_mean.item(),3)}, best {round(rmse_best.item(),3)}')
     print(f'This took {time_total} seconds for 1000*10 samples')
+    print(f'This took {time_total} seconds for {len(test_dataset)}*{num_samples} samples')
+    
+
+    final_metrics = {
+        'rmse_mean': rmse_mean,
+        'rmse_best': rmse_best,
+        'time_total': time_total
+    }
+
+    logger.log_metrics(final_metrics)
 
     start_time_saving = time.time()
 
     # Serialize dictionary with pickle
     pickled_data = pickle.dumps(saved_samples)
+
+    # Make file directory if it does not exist #roos
+    directory = os.path.dirname(sample_savepath)
+    if not os.path.exists(directory):
+        os.makedirs(directory)
 
     # Compress pickled data
     with gzip.open(f'{sample_savepath}.pkl.gz', 'wb') as f:
@@ -162,4 +190,6 @@ if __name__ == "__main__":
     end_time_saving = time.time()
     time_saving = end_time_saving - start_time_saving
     print(f'Time to save data: {time_saving} s')
+
+    logger.experiment.finish()
 

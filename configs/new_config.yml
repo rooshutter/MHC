@@ -1,11 +1,11 @@
 # Logging Traing only
-logdir: "./checkpoints/fold_1/"
+logdir: "./checkpoints/fold_1_t_1000"
 project: 'Structur_prediction_Experiments'
-run_name: 'pmhc_8K_xray_aligned_egnn_1_test_2'
+run_name: 'pmhc_8K_xray_diffusion_timesteps_1000'
 entity: 'roos-hutter-university-of-amsterdam' #'neuro-ai-scientist'
 
 # Training
-num_epochs: 1000 # TODO: early stopping?? -> prevent overfitting
+num_epochs: 100 #1000 # TODO: early stopping?? -> prevent overfitting
 device: 'cuda'
 gpus: 1
 
@@ -60,11 +60,11 @@ network_params:
   reflection_equivariant: False
 
 # Eval
-checkpoint: './checkpoints/fold_1/checkpoints/best-model-epoch=epoch=988.ckpt' 
+checkpoint: './checkpoints/fold_1_t_1000/checkpoints/best-model-epoch=epoch=94.ckpt' 
 num_samples: 10
 sample_batch_size: 10
 sampling_without_noise: False
-sample_savepath: './results/rmse_values/fold_1/samples_test'
+sample_savepath: './results/rmse_values/diffusion/fold_1_t_1000/samples_test'
 
 
 

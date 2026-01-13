@@ -1,0 +1,37 @@
+============================================================================================== 
+Warning! Mixing Conda and module environments may lead to corruption of the
+user environment. 
+We do not recommend users mixing those two environments unless absolutely
+necessary. Note that 
+SURF does not provide any support for Conda environment.
+For more information, please refer to our software policy page:
+https://servicedesk.surf.nl/wiki/display/WIKI/Software+policy+Snellius#SoftwarepolicySnellius-UseofAnacondaandMinicondaenvironmentsonSnellius 
+
+Remember that many packages have already been installed on the system and can
+be loaded using 
+the 'module load <package__name>' command. If you are uncertain if a package is
+already available 
+on the system, please use 'module avail' or 'module spider' to search for it.
+============================================================================================== 
+/home/rhutter/.conda/envs/mhcdiff/lib/python3.10/site-packages/lightning_lite/__init__.py:29: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
+  __import__("pkg_resources").declare_namespace(__name__)
+Loading dataset from /scratch-shared/roos/preprocessed/BA_cluster1.hdf5...
+Loaded 787 entries from test split.
+tensor([47.1587,  5.7372,  1.9015])
+787
+Prior to sampling time 0.23471546173095703
+Traceback (most recent call last):
+  File "/gpfs/home3/rhutter/MHC-Diff/test.py", line 106, in <module>
+    xh_mol_final, xh_pro_final, _ = lightning_model.model.sample_structure(num_samples, molecule, protein_pocket, args.sampling_without_noise, args.data_dir, args.run_name)
+  File "/home/rhutter/.conda/envs/mhcdiff/lib/python3.10/site-packages/torch/autograd/grad_mode.py", line 27, in decorate_context
+    return func(*args, **kwargs)
+  File "/home/rhutter/MHC-Diff/model/diffusion_model.py", line 783, in sample_structure
+    self.safe_pdbs(xh_mol_final, molecule, run_id, data_dir, time_step='F')
+  File "/home/rhutter/MHC-Diff/model/diffusion_model.py", line 812, in safe_pdbs
+    create_new_pdb_hdf5(peptide_pos, peptide_idx, graph_name, run_id, data_dir, time_step=time_step, sample_id=i)
+  File "/home/rhutter/MHC-Diff/utils.py", line 50, in create_new_pdb_hdf5
+    raise FileNotFoundError(
+FileNotFoundError: The HDF5 group for 'BA-55335' contains processed tensors but no 'pdb_string' dataset was found inside it. 
+Cannot reconstruct the PDB structure without the template.
+srun: error: gcn31: task 0: Exited with exit code 1
+srun: Terminating StepId=17755807.0

@@ -118,6 +118,7 @@ class Conditional_Diffusion_Model(nn.Module):
 
         # dataset info
         self.num_atoms = num_atoms
+        # print("num_atoms:", self.num_atoms) #20
         self.num_residues = num_residues
         self.norm_values = norm_values
         self.x_dim = 3
@@ -137,7 +138,22 @@ class Conditional_Diffusion_Model(nn.Module):
     def forward(self, z_data):
 
         molecule, protein_pocket = z_data
+        # print("molecule keys:", molecule.keys()) # molecule keys: dict_keys(['x', 'h', 'size', 'idx', 'pos_in_seq', 'graph_name'])
+        # print("protein pocket keys:", protein_pocket.keys()) # protein pocket keys: dict_keys(['x', 'h', 'size', 'idx'])
+
+        # molecule x shape: torch.Size([288, 3]) 3d positions
+        # molecule h shape: torch.Size([288, 20]) (one-hot encoding of amino acid type)
+        # molecule size shape: torch.Size([32]) number of amino acids in each peptide in the batch = 9
+        # molecule idx shape: torch.Size([288])  to which molecule in the batch each aa belongs
+        # molecule pos_in_seq shape: torch.Size([288]) which position in the peptide chain each aa has (1-9)
+        # molecule graph_name shape: 32 BA-55312
+        # protein pocket x shape: torch.Size([5760, 3])
+        # protein pocket h shape: torch.Size([5760, 20])
+        # protein pocket size shape: torch.Size([32])
+        # protein pocket idx shape: torch.Size([5760])
+
         # add position in peptide chain information
+        # print("position encoding:", self.position_encoding) true
         if self.position_encoding:
             molecule_pos = molecule['pos_in_seq']
         else:
@@ -145,9 +161,17 @@ class Conditional_Diffusion_Model(nn.Module):
 
         # compute noised sample
         z_t_mol, z_t_pro, eps_x_mol, epsilon_pro, t = self.noise_process(z_data)
+        # print("z_t_mol shape:", z_t_mol.shape) # z_t_mol shape: torch.Size([288, 23])
+        # print("z_t_pro shape:", z_t_pro.shape) # z_t_pro shape: torch.Size([5760, 23])
+        # print("eps_x_mol shape:", eps_x_mol.shape) # eps_x_mol shape: torch.Size([288, 3])
+        # print("epsilon_pro shape:", epsilon_pro.shape) # epsilon_pro shape: torch.Size([5760, 23])
+        # print("t shape:", t.shape) # t shape: torch.Size([32, 1])
 
         # use neural network to predict noise
         epsilon_hat_mol, epsilon_hat_pro, c_s = self.neural_net(z_t_mol, z_t_pro, t, molecule['idx'], protein_pocket['idx'], molecule_pos)
+        # print("epsilon_hat_mol shape:", epsilon_hat_mol.shape) # epsilon_hat_mol shape: torch.Size([288, 23])
+        # print("epsilon_hat_pro shape:", epsilon_hat_pro.shape) # epsilon_hat_pro shape: torch.Size([5760, 23])
+        # print("c_s:", c_s) # c_s: int
 
 
         if self.training:
@@ -186,6 +210,7 @@ class Conditional_Diffusion_Model(nn.Module):
         t = torch.randint(t_low, self.T + 1, size=(batch_size, 1), device=device)
 
         # high_noise_training_schedule (experiment to improve sampling start, not used in final model)
+        # print("high_noise_training:", self.high_noise_training) false
         if self.high_noise_training:
             split_point = int(0.95 * self.T)
             t = torch.empty((batch_size, 1), device=device)

@@ -1,0 +1,37 @@
+============================================================================================== 
+Warning! Mixing Conda and module environments may lead to corruption of the
+user environment. 
+We do not recommend users mixing those two environments unless absolutely
+necessary. Note that 
+SURF does not provide any support for Conda environment.
+For more information, please refer to our software policy page:
+https://servicedesk.surf.nl/wiki/display/WIKI/Software+policy+Snellius#SoftwarepolicySnellius-UseofAnacondaandMinicondaenvironmentsonSnellius 
+
+Remember that many packages have already been installed on the system and can
+be loaded using 
+the 'module load <package__name>' command. If you are uncertain if a package is
+already available 
+on the system, please use 'module avail' or 'module spider' to search for it.
+============================================================================================== 
+/home/rhutter/.conda/envs/mhcdiff/lib/python3.10/site-packages/lightning_lite/__init__.py:29: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
+  __import__("pkg_resources").declare_namespace(__name__)
+Traceback (most recent call last):
+  File "/gpfs/home3/rhutter/MHC-Diff/test.py", line 47, in <module>
+    lightning_model = Structure_Prediction_Model.load_from_checkpoint(
+  File "/home/rhutter/.conda/envs/mhcdiff/lib/python3.10/site-packages/pytorch_lightning/core/saving.py", line 137, in load_from_checkpoint
+    return _load_from_checkpoint(
+  File "/home/rhutter/.conda/envs/mhcdiff/lib/python3.10/site-packages/pytorch_lightning/core/saving.py", line 158, in _load_from_checkpoint
+    checkpoint = pl_load(checkpoint_path, map_location=map_location)
+  File "/home/rhutter/.conda/envs/mhcdiff/lib/python3.10/site-packages/lightning_lite/utilities/cloud_io.py", line 47, in _load
+    with fs.open(path_or_url, "rb") as f:
+  File "/home/rhutter/.conda/envs/mhcdiff/lib/python3.10/site-packages/fsspec/spec.py", line 1349, in open
+    f = self._open(
+  File "/home/rhutter/.conda/envs/mhcdiff/lib/python3.10/site-packages/fsspec/implementations/local.py", line 210, in _open
+    return LocalFileOpener(path, mode, fs=self, **kwargs)
+  File "/home/rhutter/.conda/envs/mhcdiff/lib/python3.10/site-packages/fsspec/implementations/local.py", line 387, in __init__
+    self._open()
+  File "/home/rhutter/.conda/envs/mhcdiff/lib/python3.10/site-packages/fsspec/implementations/local.py", line 392, in _open
+    self.f = open(self.path, mode=self.mode)
+FileNotFoundError: [Errno 2] No such file or directory: '/gpfs/home3/rhutter/MHC-Diff/checkpoints/fold_1_flow/checkpoints/best-model-epoch=epoch=988.ckpt'
+srun: error: gcn6: task 0: Exited with exit code 1
+srun: Terminating StepId=18100158.0
