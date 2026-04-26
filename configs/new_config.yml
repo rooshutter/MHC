@@ -1,8 +1,10 @@
 # Logging Traing only
-logdir: "./checkpoints/fold_1_t_1000"
+logdir: "./checkpoints/fold_1_t_1000_e_100_test"
 project: 'Structur_prediction_Experiments'
-run_name: 'pmhc_8K_xray_diffusion_timesteps_1000'
+run_name: 'pmhc_8K_xray_diff_t_1000_e_100_test'
 entity: 'roos-hutter-university-of-amsterdam' #'neuro-ai-scientist'
+
+resume: False #"./checkpoints/fold_1_t_1000_e_500/checkpoints/best-model-epoch=epoch=482.ckpt"
 
 # Training
 num_epochs: 100 #1000 # TODO: early stopping?? -> prevent overfitting
@@ -12,6 +14,8 @@ gpus: 1
 batch_size: 32
 lr: 5.0e-4
 num_workers: 18
+all_atom: False
+wandb_log: False
 
 # Task
 task_params:
@@ -19,7 +23,7 @@ task_params:
   confidence_score: False
 
 # Dataset
-data_dir: "/scratch-shared/roos/preprocessed/" #"/home/rhutter/MHC-Diff/data/pmhc_xray_8K_aligned/folds/fold_1/"
+data_dir: "/home/rhutter/MHC-Diff/data/pmhc_xray_8K_aligned/folds/fold_1/" #"/scratch-shared/roos/preprocessed/" 
 dataset: 'pmhc_8K_xray'
 dataset_params:
   num_atoms: 20
@@ -60,18 +64,11 @@ network_params:
   reflection_equivariant: False
 
 # Eval
-checkpoint: './checkpoints/fold_1_t_1000/checkpoints/best-model-epoch=epoch=94.ckpt' 
+checkpoint: './checkpoints/fold_1_t_1000_e_100_test/checkpoints/best-model-epoch=epoch=94.ckpt' 
 num_samples: 10
 sample_batch_size: 10
 sampling_without_noise: False
-sample_savepath: './results/rmse_values/diffusion/fold_1_t_1000/samples_test'
-
-
-
-
-
-
-
+sample_savepath: './results/rmse_values/diffusion/fold_1_t_1000_e_100_test/samples_test'
 
 
 

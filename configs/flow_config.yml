@@ -1,8 +1,10 @@
 # Logging Traing only
-logdir: "./checkpoints/fold_1_flow_t_50"
+logdir: "./checkpoints/fold_1_flow_t_50_e_100_fix_1" 
 project: 'Structur_prediction_Experiments'
-run_name: 'pmhc_8K_xray_flow_matching_timesteps_50'
+run_name: 'pmhc_8K_xray_fm_t_50_e_100_fix_1'
 entity: 'roos-hutter-university-of-amsterdam' #'neuro-ai-scientist'
+
+resume: False #"./checkpoints/fold_1_flow_t_50_e_100_loss8/checkpoints/best-model-epoch=epoch=91.ckpt"
 
 # Training
 num_epochs: 100 #1000 # TODO: early stopping?? -> prevent overfitting
@@ -10,8 +12,10 @@ device: 'cuda'
 gpus: 1
 
 batch_size: 32
-lr: 5.0e-4
-num_workers: 18
+lr: 2.0e-4 
+num_workers: 4
+all_atom: True
+wandb_log: True
 
 # Task
 task_params:
@@ -19,21 +23,21 @@ task_params:
   confidence_score: False
 
 # Dataset
-data_dir: "/scratch-shared/roos/preprocessed/" #"/home/rhutter/MHC-Diff/data/pmhc_xray_8K_aligned/folds/fold_1/"
+data_dir: "/home/rhutter/MHC-Diff/data/pmhc_xray_8K_aligned/"   #folds/fold_1/" #"/scratch-shared/roos/preprocessed/" 
 dataset: 'pmhc_8K_xray'
 dataset_params:
   num_atoms: 20
   num_residues: 20
   norm_values: [1,1]
 
-generative_model: 'flow_matching'
+generative_model: 'flow_matching_all_atom' #'flow_matching'
 generative_model_params:
   timesteps: 50
   position_encoding: True
   position_encoding_dim: 10
   com_handling: 'peptide' # 'protein' 'both' 'peptide' 'no_COM'
   sampling_stepsize: 1
-  noise_scaling: null
+  noise_scaling: null #1.0e-3 #null
   high_noise_training: False
 
 
@@ -48,44 +52,23 @@ network_params:
   edge_embedding_dim: 8
   edge_cutoff_ligand: null
   edge_cutoff_pocket: 8.0
-  edge_cutoff_interaction: 14.0
+  edge_cutoff_interaction: 20.0
   # egnn specific
   attention: True
-  tanh: True
+  tanh: False # roos
   norm_constant: 1
   inv_sublayers: 1
   sin_embedding: True
-  normalization_factor: 100
-  aggregation_method: 'sum'
+  normalization_factor: 1.0 # roos
+  aggregation_method: 'sum' # roos
   reflection_equivariant: False
 
 # Eval
-checkpoint: './checkpoints/fold_1_flow_t_50/checkpoints/best-model-epoch=epoch=99.ckpt' 
+checkpoint: './checkpoints/fold_1_flow_t_50_e_100_fix_1/checkpoints/best-model-epoch=epoch=91.ckpt' 
 num_samples: 10
 sample_batch_size: 10
 sampling_without_noise: False
-sample_savepath: './results/rmse_values/flow/fold_1_flow_t_50/samples_test'
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+sample_savepath: './results/rmse_values/flow/fold_1_flow_t_50_e_100_fix_1/samples_test'
 
 
 

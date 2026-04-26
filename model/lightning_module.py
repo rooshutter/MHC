@@ -7,11 +7,17 @@ FLOAT_TYPE = torch.float32
 INT_TYPE = torch.int64
 
 from dataset_8k_xray import PDB_Dataset
+from dataset_8k_xray import PDB_Dataset_all, PDB_Dataset_combine, PDB_Dataset_swift
 from dataset_100k_xray import PDB_Dataset_Mixed
 
 from model.diffusion_model import Conditional_Diffusion_Model
 from model.architecture import NN_Model
 from model.flow_matching_model import Flow_Matching_Model
+from model.flow_matching_model_all_atom import Flow_Matching_Model_all_atom
+
+import numpy as np
+import os
+import h5py
 
 """
 This file implements the 3D-structure prediction for a moelcule 
@@ -34,6 +40,7 @@ class Structure_Prediction_Model(pl.LightningModule):
             lr: float,
             num_workers: int,
             device,
+            all_atom: bool = False,
 
     ):
         """
@@ -65,7 +72,7 @@ class Structure_Prediction_Model(pl.LightningModule):
         torch.manual_seed(42)
 
         # choose the generative framework
-        frameworks = {'conditional_diffusion': Conditional_Diffusion_Model, 'flow_matching': Flow_Matching_Model}
+        frameworks = {'conditional_diffusion': Conditional_Diffusion_Model, 'flow_matching': Flow_Matching_Model, 'flow_matching_all_atom': Flow_Matching_Model_all_atom}
         assert generative_model in frameworks
 
         # choose the neural net architecture
@@ -80,6 +87,7 @@ class Structure_Prediction_Model(pl.LightningModule):
             dataset_params.num_atoms,
             dataset_params.num_residues,
             device,
+            all_atom,
         )
 
         self.model = frameworks[generative_model](
@@ -96,6 +104,7 @@ class Structure_Prediction_Model(pl.LightningModule):
             dataset_params.num_atoms,
             dataset_params.num_residues,
             dataset_params.norm_values,
+            all_atom,
         )
         
         self.dataset = dataset
@@ -103,18 +112,135 @@ class Structure_Prediction_Model(pl.LightningModule):
         self.lr = lr
         self.batch_size = batch_size
         self.num_workers = num_workers
+        self.all_atom = all_atom
 
     # Data section
+
+    def check_overlap(self, train_ds, val_ds, test_ds=None):
+        # Decode byte strings to normal strings for comparison
+        train_ids = set(name.decode('utf-8') if isinstance(name, bytes) else name for name in train_ds.pdb_names)
+        val_ids = set(name.decode('utf-8') if isinstance(name, bytes) else name for name in val_ds.pdb_names)
+        
+        
+        # Test might not be initialized during 'fit' stage
+        test_ids = set()
+        if test_ds is not None:
+            test_ids = set(name.decode('utf-8') if isinstance(name, bytes) else name for name in test_ds.pdb_names)
+
+        print(f"Number of training samples: {len(train_ids)}")
+        print(f"Number of validation samples: {len(val_ids)}")
+        print(f"Number of test samples: {len(test_ids)}")
+
+        # Calculate Intersections
+        train_val = train_ids.intersection(val_ids)
+        train_test = train_ids.intersection(test_ids)
+        val_test = val_ids.intersection(test_ids)
+
+        print(f"--- Overlap Report ---")
+        print(f"Train vs Val: {len(train_val)} overlaps")
+        print(f"Train vs Test: {len(train_test)} overlaps")
+        print(f"Val vs Test: {len(val_test)} overlaps")
+        
+        if len(train_val) + len(train_test) + len(val_test) > 0:
+            print(f"WARNING: Data leakage detected!")
+            
+        return train_val, train_test, val_test
+    
+    def check_coordinate_overlap(self, ds_a, ds_b, name_a="Train", name_b="Test"):
+        print(f"Checking coordinate overlap between {name_a} and {name_b}...")
+        
+        # We'll use a hash of the coordinates as a fingerprint for speed
+        def get_coord_hashes(dataset, name):
+            hashes = {}
+            duplicates = 0
+            print(f"Processing {name} dataset with {len(dataset)} entries...")
+            for i in range(len(dataset)):
+                # get_entry returns the dict with 'peptide_positions'
+                data = dataset.get_entry(i)
+                
+                # Combine peptide and protein positions
+                # Rounding to 2 decimal places to catch near-duplicates 
+                # that might differ by float precision
+                #print all keys
+                coords = data['peptide_positions']
+                name = data['graph_name']
+                # print(f"Original coordinates shape for sample {i}: {coords.shape}")
+                
+                # Create a tuple of the rounded values to make it hashable
+                flat_coords = tuple(coords.numpy().flatten())
+                # print(f"{len(flat_coords)=}")
+                #check if coords in hashed:
+                for key in hashes.keys():
+                    if torch.allclose(torch.tensor(flat_coords), torch.tensor(hashes[key]), atol=1e-3):
+                        print(name)
+                        print(flat_coords)
+                        print(key)
+                        print(hashes[key])
+                        duplicates += 1
+                        
+
+                # if flat_coords in hashes.values():
+                #     print(name)
+                #     print()
+                #     duplicates += 1
+
+                hashes[name] = flat_coords
+            
+            print(f"{len(hashes)=}")
+            print(f"{len(flat_coords)=}")
+
+            print(f"Finished processing {name}. Found {duplicates}/{len(dataset)}={duplicates/len(dataset)*100:.2f}% duplicate coordinate sets.")
+            return hashes
+
+        hashes_a = get_coord_hashes(ds_a, name_a)
+        hashes_b = get_coord_hashes(ds_b, name_b)
+        print(f"{name_a} has {len(hashes_a)} unique coordinate sets.")
+        print(f"{name_b} has {len(hashes_b)} unique coordinate sets.")
+        
+        overlap = [h for h in hashes_a.values() if h in hashes_b.values()]
+        print(f"Found {len(overlap)} structures with identical 3D coordinates.")
+        return overlap
 
     def setup(self, stage):
 
         if self.dataset == 'pmhc_8K_xray':
 
-            if stage == 'fit':
-                self.train_dataset = PDB_Dataset(self.data_dir, 'train')
-                self.val_dataset = PDB_Dataset(self.data_dir, 'valid')
-            elif stage == 'test':
-                self.test_dataset = PDB_Dataset(self.data_dir, 'test')
+            if not self.all_atom:
+                if stage == 'fit':
+                    
+                    self.train_dataset = PDB_Dataset(self.data_dir, 'train', all_atom=self.all_atom)
+                    self.val_dataset = PDB_Dataset(self.data_dir, 'valid', all_atom=self.all_atom)
+                elif stage == 'test':
+                    self.test_dataset = PDB_Dataset(self.data_dir, 'test', all_atom=self.all_atom)
+
+            if self.all_atom:
+                if stage == 'fit':
+
+                    # self.train_dataset = PDB_Dataset_combine("/scratch-shared/roos/preprocessed/", self.data_dir, 'train')
+                    # self.val_dataset = PDB_Dataset_combine("/scratch-shared/roos/preprocessed/", self.data_dir, 'val')
+                    
+
+                    self.train_dataset = PDB_Dataset_swift("/scratch-shared/roos/preprocessed/", 'train')
+                    self.val_dataset = PDB_Dataset_swift("/scratch-shared/roos/preprocessed/", 'valid')
+
+                    
+                    
+                    # print(f"{len(self.train_dataset.pdb_names)=}")
+                    # print(f"{len(self.val_dataset.pdb_names)=}")
+                    
+                elif stage == 'test':
+
+                    self.test_dataset = PDB_Dataset_swift("/scratch-shared/roos/preprocessed/", 'test')
+                    # self.test_dataset = PDB_Dataset_combine("/scratch-shared/roos/preprocessed/", self.data_dir, 'test')
+                    # print(f"{len(self.test_dataset.pdb_names)=}")
+
+            
+            # self.test_dataset = PDB_Dataset_combine("/scratch-shared/roos/preprocessed/", self.data_dir, 'test')
+            # train_val_overlap, train_test_overlap, val_test_overlap = self.check_overlap(self.train_dataset, self.val_dataset, self.test_dataset)
+            # overlap = self.check_coordinate_overlap(self.train_dataset, self.test_dataset, name_a="Train", name_b="Test")
+            # overlap = self.check_coordinate_overlap(self.train_dataset, self.val_dataset, name_a="Train", name_b="Val")
+            # overlap = self.check_coordinate_overlap(self.val_dataset, self.test_dataset, name_a="Val", name_b="Test")
+
 
         elif self.dataset == 'pmhc_100K_xray':
 
@@ -155,14 +281,37 @@ class Structure_Prediction_Model(pl.LightningModule):
             'idx': data['peptide_idx'].to(self.device, INT_TYPE),
             'pos_in_seq': data['pos_in_seq'].to(self.device, INT_TYPE),
             'graph_name': data['graph_name'],
+            'backbone_rigid_tensor': data['peptide_backbone_rigid_tensor'].to(self.device, FLOAT_TYPE) if 'peptide_backbone_rigid_tensor' in data else None,
+            'torsion_angles_sin_cos': data['peptide_torsion_angles_sin_cos'].to(self.device, FLOAT_TYPE) if 'peptide_torsion_angles_sin_cos' in data else None,
+            'aatype': data['peptide_aatype'].to(self.device, INT_TYPE) if 'peptide_aatype' in data else None,
+            "atom14_gt_exists": data["peptide_atom14_gt_exists"].to(self.device) if "peptide_atom14_gt_exists" in data else None,
+            "atom14_alt_gt_positions": data["peptide_atom14_alt_gt_positions"].to(self.device, FLOAT_TYPE) if "peptide_atom14_alt_gt_positions" in data else None,
+            "alt_torsion_angles_sin_cos": data["peptide_alt_torsion_angles_sin_cos"].to(self.device, FLOAT_TYPE) if "peptide_alt_torsion_angles_sin_cos" in data else None,
+            "cross_residues_mask": data["peptide_cross_residues_mask"].to(self.device, INT_TYPE) if "peptide_cross_residues_mask" in data else None,
+            "affinity": data["affinity"].to(self.device, FLOAT_TYPE) if "affinity" in data else None,
+            "torsion_angles_mask": data["peptide_torsion_angles_mask"].to(self.device, FLOAT_TYPE) if "peptide_torsion_angles_mask" in data else None,
+            "residue_index": data["peptide_residue_index"].to(self.device, INT_TYPE) if "peptide_residue_index" in data else None,
         }
 
         protein_pocket = {
             'x': data['protein_pocket_positions'].to(self.device, FLOAT_TYPE),
             'h': data['protein_pocket_features'].to(self.device, FLOAT_TYPE),
             'size': data['num_protein_pocket_residues'].to(self.device, INT_TYPE),
-            'idx': data['protein_pocket_idx'].to(self.device, INT_TYPE)
+            'idx': data['protein_pocket_idx'].to(self.device, INT_TYPE),
+            'backbone_rigid_tensor': data['protein_backbone_rigid_tensor'].to(self.device, FLOAT_TYPE) if 'protein_backbone_rigid_tensor' in data else None,
+            'aatype': data['protein_aatype'].to(self.device, INT_TYPE) if 'protein_aatype' in data else None,
+            'cross_residues_mask': data['protein_cross_residues_mask'].to(self.device, INT_TYPE) if 'protein_cross_residues_mask' in data else None,
+            "residue_index": data["protein_residue_index"].to(self.device, INT_TYPE) if "protein_residue_index" in data else None,
         }
+
+        # print what is None:
+        for key in molecule.keys():
+            if molecule[key] is None:
+                print(f"{key} is None in molecule")
+        for key in protein_pocket.keys():
+            if protein_pocket[key] is None:
+                print(f"{key} is None in protein_pocket")
+                
         return (molecule, protein_pocket)
         
 
@@ -189,8 +338,26 @@ class Structure_Prediction_Model(pl.LightningModule):
             self.log(val_key, value)
 
     def configure_optimizers(self):
-        optimizer = torch.optim.AdamW(self.neural_net.parameters(), lr=self.lr, amsgrad=True, weight_decay=1e-12)
-        return optimizer
+        optimizer = torch.optim.AdamW(self.parameters(), lr=self.lr, amsgrad=True, weight_decay=1e-4)
+
+        if self.all_atom:
+            scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
+                optimizer, mode='min', factor=0.5, patience=15, min_lr=1e-6
+            )
+            return {
+                "optimizer": optimizer,
+                "lr_scheduler": {
+                    "scheduler": scheduler,
+                    "monitor": "val_loss", 
+                    "interval": "epoch", 
+                    "frequency": 1,
+                },
+            }
+        else:
+            return {
+                "optimizer": optimizer,
+            }
+
     
 
 

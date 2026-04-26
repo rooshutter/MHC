@@ -25,7 +25,7 @@ if __name__ == "__main__":
     os.chdir(desired_directory)
     sys.path.insert(0, desired_directory)
     from model.lightning_module import Structure_Prediction_Model
-    from dataset_8k_xray import PDB_Dataset
+    from dataset_8k_xray import PDB_Dataset, PDB_Dataset_combine
 
     # read in config
     parser = argparse.ArgumentParser()
@@ -42,18 +42,17 @@ if __name__ == "__main__":
         else:
             args_dict[key] = value
 
-    logger = pl.loggers.WandbLogger(
-        save_dir=args.logdir,
-        project=args.project,
-        name=args.run_name,
-        entity=args.entity,
-        config=args_dict  
-    )
+    if args.wandb_log:
+        logger = pl.loggers.WandbLogger(
+            save_dir=args.logdir,
+            project=args.project,
+            name=args.run_name,
+            entity=args.entity,
+            config=args_dict  
+        )
 
     num_samples = args.num_samples
     sample_batch_size = args.sample_batch_size
-    print(f"{num_samples=}, {sample_batch_size=}")
-    print(f"{sample_batch_size=}")
     sample_savepath = args.sample_savepath
 
     lightning_model = Structure_Prediction_Model.load_from_checkpoint(
@@ -70,6 +69,7 @@ if __name__ == "__main__":
                     lr=args.lr,
                     num_workers=args.num_workers,
                     device=args.device,
+                    all_atom=args.all_atom,
     )   
 
     lightning_model = lightning_model.to(device)
@@ -96,9 +96,6 @@ if __name__ == "__main__":
 
     start_time_total = time.time()
 
-    print(f"{len(test_dataset)=}")
-    # print(f"{test_dataset.shape=}")
-
     for i in range(0, len(test_dataset), sample_batch_size):
 
         if i + sample_batch_size >= len(test_dataset): continue
@@ -108,7 +105,10 @@ if __name__ == "__main__":
         # prepare peptide-MHC
         mol_pro_list = [test_dataset[i+j] for _ in range(num_samples) for j in range(sample_batch_size)]
 
-        mol_pro_samples = PDB_Dataset.collate_fn(mol_pro_list)
+        if args.all_atom:
+            mol_pro_samples = PDB_Dataset_combine.collate_fn(mol_pro_list)
+        else:
+            mol_pro_samples = PDB_Dataset.collate_fn(mol_pro_list)
 
         # sample new peptide-MHC structures using trained model
         mol_pro_batch = lightning_model.get_molecule_and_protein(mol_pro_samples)
@@ -117,24 +117,50 @@ if __name__ == "__main__":
         print(f'Prior to sampling time {time.time() - start_time}')
 
         xh_mol_final, xh_pro_final, _ = lightning_model.model.sample_structure(num_samples, molecule, protein_pocket, args.sampling_without_noise, args.data_dir, args.run_name)
+        if args.all_atom:
+            x_mol_final = xh_mol_final[:,:3].reshape(-1, molecule['x'].shape[1], 3)
+        else:
+            x_mol_final = xh_mol_final[:,:3]
 
         print(f'After sampling time {time.time() - start_time}')
-
+        
+        if args.all_atom:
+            molecule['h'] = molecule['h'].reshape(-1, molecule['h'].shape[-1])
         # Safe resulting structures
         size_tuple = tuple(molecule['size'].tolist())
         true_pos = [torch.split(molecule['x'], size_tuple, dim=0)[i*num_samples] for i in range(sample_batch_size)] # [sample_batch_size, num_nodes, 3]
         true_h = [torch.split(molecule['h'], size_tuple, dim=0)[i*num_samples] for i in range(sample_batch_size)] # [sample_batch_size, num_nodes, 3]
+
         for j in range(sample_batch_size):
             key = i+j
             saved_samples['x_target'][key] = true_pos[j]
             # [num_all_nodes, 3] -> [sample_batch_size * samples, num_nodes, 3] -> [sample_batch_size, samples, num_nodes, 3]
-            saved_samples['x_predicted'][key] = torch.split(xh_mol_final[:,:3], size_tuple, dim=0)[j*num_samples:(j+1)*num_samples]
+            saved_samples['x_predicted'][key] = torch.split(x_mol_final, size_tuple, dim=0)[j*num_samples:(j+1)*num_samples]
             saved_samples['h'][key] = true_h[j]
         # Goal structure ['x_predicted']: [sample_key][10 * [9,3]], ['x_target']: [sample_key][1 * [9,3]]
 
         # Calculate the RMSE error
-        error_mol = scatter_add(torch.sum((molecule['x'] - xh_mol_final[:,:3])**2, dim=-1), molecule['idx'], dim=0)
-        rmse = torch.sqrt(error_mol / (molecule['size']))
+        # print('------------')
+        # print(f"{x_mol_final.shape=}")
+        # print(f"{molecule['x'].shape=}")
+        # print(f"{x_mol_final[0]=}")
+        # print(f"{molecule['x'][0]=}")
+        if args.all_atom:
+            # molecule['x'] = molecule['x'].reshape(100, 9, 14, 3) # reshape to [100, 9, 14, 3]
+            # x_mol_final = x_mol_final.reshape(100, 9, 14, 3) 
+            # min = (molecule['x'] - x_mol_final)**2
+            # mean = torch.mean(min, dim=(1,2,3))
+            # rmse = torch.sqrt(mean)
+            print(f"{molecule['x'].shape=}")
+            print(f"{x_mol_final.shape=}")
+            print(f"{molecule['x'][0][0]=}")
+            print(f"{x_mol_final[0][0]=}")
+            
+            error_mol = scatter_add(torch.sum((molecule['x'] - x_mol_final)**2, dim=(-2, -1)), molecule['idx'], dim=0)
+            rmse = torch.sqrt(error_mol / (molecule['size'] * molecule["x"].shape[1]))
+        else:
+            error_mol = scatter_add(torch.sum((molecule['x'] - x_mol_final)**2, dim=-1), molecule['idx'], dim=0)
+            rmse = torch.sqrt(error_mol / (molecule['size']))
 
         rmse_sample_mean = [rmse[j*num_samples:(j+1)*num_samples].mean(0) for j in range(sample_batch_size)]
         rmse_sample_best = [rmse[j*num_samples:(j+1)*num_samples].min(0)[0] for j in range(sample_batch_size)]
@@ -142,7 +168,9 @@ if __name__ == "__main__":
         end_time = time.time()
 
         saved_samples['rmse'] += [rmse[j*num_samples:(j+1)*num_samples] for j in range(sample_batch_size)]
-        print(f"{len(saved_samples['rmse'])=}, {rmse.shape=}")
+        print(len(saved_samples['rmse']), rmse.shape)
+        print(f'RMSE sample mean: {rmse_sample_mean}')
+        print(f'RMSE sample best: {rmse_sample_best}')
         # print(f'RMSE: {[rmse[j*num_samples:(j+1)*num_samples] for j in range(sample_batch_size)]}')
         saved_samples['rmse_mean'] += [rmse_sample_mean[j] for j in range(sample_batch_size)]
         saved_samples['rmse_best'] += [rmse_sample_best[j] for j in range(sample_batch_size)]
@@ -171,7 +199,8 @@ if __name__ == "__main__":
         'time_total': time_total
     }
 
-    logger.log_metrics(final_metrics)
+    if args.wandb_log:
+        logger.log_metrics(final_metrics)
 
     start_time_saving = time.time()
 
@@ -191,5 +220,6 @@ if __name__ == "__main__":
     time_saving = end_time_saving - start_time_saving
     print(f'Time to save data: {time_saving} s')
 
-    logger.experiment.finish()
+    if args.wandb_log:
+        logger.experiment.finish()
 

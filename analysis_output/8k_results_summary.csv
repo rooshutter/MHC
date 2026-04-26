@@ -1,0 +1,2 @@
+fold,n_samples,n_xray,n_pandora,xray_best_mean,xray_best_median,xray_avg_mean,xray_avg_median,pandora_best_mean,pandora_best_median,pandora_avg_mean,pandora_avg_median
+fold_1_t_1000_e_200,840,42,798,0.5758374333381653,0.5756639242172241,1.01226806640625,1.0031635761260986,0.5770869255065918,0.5618423223495483,1.1471465826034546,1.1264078617095947

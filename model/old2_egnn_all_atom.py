@@ -95,13 +95,28 @@ class EquivariantUpdate(nn.Module):
             act_fn,
             layer
         ) if not self.reflection_equiv else None
+        self.rot_mlp = nn.Sequential(
+            nn.Linear(input_edge, hidden_nf),
+            act_fn,
+            nn.Linear(hidden_nf, hidden_nf),
+            act_fn,
+            nn.Linear(hidden_nf, 1)
+        )
+        self.angle_mlp = nn.Sequential(
+            nn.Linear(input_edge, hidden_nf),
+            act_fn,
+            nn.Linear(hidden_nf, hidden_nf),
+            act_fn,
+            nn.Linear(hidden_nf, 14)
+        )
         self.normalization_factor = normalization_factor
         self.aggregation_method = aggregation_method
 
-    def coord_model(self, h, coord, edge_index, coord_diff, coord_cross,
+    def coord_model(self, h, x, edge_index, coord_diff, coord_cross,
                     edge_attr, edge_mask, update_coords_mask=None):
         row, col = edge_index
         input_tensor = torch.cat([h[row], h[col], edge_attr], dim=1)
+
         if self.tanh:
             trans = coord_diff * torch.tanh(self.coord_mlp(input_tensor)) * self.coords_range
         else:
@@ -116,25 +131,80 @@ class EquivariantUpdate(nn.Module):
         if edge_mask is not None:
             trans = trans * edge_mask
 
-        agg = unsorted_segment_sum(trans, row, num_segments=coord.size(0),
+        agg = unsorted_segment_sum(trans, row, num_segments=x.size(0),
                                    normalization_factor=self.normalization_factor,
                                    aggregation_method=self.aggregation_method)
 
         if update_coords_mask is not None:
             agg = update_coords_mask * agg
 
-        coord = coord + agg
-        return coord
+        x = x + agg
+        return x
+    
+    def rot_model(self, h, q, edge_index, coord_diff, coord_cross,
+                    edge_attr, edge_mask, update_coords_mask=None):
+        row, col = edge_index
+        input_tensor = torch.cat([h[row], h[col], edge_attr], dim=1)
 
-    def forward(self, h, coord, edge_index, coord_diff, coord_cross,
+        if self.tanh:
+            trans = torch.tanh(self.rot_mlp(input_tensor))
+        else:
+            trans = self.rot_mlp(input_tensor)
+        
+        if edge_mask is not None:
+            trans = trans * edge_mask   
+
+        agg = unsorted_segment_sum(trans, row, num_segments=q.size(0),
+                                   normalization_factor=self.normalization_factor,
+                                   aggregation_method=self.aggregation_method)
+        
+        q = q + agg
+        q = q / torch.norm(q, dim=-1, keepdim=True)
+        return q
+    
+    def angle_model(self, h, a, edge_index, coord_diff, coord_cross,
+                    edge_attr, edge_mask, update_coords_mask=None):
+        row, col = edge_index
+        input_tensor = torch.cat([h[row], h[col], edge_attr], dim=1)
+        
+        if self.tanh:
+            trans = torch.tanh(self.angle_mlp(input_tensor))
+        else:
+            trans = self.angle_mlp(input_tensor)
+        
+        if edge_mask is not None:
+            trans = trans * edge_mask
+        
+        agg = unsorted_segment_sum(trans, row, num_segments=a.size(0),
+                                   normalization_factor=self.normalization_factor,
+                                   aggregation_method=self.aggregation_method)
+        
+        a = a + agg
+
+        a_reshaped = a.view(-1, 7, 2)
+    
+        a_normalized = torch.nn.functional.normalize(a_reshaped, p=2, dim=-1)
+        
+        return a_normalized.view(-1, 14)
+
+    def forward(self, h, qxa, edge_index, coord_diff, coord_cross,
                 edge_attr=None, node_mask=None, edge_mask=None,
                 update_coords_mask=None):
-        coord = self.coord_model(h, coord, edge_index, coord_diff, coord_cross,
-                                 edge_attr, edge_mask,
-                                 update_coords_mask=update_coords_mask)
+        x = qxa[:, 9:9+3]
+        q = qxa[:, :9]
+        a = qxa[:, 9+3:9+3+7]
+        x = self.coord_model(h, x, edge_index, coord_diff, coord_cross,
+                              edge_attr, edge_mask,
+                              update_coords_mask=update_coords_mask)
+        q = self.rot_model(h, q, edge_index, coord_diff, coord_cross,
+                            edge_attr, edge_mask, update_coords_mask=update_coords_mask)
+        # a = self.angle_model(h, a, edge_index, coord_diff, coord_cross,
+        #                     edge_attr, edge_mask, update_coords_mask=update_coords_mask)
+        
+        qxa = torch.cat([q, x, a], dim=-1)
         if node_mask is not None:
-            coord = coord * node_mask
-        return coord
+            qxa = qxa * node_mask
+        return qxa
 
 
 class EquivariantBlock(nn.Module):
@@ -165,9 +235,10 @@ class EquivariantBlock(nn.Module):
                                                        reflection_equiv=self.reflection_equiv))
         self.to(self.device)
 
-    def forward(self, h, x, edge_index, node_mask=None, edge_mask=None,
+    def forward(self, h, qxa, edge_index, node_mask=None, edge_mask=None,
                 edge_attr=None, update_coords_mask=None, batch_mask=None):
 
+        x = qxa[:, 4:7]
         distances, coord_diff = coord2diff(x, edge_index, self.norm_constant)
         if self.reflection_equiv:
             coord_cross = None
@@ -180,20 +251,20 @@ class EquivariantBlock(nn.Module):
         for i in range(0, self.n_layers):
             h, _ = self._modules["gcl_%d" % i](h, edge_index, edge_attr=edge_attr,
                                                node_mask=node_mask, edge_mask=edge_mask)
-        x = self._modules["gcl_equiv"](h, x, edge_index, coord_diff, coord_cross, edge_attr,
+        qxa = self._modules["gcl_equiv"](h, qxa, edge_index, coord_diff, coord_cross, edge_attr,
                                        node_mask, edge_mask, update_coords_mask=update_coords_mask)
 
         # Important, the bias of the last linear might be non-zero
         if node_mask is not None:
             h = h * node_mask
-        return h, x
+        return h, qxa
 
 
-class EGNN(nn.Module):
+class EGNN_all_atom(nn.Module):
     def __init__(self, in_node_nf, in_edge_nf, hidden_nf, device='cpu', act_fn=nn.SiLU(), n_layers=3, attention=False,
                  norm_diff=True, out_node_nf=None, tanh=False, coords_range=15, norm_constant=1, inv_sublayers=2,
                  sin_embedding=False, normalization_factor=100, aggregation_method='sum', reflection_equiv=True, edge_sin_attr=False, all_atom=False):
-        super(EGNN, self).__init__()
+        super(EGNN_all_atom, self).__init__()
         if out_node_nf is None:
             out_node_nf = in_node_nf
         self.hidden_nf = hidden_nf
@@ -216,8 +287,15 @@ class EGNN(nn.Module):
         
         edge_feat_nf = edge_feat_nf + in_edge_nf
 
-        self.embedding = nn.Linear(in_node_nf, self.hidden_nf)
+        self.embedding = nn.Linear(in_node_nf+14, self.hidden_nf)
         self.embedding_out = nn.Linear(self.hidden_nf, out_node_nf)
+
+        # if self.all_atom:
+        #     self.quat_out = nn.Sequential(
+        #         nn.Linear(self.hidden_nf, self.hidden_nf),
+        #         nn.SiLU(),
+        #         nn.Linear(self.hidden_nf, 4)
+        #     )
         
         for i in range(0, n_layers):
             self.add_module("e_block_%d" % i, EquivariantBlock(hidden_nf, edge_feat_nf=edge_feat_nf, device=device,
@@ -231,8 +309,12 @@ class EGNN(nn.Module):
         self.to(self.device)
 
     def forward(self, h, x, edge_index, node_mask=None, edge_mask=None, update_coords_mask=None,
-                batch_mask=None, edge_attr=None):
+                batch_mask=None, edge_attr=None, rot=None, angles=None):
 
+        qxa = torch.concatenate([rot, x, angles], dim=-1)
+        # torch.set_printoptions(sci_mode=False, precision=4)
+        # print("qx shape:", qx.shape)
+        # print(f"{qx[:9]=}")
         # Edit Emiel: Remove velocity as input
         edge_feat, _ = coord2diff(x, edge_index)
 
@@ -242,11 +324,13 @@ class EGNN(nn.Module):
         if edge_attr is not None:
             edge_feat = torch.cat([edge_feat, edge_attr], dim=1)
 
+        # if self.all_atom:
+        #     h = torch.cat([h, q], dim=-1)
         h = self.embedding(h)
 
         for i in range(0, self.n_layers):
-            h, x = self._modules["e_block_%d" % i](
-                h, x, edge_index, node_mask=node_mask, edge_mask=edge_mask,
+            h, qxa = self._modules["e_block_%d" % i](
+                h, qxa, edge_index, node_mask=node_mask, edge_mask=edge_mask,
                 edge_attr=edge_feat, update_coords_mask=update_coords_mask,
                 batch_mask=batch_mask)
 
@@ -256,10 +340,23 @@ class EGNN(nn.Module):
         # Important, the bias of the last linear might be non-zero
         h_out = self.embedding_out(h)
 
+        # if self.all_atom:
+        #     quats = self.quat_out(h)
+        #     quats = quats / torch.norm(quats, dim=-1, keepdim=True)
+        # else:
+        #     quats = None
+
         if node_mask is not None:
             h_out = h_out * node_mask
 
-        return h_out, x, h_last_layer
+        # if quats is not None and node_mask is not None: #TODO check if this is needed
+        #     quats = quats * node_mask
+
+        x = qxa[:, 4:7]
+        quats = qxa[:, :4]
+        # angles = qxa[:, 7:]
+        angles = h[:, :14]
+        return h_out, x, h_last_layer, quats, angles
 
 
 class GNN(nn.Module):

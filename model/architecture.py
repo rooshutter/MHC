@@ -6,6 +6,7 @@ from torch_scatter import scatter_mean
 from torch_geometric.data import Data, Batch
 
 from model.egnn import EGNN, GNN
+from model.egnn_all_atom import EGNN_all_atom
 from model.positional_encoding import sin_pE
 from model.confidence_score import Confidence_Score
 
@@ -26,6 +27,7 @@ class NN_Model(nn.Module):
             num_atoms: int,
             num_residues: int,
             device: str,
+            all_atom: bool = False,
     ):
         
         """
@@ -46,7 +48,10 @@ class NN_Model(nn.Module):
 
         self.architecture = architecture
         self.features_fixed = features_fixed
+        self.all_atom = all_atom
         self.x_dim = 3
+        self.rot_dim = 9
+        self.angle_dim = 14
         self.act_fn = nn.SiLU()
 
         self.joint_dim = network_params.joint_dim
@@ -110,16 +115,24 @@ class NN_Model(nn.Module):
                 self.confidence_scores = Confidence_Score(3 + self.hidden_dim)
 
             if architecture == 'egnn':
-
-                self.egnn = EGNN(in_node_nf=self.joint_dim, in_edge_nf=self.edge_embedding_dim,
+                if self.all_atom:
+                    self.egnn = EGNN_all_atom(in_node_nf=self.joint_dim, in_edge_nf=self.edge_embedding_dim,
                                  hidden_nf=self.hidden_dim, device=device, act_fn=self.act_fn,
                                  n_layers=self.num_layers, attention=network_params.attention, tanh=network_params.tanh,
                                  norm_constant=network_params.norm_constant,
                                  inv_sublayers=network_params.inv_sublayers, sin_embedding=network_params.sin_embedding,
                                  normalization_factor=network_params.normalization_factor,
                                  aggregation_method=network_params.aggregation_method,
-                                 reflection_equiv=network_params.reflection_equivariant) # edge_sin_attr=self.edge_sin_attrs
-
+                                 reflection_equiv=network_params.reflection_equivariant, all_atom=self.all_atom) # edge_sin_attr=self.edge_sin_attrs
+                else:
+                    self.egnn = EGNN(in_node_nf=self.joint_dim, in_edge_nf=self.edge_embedding_dim,
+                                    hidden_nf=self.hidden_dim, device=device, act_fn=self.act_fn,
+                                    n_layers=self.num_layers, attention=network_params.attention, tanh=network_params.tanh,
+                                    norm_constant=network_params.norm_constant,
+                                    inv_sublayers=network_params.inv_sublayers, sin_embedding=network_params.sin_embedding,
+                                    normalization_factor=network_params.normalization_factor,
+                                    aggregation_method=network_params.aggregation_method,
+                                    reflection_equiv=network_params.reflection_equivariant, all_atom=self.all_atom) # edge_sin_attr=self.edge_sin_attrs
             else:
                 
                 self.gnn = GNN(in_node_nf=self.joint_dim + self.x_dim, in_edge_nf=self.edge_embedding_dim,
@@ -135,7 +148,7 @@ class NN_Model(nn.Module):
 
 
 
-    def forward(self, z_t_mol, z_t_pro, t, molecule_idx, protein_pocket_idx, molecule_pos=None):
+    def forward(self, z_t_mol, z_t_pro, t, molecule_idx, protein_pocket_idx, molecule_pos=None, angle_mask=None):
 
         '''
         Takes in noised sample and outputs predicted added noise
@@ -150,10 +163,38 @@ class NN_Model(nn.Module):
         return epsilon_hat_mol: size = [batch_node_dim_mol, x + num_atoms], 
                 epsilon_hat_pro: size = [batch_node_dim_pro, x + num_residues]
         '''
+        if self.all_atom:
+            mol_dim = z_t_mol.shape[0] * z_t_mol.shape[1]
+            z_t_mol_rot = z_t_mol.reshape(-1, z_t_mol.shape[-1])[:, :self.rot_dim]
+            z_t_pro_rot = z_t_pro.reshape(-1, z_t_pro.shape[-1])[:, :self.rot_dim]
+            rot = torch.cat((z_t_mol_rot, z_t_pro_rot), dim=0)
+            z_t_mol_angles = z_t_mol.reshape(-1, z_t_mol.shape[-1])[:, self.rot_dim+self.x_dim:self.rot_dim+self.x_dim+self.angle_dim]
+            z_t_pro_angles = torch.zeros_like(z_t_pro.reshape(-1, z_t_pro.shape[-1])[:, self.rot_dim+self.x_dim:self.rot_dim+self.x_dim+self.angle_dim])
+            angles = torch.cat((z_t_mol_angles, z_t_pro_angles), dim=0)
+
+            # rot2 = rot.reshape(-1, 3, 3)
+            # RT_R = torch.matmul(rot2.transpose(-2, -1), rot2)
+            # print(f"{RT_R[0]=}")
+            # identity = torch.eye(3, device=rot2.device).expand_as(rot2)
+            # is_orthogonal = torch.allclose(RT_R, identity, atol=1e-2)
+            # print(f"Is the batch orthogonal? {is_orthogonal}")
+
+        else:
+            q = None
+        if self.all_atom:
+            # z_t_pro_quats = z_t_pro.reshape(-1, z_t_pro.shape[-1])[:, :4]
+            z_t_mol = z_t_mol.reshape(-1, z_t_mol.shape[-1]) #[:, 4:]
+            z_t_pro = z_t_pro.reshape(-1, z_t_pro.shape[-1]) #[:, 4:]
+            t = t.squeeze(-1)
+        
 
         idx_joint = torch.cat((molecule_idx, protein_pocket_idx), dim=0)
-        x_mol = z_t_mol[:,:self.x_dim].clone()
-        x_pro = z_t_pro[:,:self.x_dim].clone()
+        if self.all_atom:
+            x_mol = z_t_mol[:,self.rot_dim:self.x_dim+self.rot_dim].clone()
+            x_pro = z_t_pro[:,self.rot_dim:self.x_dim+self.rot_dim].clone()
+        else:
+            x_mol = z_t_mol[:,:self.x_dim].clone()
+            x_pro = z_t_pro[:,:self.x_dim].clone()
 
         # add edges to the graph (edges are determined by distance cutoffs)
         edges = self.get_edges(molecule_idx, protein_pocket_idx, x_mol, x_pro)
@@ -162,9 +203,18 @@ class NN_Model(nn.Module):
         if self.architecture == 'egnn' or self.architecture == 'gnn':
 
             # encode z_t_mol, z_t_pro (possible need to .clone() the inputs)
-            h_mol = self.atom_encoder(z_t_mol[:,self.x_dim:]).clone()
-            h_pro = self.residue_encoder(z_t_pro[:,self.x_dim:]).clone()
-
+            if self.all_atom:                
+                # check if there is nan in ztmol:
+                if torch.any(torch.isnan(z_t_mol)):
+                    raise ValueError("NaN detected in z_t_mol")
+                h_mol = self.atom_encoder(z_t_mol[:,self.x_dim+self.rot_dim+self.angle_dim:]).clone()
+            else:
+                h_mol = self.atom_encoder(z_t_mol[:,self.x_dim:]).clone()
+            if self.all_atom:
+                h_pro = self.residue_encoder(z_t_pro[:,self.x_dim+self.rot_dim:]).clone()
+            else:
+                h_pro = self.residue_encoder(z_t_pro[:,self.x_dim:]).clone()
+  
             # position_encoding
             if self.position_encoding:
                 # TODO: molecule_pos[molecule_idx] not correct !!!
@@ -173,13 +223,23 @@ class NN_Model(nn.Module):
                 h_pro = torch.cat([h_pro, torch.zeros((h_pro.shape[0], self.pE_dim), device=h_pro.device)], dim=1)
 
             # combine molecule and protein in joint space
-            x_joint = torch.cat((z_t_mol[:,:self.x_dim], z_t_pro[:,:self.x_dim]), dim=0) # [batch_node_dim_mol + batch_node_dim_pro, 3]
+            if self.all_atom:
+                x_joint = torch.cat((z_t_mol[:,self.rot_dim:self.rot_dim+self.x_dim], z_t_pro[:,self.rot_dim:self.rot_dim+self.x_dim]), dim=0) # [batch_node_dim_mol + batch_node_dim_pro, 3]
+            else:
+                x_joint = torch.cat((z_t_mol[:,:self.x_dim], z_t_pro[:,:self.x_dim]), dim=0) # [batch_node_dim_mol + batch_node_dim_pro, 3]
             h_joint = torch.cat((h_mol, h_pro), dim=0) # [batch_node_dim_mol + batch_node_dim_pro, joint_dim]
-
+ 
             # add time conditioning
             if self.conditioned_on_time:
                 h_time = t[idx_joint]
-                h_joint = torch.cat([h_joint, h_time], dim=1)
+                # print(f'{h_joint.shape=}, {h_time.shape=}')
+                # print(f'{angles.shape=}')
+                if self.all_atom:
+                    # h_joint = torch.cat([angles, h_joint, h_time], dim=1)
+                    h_joint = torch.cat([h_joint, h_time], dim=1)
+                else:
+                    h_joint = torch.cat([h_joint, h_time], dim=1)
+                
 
             # add edge embedding and types
             if self.edge_embedding_dim > 0:
@@ -199,12 +259,28 @@ class NN_Model(nn.Module):
                 protein_pocket_fixed = torch.cat((torch.ones_like(molecule_idx), torch.zeros_like(protein_pocket_idx))).unsqueeze(1)
 
                 # neural net forward pass
-                h_new, x_new, h_last_layer = self.egnn(h_joint, x_joint, edges,
+                if self.all_atom:
+                    h_new, x_new, h_last_layer, rot, angles = self.egnn(h_joint, x_joint, edges,
+                                                            update_coords_mask=protein_pocket_fixed,
+                                                            batch_mask=idx_joint, edge_attr=edge_types, 
+                                                            rot=rot, angles=angles, mol_dim=mol_dim,
+                                                            angle_mask=angle_mask)
+                else:
+                    h_new, x_new, h_last_layer = self.egnn(h_joint, x_joint, edges,
                                             update_coords_mask=protein_pocket_fixed,
                                             batch_mask=idx_joint, edge_attr=edge_types)
                 
                 # calculate displacement vectors
-                displacement_vec = (x_new - x_joint)
+                displacement_vec = (x_new - x_joint) # TODO is this needed?
+
+                # displacement_vec_q = (quats - q) if self.all_atom else None
+
+                if self.all_atom:
+                    rot_mol = rot[:len(molecule_idx)]
+                    rot_pro = rot[len(molecule_idx):]
+                    angle_mol = angles[:len(molecule_idx)]
+                    angle_pro = angles[len(molecule_idx):]
+                    displacement_vec = x_new
 
             elif self.architecture == 'gnn':
 
@@ -237,18 +313,32 @@ class NN_Model(nn.Module):
         if self.position_encoding:
             # Slice off last dimension which represented postional encoding.
             h_new = h_new[:, :-self.pE_dim]
-                
+
+        # if self.all_atom:
+        #     # Slice off first dimensions which represented angle information.
+        #     h_new = h_new[:, self.angle_dim:]
+
         # decode h_new
         h_new_mol = self.atom_decoder(h_new[:len(molecule_idx)])
         h_new_pro = self.residue_decoder(h_new[len(molecule_idx):])
 
         # might not be necessary but let's see
         if torch.any(torch.isnan(displacement_vec)):
-            raise ValueError("NaN detected in EGNN output")
-
+            raise ValueError("NaN detected in translation vector")
+        if self.all_atom:
+            if torch.any(torch.isnan(rot)):
+                raise ValueError("NaN detected in rotation")
+            if torch.any(torch.isnan(angles)):
+                raise ValueError("NaN detected in angles")
+        
         # output
-        epsilon_hat_mol = torch.cat((displacement_vec[:len(molecule_idx)], h_new_mol), dim=1)
-        epsilon_hat_pro = torch.cat((displacement_vec[len(molecule_idx):], h_new_pro), dim=1)
+        if self.all_atom:
+            epsilon_hat_mol = torch.cat((rot_mol, displacement_vec[:len(molecule_idx)], angle_mol, h_new_mol), dim=1)
+            epsilon_hat_pro = torch.cat((rot_pro, displacement_vec[len(molecule_idx):], angle_pro, h_new_pro), dim=1)
+
+        else:
+            epsilon_hat_mol = torch.cat((displacement_vec[:len(molecule_idx)], h_new_mol), dim=1)
+            epsilon_hat_pro = torch.cat((displacement_vec[len(molecule_idx):], h_new_pro), dim=1)
 
         return epsilon_hat_mol, epsilon_hat_pro, c_s
     
@@ -271,6 +361,7 @@ class NN_Model(nn.Module):
 
         adj = torch.cat((torch.cat((adj_ligand, adj_cross), dim=1),
                          torch.cat((adj_cross.T, adj_pocket), dim=1)), dim=0)
+        # print(f"Number of edges: {adj.shape}")
         edges = torch.stack(torch.where(adj), dim=0)
 
         return edges

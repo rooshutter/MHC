@@ -87,6 +87,7 @@ class Conditional_Diffusion_Model(nn.Module):
         num_atoms: int,
         num_residues: int,
         norm_values: list,
+        all_atom: bool,
     ):
         """
         Parameters:
@@ -161,17 +162,14 @@ class Conditional_Diffusion_Model(nn.Module):
 
         # compute noised sample
         z_t_mol, z_t_pro, eps_x_mol, epsilon_pro, t = self.noise_process(z_data)
-        # print("z_t_mol shape:", z_t_mol.shape) # z_t_mol shape: torch.Size([288, 23])
-        # print("z_t_pro shape:", z_t_pro.shape) # z_t_pro shape: torch.Size([5760, 23])
-        # print("eps_x_mol shape:", eps_x_mol.shape) # eps_x_mol shape: torch.Size([288, 3])
-        # print("epsilon_pro shape:", epsilon_pro.shape) # epsilon_pro shape: torch.Size([5760, 23])
-        # print("t shape:", t.shape) # t shape: torch.Size([32, 1])
 
         # use neural network to predict noise
         epsilon_hat_mol, epsilon_hat_pro, c_s = self.neural_net(z_t_mol, z_t_pro, t, molecule['idx'], protein_pocket['idx'], molecule_pos)
-        # print("epsilon_hat_mol shape:", epsilon_hat_mol.shape) # epsilon_hat_mol shape: torch.Size([288, 23])
-        # print("epsilon_hat_pro shape:", epsilon_hat_pro.shape) # epsilon_hat_pro shape: torch.Size([5760, 23])
-        # print("c_s:", c_s) # c_s: int
+        
+        # compute denoised mol
+        # z_t_mol = z_t_mol - self.noise_schedule(t, 'sigma')[molecule['idx']] * epsilon_hat_mol
+        # print(f"{z_t_mol[0]=}")
+        # print(f"{molecule['x'][0]=}")
 
 
         if self.training:
@@ -303,6 +301,8 @@ class Conditional_Diffusion_Model(nn.Module):
         # compute the sum squared error loss per graph # TODO: modified to not take the h_dims
         error_mol = scatter_add(torch.sum((epsilon_mol[:,:3] - epsilon_hat_mol[:,:3])**2, dim=-1), molecule['idx'], dim=0)
         error_pro = torch.zeros(protein_pocket['size'].size(0), device=molecule['x'].device)
+
+        print(f"RMSE: {torch.sqrt(error_mol / (self.x_dim * molecule['size'])).mean().item()}")
 
         kl_prior = self.kl_prior(molecule)
 

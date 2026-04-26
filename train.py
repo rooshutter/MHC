@@ -10,6 +10,8 @@ import torch
 import pytorch_lightning as pl
 
 if __name__ == "__main__":
+
+    torch.autograd.set_detect_anomaly(True) # roos
 	
     # Setup working directory and importing
     desired_directory = '/home/rhutter/MHC-Diff/'
@@ -26,6 +28,7 @@ if __name__ == "__main__":
     # read in config
     parser = argparse.ArgumentParser()
     parser.add_argument('--config', type=str, required=True)
+    parser.add_argument('--overfit_batches', type=int, default=0, help='Number of batches to overfit on for debugging. Set to 1 to overfit on a single batch. 0 means disabled.')
     args = parser.parse_args()
 
     with open(args.config) as f:
@@ -51,34 +54,64 @@ if __name__ == "__main__":
                 args.batch_size,
                 args.lr,
                 args.num_workers,
-                args.device
+                args.device,
+                args.all_atom
     )
 
     # wandb logger
-    logger = pl.loggers.WandbLogger(
-        save_dir=args.logdir,
-        project=args.project,
-        name=args.run_name,
-        entity=args.entity
-    )
+    if args.wandb_log:
+        logger = pl.loggers.WandbLogger(
+            save_dir=args.logdir,
+            project=args.project,
+            name=args.run_name,
+            entity=args.entity
+        ) 
+    if args.all_atom:
+        monitor = "error_x_val"
+    else:
+        monitor = "error_mol_val"
+
 
     checkpoint_callback = pl.callbacks.ModelCheckpoint(
         dirpath=Path(args.logdir, 'checkpoints'),
         filename="best-model-epoch={epoch:02d}",
-        monitor="error_mol_val",
+        monitor=monitor,
         save_top_k=1,
         save_last=True,
         mode="min",
     )
 
+    # lr_monitor = pl.callbacks.LearningRateMonitor(logging_interval='epoch')
+
     # setup trainer
-    trainer = pl.Trainer(
-        max_epochs=args.num_epochs,
-        logger=logger,
-        callbacks=[checkpoint_callback],
-        enable_progress_bar=True,
-        accelerator='gpu', devices=args.gpus,
-    )
+    if args.wandb_log:
+        trainer = pl.Trainer(
+            max_epochs=args.num_epochs,
+            logger=logger,
+            # callbacks=[checkpoint_callback, lr_monitor],
+            callbacks=[checkpoint_callback],
+            enable_progress_bar=True,
+            accelerator='gpu', devices=args.gpus,
+            overfit_batches=args.overfit_batches,
+            gradient_clip_val=0.5,
+            gradient_clip_algorithm="norm",
+        )
+    else:
+        trainer = pl.Trainer(
+            max_epochs=args.num_epochs,
+            # logger=logger,
+            # callbacks=[checkpoint_callback, lr_monitor],
+            callbacks=[checkpoint_callback],
+            enable_progress_bar=True,
+            accelerator='gpu', devices=args.gpus,
+            overfit_batches=args.overfit_batches,
+            gradient_clip_val=0.5,
+            gradient_clip_algorithm="norm",
+        )
 
     # train
-    trainer.fit(model)
+    with torch.autograd.set_detect_anomaly(True): #roos
+        if args.resume is False:
+            trainer.fit(model)
+        else:
+            trainer.fit(model, ckpt_path=args.resume)

@@ -189,11 +189,11 @@ class EquivariantBlock(nn.Module):
         return h, x
 
 
-class EGNN(nn.Module):
+class EGNN_all_atom(nn.Module):
     def __init__(self, in_node_nf, in_edge_nf, hidden_nf, device='cpu', act_fn=nn.SiLU(), n_layers=3, attention=False,
                  norm_diff=True, out_node_nf=None, tanh=False, coords_range=15, norm_constant=1, inv_sublayers=2,
                  sin_embedding=False, normalization_factor=100, aggregation_method='sum', reflection_equiv=True, edge_sin_attr=False, all_atom=False):
-        super(EGNN, self).__init__()
+        super(EGNN_all_atom, self).__init__()
         if out_node_nf is None:
             out_node_nf = in_node_nf
         self.hidden_nf = hidden_nf
@@ -216,8 +216,15 @@ class EGNN(nn.Module):
         
         edge_feat_nf = edge_feat_nf + in_edge_nf
 
-        self.embedding = nn.Linear(in_node_nf, self.hidden_nf)
+        self.embedding = nn.Linear(in_node_nf + 4, self.hidden_nf)
         self.embedding_out = nn.Linear(self.hidden_nf, out_node_nf)
+
+        if self.all_atom:
+            self.quat_out = nn.Sequential(
+                nn.Linear(self.hidden_nf, self.hidden_nf),
+                nn.SiLU(),
+                nn.Linear(self.hidden_nf, 4)
+            )
         
         for i in range(0, n_layers):
             self.add_module("e_block_%d" % i, EquivariantBlock(hidden_nf, edge_feat_nf=edge_feat_nf, device=device,
@@ -231,7 +238,7 @@ class EGNN(nn.Module):
         self.to(self.device)
 
     def forward(self, h, x, edge_index, node_mask=None, edge_mask=None, update_coords_mask=None,
-                batch_mask=None, edge_attr=None):
+                batch_mask=None, edge_attr=None, q=None):
 
         # Edit Emiel: Remove velocity as input
         edge_feat, _ = coord2diff(x, edge_index)
@@ -242,6 +249,8 @@ class EGNN(nn.Module):
         if edge_attr is not None:
             edge_feat = torch.cat([edge_feat, edge_attr], dim=1)
 
+        if self.all_atom:
+            h = torch.cat([h, q], dim=-1)
         h = self.embedding(h)
 
         for i in range(0, self.n_layers):
@@ -256,10 +265,19 @@ class EGNN(nn.Module):
         # Important, the bias of the last linear might be non-zero
         h_out = self.embedding_out(h)
 
+        if self.all_atom:
+            quats = self.quat_out(h)
+            quats = quats / torch.norm(quats, dim=-1, keepdim=True)
+        else:
+            quats = None
+
         if node_mask is not None:
             h_out = h_out * node_mask
 
-        return h_out, x, h_last_layer
+        if quats is not None and node_mask is not None: #TODO check if this is needed
+            quats = quats * node_mask
+
+        return h_out, x, h_last_layer, quats
 
 
 class GNN(nn.Module):
