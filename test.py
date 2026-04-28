@@ -151,8 +151,6 @@ if __name__ == "__main__":
             # min = (molecule['x'] - x_mol_final)**2
             # mean = torch.mean(min, dim=(1,2,3))
             # rmse = torch.sqrt(mean)
-            print(f"{molecule['x'].shape=}")
-            print(f"{x_mol_final.shape=}")
             print(f"{molecule['x'][0][0]=}")
             print(f"{x_mol_final[0][0]=}")
             

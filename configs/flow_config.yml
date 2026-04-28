@@ -1,7 +1,7 @@
 # Logging Traing only
-logdir: "./checkpoints/fold_1_flow_t_50_e_100_fix_1" 
+logdir: "./checkpoints/fold_1_flow_t_50_e_100_fix_2" 
 project: 'Structur_prediction_Experiments'
-run_name: 'pmhc_8K_xray_fm_t_50_e_100_fix_1'
+run_name: 'pmhc_8K_xray_fm_t_50_e_100_fix_2'
 entity: 'roos-hutter-university-of-amsterdam' #'neuro-ai-scientist'
 
 resume: False #"./checkpoints/fold_1_flow_t_50_e_100_loss8/checkpoints/best-model-epoch=epoch=91.ckpt"
@@ -23,7 +23,7 @@ task_params:
   confidence_score: False
 
 # Dataset
-data_dir: "/home/rhutter/MHC-Diff/data/pmhc_xray_8K_aligned/"   #folds/fold_1/" #"/scratch-shared/roos/preprocessed/" 
+data_dir: '/scratch-shared/roos/preprocessed/'  # "/home/rhutter/MHC-Diff/data/pmhc_xray_8K_aligned/"   #folds/fold_1/" #"/scratch-shared/roos/preprocessed/" 
 dataset: 'pmhc_8K_xray'
 dataset_params:
   num_atoms: 20
@@ -64,11 +64,11 @@ network_params:
   reflection_equivariant: False
 
 # Eval
-checkpoint: './checkpoints/fold_1_flow_t_50_e_100_fix_1/checkpoints/best-model-epoch=epoch=91.ckpt' 
+checkpoint: './checkpoints/fold_1_flow_t_50_e_100_fix_1/checkpoints/best-model-epoch=epoch=94.ckpt' 
 num_samples: 10
 sample_batch_size: 10
 sampling_without_noise: False
-sample_savepath: './results/rmse_values/flow/fold_1_flow_t_50_e_100_fix_1/samples_test'
+sample_savepath: './results/rmse_values/flow/fold_1_flow_t_50_e_100_fix_2/samples_test'
 
 
 

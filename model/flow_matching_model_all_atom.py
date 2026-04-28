@@ -13,7 +13,7 @@ from torch_scatter import scatter_add, scatter_mean
 # from zmq import device
 
 from model.noise_schedule import Noise_Schedule
-from utils import create_new_pdb_hdf5, create_new_pdb_hdf5_100k
+from utils import create_new_pdb_hdf5, create_new_pdb_hdf5_100k, create_new_pdb_hdf5_swift
 
 from torchdiffeq import odeint_adjoint as odeint
 
@@ -475,6 +475,27 @@ class Flow_Matching_Model_all_atom(nn.Module):
 
         return mean
 
+    # def _extract_rigid_features(self, rigid_tensor):
+    #     """
+    #     Directly extracts 3x3 rotation and 3D translation from a 4x4 rigid tensor.
+    #     This avoids the unstable conversion through quaternions (which fails on H100).
+    #     """
+    #     if rigid_tensor.shape[-1] == 4:
+    #         # 4x4 matrix [..., 4, 4]
+    #         rot = rigid_tensor[..., :3, :3] # [..., 3, 3]
+    #         trans = rigid_tensor[..., :3, 3] # [..., 3]
+    #     else:
+    #         # Already 7-dim [..., 7] (quat + trans)
+    #         # This case might happen if we already have it in quat format
+    #         # We convert quat to rotation matrix using the stable algebraic formula
+    #         quat = rigid_tensor[..., :4]
+    #         trans = rigid_tensor[..., 4:7]
+    #         rot = quat_to_rot(quat)
+            
+    #     # Flatten rotation matrix to 9-dim
+    #     rot_flat = rot.reshape(*rot.shape[:-2], 9)
+    #     return rot_flat, trans
+
     def forward(self, z_data):
 
         molecule, protein_pocket = z_data
@@ -554,7 +575,9 @@ class Flow_Matching_Model_all_atom(nn.Module):
         # t = torch.zeros((batch_size, 1, 1), device=device) if t_is_0 else t
         
         peptide_backbone_rigid_tensor = molecule['backbone_rigid_tensor']
+
         T_peptide = Rigid.from_tensor_4x4(peptide_backbone_rigid_tensor)
+
         T_peptide = T_peptide.to_tensor_7()
 
         angles = molecule['torsion_angles_sin_cos']
@@ -566,6 +589,7 @@ class Flow_Matching_Model_all_atom(nn.Module):
         rot_peptide = quat_to_rot(quat_peptide)
         rot_peptide = rot_peptide.view(T_peptide.shape[0], T_peptide.shape[1], -1)
         trans_peptide = T_peptide[:,:,4:]
+        # rot_peptide, trans_peptide = self._extract_rigid_features(peptide_backbone_rigid_tensor)
         T_peptide = torch.cat((rot_peptide, trans_peptide), dim=-1)
         
         # rot = rot_peptide.reshape(-1, rot_peptide.shape[-1])
@@ -587,6 +611,7 @@ class Flow_Matching_Model_all_atom(nn.Module):
         rot_protein = quat_to_rot(quat_protein)
         rot_protein = rot_protein.view(T_protein.shape[0], T_protein.shape[1], -1)
         trans_protein = T_protein[:,:,4:]
+        # rot_protein, trans_protein = self._extract_rigid_features(protein_backbone_rigid_tensor)
         T_protein = torch.cat((rot_protein, trans_protein), dim=-1)
 
         # rot = rot_protein.reshape(-1, rot_protein.shape[-1])
@@ -739,16 +764,16 @@ class Flow_Matching_Model_all_atom(nn.Module):
             T_peptide = T_peptide.view(-1, 9, *T_peptide.shape[1:])
         # T_peptide = Rigid.from_tensor_7(T_peptide)
 
-        peptide_backbone_rigid_tensor = molecule['backbone_rigid_tensor']
-        T_peptide_true = Rigid.from_tensor_4x4(peptide_backbone_rigid_tensor)
-        T_peptide_true = T_peptide_true.to_tensor_7()
+        # peptide_backbone_rigid_tensor = molecule['backbone_rigid_tensor']
+        # T_peptide_true = Rigid.from_tensor_4x4(peptide_backbone_rigid_tensor)
+        # T_peptide_true = T_peptide_true.to_tensor_7()
+        # rot_true, trans_true = self._extract_rigid_features(peptide_backbone_rigid_tensor)
+        # quat_true = safe_rot_to_quat2(peptide_backbone_rigid_tensor[..., :3, :3])
+        # T_peptide_true_7 = torch.cat((quat_true, trans_true), dim=-1)
         
-
-        quat_true = T_peptide_true[:,:,:4] 
-        trans_true = T_peptide_true[:,:,4:]
-        quat = T_peptide[:,:,:4]
-        trans = T_peptide[:,:,4:]
-        T_peptide_true = Rigid.from_tensor_7(T_peptide_true)
+        # quat = T_peptide[:,:,:4]
+        # trans = T_peptide[:,:,4:]
+        # T_peptide_true = Rigid.from_tensor_7(T_peptide_true_7)
         # T_peptide = torch.concat([quat, trans], dim=-1)
         T_peptide = Rigid.from_tensor_7(T_peptide)
 
@@ -1019,10 +1044,18 @@ class Flow_Matching_Model_all_atom(nn.Module):
         peptide_backbone_rigid_tensor = molecule['backbone_rigid_tensor']
         T_peptide = Rigid.from_tensor_4x4(peptide_backbone_rigid_tensor)
         T_peptide = T_peptide.to_tensor_7()
-
-        # Targets are already centered in forward() via _center_inputs()
-
-        x1 = T_peptide[:,:,:4]
+        # rot_peptide, trans_peptide = self._extract_rigid_features(peptide_backbone_rigid_tensor)
+        # T_peptide = torch.cat((rot_peptide, trans_peptide), dim=-1)
+        
+                # x1 = T_peptide[:,:,:4]
+        # We also need quaternions for some loss calculations (error_quat)
+        # But we'll use our safe converter instead of openfold's to_tensor_7
+        if peptide_backbone_rigid_tensor.shape[-1] == 4:
+            quat_peptide = safe_rot_to_quat2(peptide_backbone_rigid_tensor[..., :3, :3])
+        else:
+            quat_peptide = peptide_backbone_rigid_tensor[..., :4]
+            
+        x1 = quat_peptide
 
         # gt_rot_quat_vf = calc_quat_wt_qt_q1(z_t_mol[:, :, :4], x1)
         gt_rot_quat_vf = x1
@@ -1237,8 +1270,16 @@ class Flow_Matching_Model_all_atom(nn.Module):
 
         peptide_backbone_rigid_tensor = molecule['backbone_rigid_tensor']
         T_peptide = Rigid.from_tensor_4x4(peptide_backbone_rigid_tensor)
+
         T_peptide = T_peptide.to_tensor_7()
         x1 = T_peptide[:,:,:4]
+        # rot_peptide, trans_peptide = self._extract_rigid_features(peptide_backbone_rigid_tensor)
+        # T_peptide = torch.cat((rot_peptide, trans_peptide), dim=-1)
+        
+        # if peptide_backbone_rigid_tensor.shape[-1] == 4:
+        #     x1 = safe_rot_to_quat2(peptide_backbone_rigid_tensor[..., :3, :3])
+        # else:
+        #     x1 = peptide_backbone_rigid_tensor[..., :4]
         # x1 = x1.reshape(-1, x1.shape[-1])
         # distance = SphereManifold().distance(v_hat_mol_quat, x1)
         # error_quat = distance.pow(2).mean()
@@ -1430,6 +1471,8 @@ class Flow_Matching_Model_all_atom(nn.Module):
         T_peptide = T_peptide.to_tensor_7()
         T_peptide = T_peptide.reshape(-1, T_peptide.shape[-1])
         T_peptide = T_peptide[:, 4:7]
+        # _, trans_peptide = self._extract_rigid_features(peptide_backbone_rigid_tensor)
+        # T_peptide_pos = trans_peptide.reshape(-1, 3)
 
 
         # molecule['x'] = molecule['x'] - scatter_mean(molecule['x'], molecule['idx'], dim=0)[molecule['idx']]
@@ -1449,6 +1492,7 @@ class Flow_Matching_Model_all_atom(nn.Module):
         # mu_x_mol = molecule['x'] * alpha_T[molecule['idx']] # [:,3]
         # mu_x_mol = molecule['x'] * alpha_T # [:,3]
         mu_x_mol = T_peptide * alpha_T # [:,3]
+        # mu_x_mol = T_peptide_pos * alpha_T # [:,3]
         # mu_h_mol = molecule['h'] * alpha_T[molecule['idx']] # [:,20]
         
         # sigma_T_x = torch.full(alpha_T.shape, fill_value=sigma_T_value, device=device).squeeze() # [64,1]
@@ -1588,6 +1632,7 @@ class Flow_Matching_Model_all_atom(nn.Module):
                 id_matrix,
                 protein_backbone_rigid_tensor
             )
+
         T_protein = Rigid.from_tensor_4x4(protein_backbone_rigid_tensor)
         T_protein = T_protein.to_tensor_7()
         quat_protein = T_protein[:,:,:4]
@@ -1596,6 +1641,8 @@ class Flow_Matching_Model_all_atom(nn.Module):
         rot_protein = quat_to_rot(quat_protein)
         rot_protein = rot_protein.view(T_protein.shape[0], T_protein.shape[1], -1)
         trans_protein = T_protein[:,:,4:]
+            
+        # rot_protein, trans_protein = self._extract_rigid_features(protein_backbone_rigid_tensor)
         T_protein = torch.cat((rot_protein, trans_protein), dim=-1)
 
         xh_pro = torch.cat((T_protein, protein_pocket['h']), dim=-1)
@@ -1642,6 +1689,9 @@ class Flow_Matching_Model_all_atom(nn.Module):
         peptide_backbone_rigid_tensor = molecule['backbone_rigid_tensor']
         T_peptide = Rigid.from_tensor_4x4(peptide_backbone_rigid_tensor)
         T_peptide = T_peptide.to_tensor_7()
+        # Extraction of rigid features (Stable version avoiding to_tensor_7)
+        # rot_peptide, trans_peptide = self._extract_rigid_features(peptide_backbone_rigid_tensor)
+        # T_peptide = torch.cat((rot_peptide, trans_peptide), dim=-1)
 
         if solver == "loop":
 
@@ -1729,10 +1779,25 @@ class Flow_Matching_Model_all_atom(nn.Module):
         # x_mol_final = current_xh_mol[:,:self.x_dim] * self.norm_values[0]
         rot_hat = current_xh_mol[:,:self.rot_dim]
         rot_hat = rot_hat.reshape(-1, 3, 3)
+        
+        # Project to SO(3) using SVD
+        U, S, V = torch.svd(rot_hat)
+        rot_hat_projected = torch.matmul(U, V.transpose(-2, -1))
+        det = torch.det(rot_hat_projected)
+        V_det = V.clone()
+        V_det[:, :, 2] *= det.view(-1, 1)
+        rot_hat = torch.matmul(U, V_det.transpose(-2, -1))
+
         quat_hat = safe_rot_to_quat2(rot_hat)
+        quat_hat = F.normalize(quat_hat, dim=-1, eps=1e-6)
         # quat_hat = rot_to_quat(rot_hat)
         trans_hat = current_xh_mol[:,self.rot_dim:self.rot_dim+self.x_dim]
         angles_hat = current_xh_mol[:,self.rot_dim+self.x_dim:self.rot_dim+self.x_dim+self.angle_dim]
+        
+        # Normalize angles to be on the unit circle
+        angles_hat = angles_hat.view(-1, 7, 2)
+        angles_hat = F.normalize(angles_hat, dim=-1, eps=1e-6)
+        angles_hat = angles_hat.view(-1, 14)
 
         h_mol_final = current_xh_mol[:,self.rot_dim+self.x_dim+self.angle_dim:] * self.norm_values[0]
         x_pro_final = protein_pocket['x']
@@ -1748,6 +1813,15 @@ class Flow_Matching_Model_all_atom(nn.Module):
         h_pro_final = h_pro_final.unsqueeze(1).expand(-1, x_pro_final.shape[1], -1)
         xh_pro_final = torch.cat([x_pro_final, h_pro_final], dim=-1)
 
+        #print true and pred for quat, trans and angle
+        print(f"quat_true: {T_peptide[0, 0, :4]}")
+        print(f"quat_hat: {quat_hat[0]}")
+        print(f"trans_true: {T_peptide[0, 0, 4:]}")
+        print(f"trans_hat: {trans_hat[0]}")
+        print(f"angles_true: {molecule['torsion_angles_sin_cos'][0][0]}")
+        print(f"angles_hat: {angles_hat[0].view(7, 2)}")
+        
+
         x_hat_mol, angles_hat, sidechain_frames = self.predict_pos(molecule, T_peptide_hat, angles_hat)
         h_mol_final = h_mol_final.unsqueeze(2).expand(-1, -1, x_hat_mol.shape[2], -1)
         x_hat_mol = x_hat_mol.reshape(-1, x_hat_mol.shape[-2], x_hat_mol.shape[-1])
@@ -1761,21 +1835,31 @@ class Flow_Matching_Model_all_atom(nn.Module):
         self.safe_pdbs(molecule['x'].reshape(-1, 3), molecule, run_id, data_dir, time_step='GT', atom_level=True)
         
         if 'backbone_rigid_tensor' in molecule and molecule['backbone_rigid_tensor'] is not None:
-             T_peptide_true = Rigid.from_tensor_4x4(molecule['backbone_rigid_tensor']).to_tensor_7()
-             angles_true = molecule['torsion_angles_sin_cos']
-             print(T_peptide_true.shape, angles_true.shape)
-             x_true_recon, _, _ = self.predict_pos(molecule, T_peptide_true, angles_true)
-             self.safe_pdbs(x_true_recon.reshape(-1, 3), molecule, run_id, data_dir, time_step='RECON', atom_level=True)
+            T_peptide_true = Rigid.from_tensor_4x4(molecule['backbone_rigid_tensor']).to_tensor_7()
+            # T_peptide_true = Rigid.from_tensor_4x4(molecule['backbone_rigid_tensor'])
+            # rot_true, trans_true = self._extract_rigid_features(molecule['backbone_rigid_tensor'])
+            # T_peptide_true_7 = torch.cat((safe_rot_to_quat2(molecule['backbone_rigid_tensor'][..., :3, :3]), trans_true), dim=-1)
+            angles_true = molecule['torsion_angles_sin_cos']
+            print(T_peptide_true.shape, angles_true.shape)
+            x_true_recon, _, _ = self.predict_pos(molecule, T_peptide_true, angles_true)
+            self.safe_pdbs(x_true_recon.reshape(-1, 3), molecule, run_id, data_dir, time_step='RECON', atom_level=True)
 
         return (xh_mol_final, xh_pro_final, c_s)
     
     def safe_pdbs(self, pos, molecule, run_id, data_dir, time_step, atom_level=False):
+        # Ensure we only have the first 3 dimensions (x, y, z)
+        pos = pos[..., :3]
         
         for i in range(len(molecule['size'])):
             # (1) extract the peptide position
-            pos = pos[:,:3]
-            idx_mol = molecule['idx'].repeat_interleave(molecule['x'].shape[1])
-            peptide_pos = pos[idx_mol == i]
+            if len(pos.shape) == 3: # [num_residues, 14, 3]
+                peptide_pos = pos[molecule['idx'] == i]
+            else: # [num_residues * 14, 3] or [num_residues, 3]
+                if pos.shape[0] == molecule['idx'].shape[0] * 14:
+                    idx_mol = molecule['idx'].repeat_interleave(14)
+                    peptide_pos = pos[idx_mol == i]
+                else:
+                    peptide_pos = pos[molecule['idx'] == i]
             # (2) bring peptides into correct order
             peptide_idx = molecule['pos_in_seq'][molecule['idx'] == i]
             # peptide_pos_orderd = peptide_pos[peptide_idx-1] # pos starts at 1
@@ -1791,7 +1875,7 @@ class Flow_Matching_Model_all_atom(nn.Module):
 
             else:
 
-                create_new_pdb_hdf5(peptide_pos, peptide_idx, graph_name, run_id, data_dir, time_step=time_step, sample_id=i, atom_level=atom_level)
+                create_new_pdb_hdf5_swift(peptide_pos, peptide_idx, graph_name, run_id, data_dir, time_step=time_step, sample_id=i, atom_level=atom_level)
 
 class ODEWrapper(nn.Module):
     def __init__(self, model, T_peptide, xh_pro, molecule, molecule_pos, protein_pocket, step_size, rot_dim=9, x_dim=3, angle_dim=14):
@@ -1837,9 +1921,9 @@ class ODEWrapper(nn.Module):
         # quats_hat = safe_rot_to_quat(v_x[:, :self.rot_dim])
         # v_x_quat = quaternion_slerp_exp(scaling * self.step_size, quats_hat, quats)
         # v_x_quat = (v_x_quat - xh_mol[:, :self.rot_dim]) * scale
-        # v_x_rot = (v_x[:, :self.rot_dim] - xh_mol[:, :self.rot_dim]) * scale
-        v_x_rot = torch.einsum("...ij,...jk->...ik", torch.transpose(v_x[:, :self.rot_dim].view(-1, 3, 3), -1, -2), xh_mol[:, :self.rot_dim].view(-1, 3, 3))
-        v_x_rot = v_x_rot.view(-1, self.rot_dim)
+        v_x_rot = (v_x[:, :self.rot_dim] - xh_mol[:, :self.rot_dim]) * scale
+        # v_x_rot = torch.einsum("...ij,...jk->...ik", torch.transpose(v_x[:, :self.rot_dim].view(-1, 3, 3), -1, -2), xh_mol[:, :self.rot_dim].view(-1, 3, 3))
+        # v_x_rot = v_x_rot.view(-1, self.rot_dim)
 
         v_x_angle = (v_x[:, self.rot_dim+self.x_dim:self.rot_dim+self.x_dim+self.angle_dim] - xh_mol[:, self.rot_dim+self.x_dim:self.rot_dim+self.x_dim+self.angle_dim]) * scale
 

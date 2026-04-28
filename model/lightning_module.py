@@ -230,7 +230,7 @@ class Structure_Prediction_Model(pl.LightningModule):
                     
                 elif stage == 'test':
 
-                    self.test_dataset = PDB_Dataset_swift("/scratch-shared/roos/preprocessed/", 'test')
+                    self.test_dataset = PDB_Dataset_swift("/scratch-shared/roos/preprocessed/", 'BA')
                     # self.test_dataset = PDB_Dataset_combine("/scratch-shared/roos/preprocessed/", self.data_dir, 'test')
                     # print(f"{len(self.test_dataset.pdb_names)=}")
 

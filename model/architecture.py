@@ -210,7 +210,7 @@ class NN_Model(nn.Module):
                 h_mol = self.atom_encoder(z_t_mol[:,self.x_dim+self.rot_dim+self.angle_dim:]).clone()
             else:
                 h_mol = self.atom_encoder(z_t_mol[:,self.x_dim:]).clone()
-            if self.all_atom:
+            if self.all_atom:                
                 h_pro = self.residue_encoder(z_t_pro[:,self.x_dim+self.rot_dim:]).clone()
             else:
                 h_pro = self.residue_encoder(z_t_pro[:,self.x_dim:]).clone()

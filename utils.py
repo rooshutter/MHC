@@ -11,13 +11,16 @@ import pickle
 import h5py
 import numpy as np
 from io import StringIO
-from typing import Sequence
+from typing import Sequence, Optional
+import openfold.np.protein as protein
+from openfold.np import residue_constants
 
 
 def create_new_pdb_hdf5(
         peptide, peptide_idx, graph_name, run_id, data_dir, time_step, sample_id, atom_level=False
 ):
-    hdf5_file = h5py.File(f'{data_dir}/test.hdf5', 'r')
+    # hdf5_file = h5py.File(f'{data_dir}/test.hdf5', 'r')
+    hdf5_file = h5py.File(f'{data_dir}BA_cluster1.hdf5', 'r')
         
     pdb_names = hdf5_file['pdb_names'][:]
     pdb_strings = hdf5_file['pdb_strings'][:]
@@ -136,3 +139,147 @@ def write_updated_peptide_coords_pdb(
     io = PDBIO()
     io.set_structure(pdb_models)
     io.save(str(pdb_output_path))
+
+
+def create_new_pdb_hdf5_swift(
+    peptide: np.ndarray,
+    peptide_idx: Sequence[int],
+    graph_name: str,
+    run_id: str,
+    data_dir: str,
+    time_step: int,
+    sample_id: int,
+    split: str = "test",
+    fold: str = "1",
+    atom_level=False
+):
+    """
+    Saves a new PDB for SwiftMHC entries.
+    Loads protein and peptide metadata from HDF5 and uses prediction for peptide coords.
+    """
+    # 1) Determine HDF5 path (following dataset_8k_xray.py logic)
+    # hdf5_path = Path(data_dir) / f"{split}_fold{fold}.hdf5"
+    hdf5_path = Path(data_dir) / f"BA_cluster{fold}.hdf5"
+    if not hdf5_path.exists():
+        # Fallback if names are different
+        hdf5_path = Path(data_dir) / f"{split}_fold.hdf5"
+
+    with h5py.File(hdf5_path, 'r') as f5:
+        if graph_name not in f5:
+            # Fallback: search keys
+            found_key = None
+            for k in f5.keys():
+                if graph_name in k or k in graph_name:
+                    found_key = k
+                    break
+            if found_key:
+                print(f"Warning: {graph_name} not found directly in {hdf5_path}. Using {found_key} instead.")
+                group = f5[found_key]
+            else:
+                raise KeyError(f"{graph_name} not found in {hdf5_path}. Available keys (first 10): {list(f5.keys())[:10]}")
+        else:
+            group = f5[graph_name]
+        protein_data = {
+            'aatype': group['protein']['aatype'][:],
+            'atom_positions': group['protein']['all_atom_positions'][:],
+            'atom_mask': group['protein']['all_atom_mask'][:]
+        }
+        peptide_data = {
+            'aatype': group['peptide']['aatype'][:]
+        }
+
+    # 2) Build output path
+    out_dir = Path('results') / 'structures' / run_id
+    out_dir.mkdir(parents=True, exist_ok=True)
+    pdb_output_path = out_dir / f"{graph_name}_{time_step}_{sample_id}.pdb"
+
+    # 3) Write updated PDB
+    write_updated_peptide_coords_pdb_swiftmhc(
+        peptide_coords=peptide,
+        peptide_data=peptide_data,
+        protein_data=protein_data,
+        pdb_output_path=str(pdb_output_path),
+        atom_level=atom_level
+    )
+
+
+def write_updated_peptide_coords_pdb_swiftmhc(
+    peptide_coords: np.ndarray,
+    peptide_data: dict,
+    protein_data: dict,
+    pdb_output_path: str,
+    atom_level=False
+):
+    """
+    Writes a PDB file for SwiftMHC complex using OpenFold's protein tools.
+    """
+    # 1) Process Peptide (convert atom14 predicted to atom37)
+    peptide_aatype = peptide_data['aatype']
+    n_peptide_res = len(peptide_aatype)
+    
+    # Create atom14 to atom37 mapping
+    restype_atom14_to_atom37 = np.zeros((21, 14), dtype=np.int32)
+    for rt_idx, restype_char in enumerate(residue_constants.restypes):
+        restype_name = residue_constants.restype_1to3[restype_char]
+        atom14_names = residue_constants.restype_name_to_atom14_names[restype_name]
+        for a14_idx, atom_name in enumerate(atom14_names):
+            if atom_name:
+                a37_idx = residue_constants.atom_order[atom_name]
+                restype_atom14_to_atom37[rt_idx, a14_idx] = a37_idx
+
+    # Expand peptide_coords [N, 14, 3] to [N, 37, 3]
+    peptide_atom37_positions = np.zeros((n_peptide_res, 37, 3))
+    peptide_atom37_mask = np.zeros((n_peptide_res, 37))
+    
+    # Ensure peptide_coords is a numpy array on CPU
+    if hasattr(peptide_coords, 'detach'):
+        peptide_coords = peptide_coords.detach().cpu().numpy()
+    
+    # If flattened [N*14, 3], reshape to [N, 14, 3]
+    if len(peptide_coords.shape) == 2 and peptide_coords.shape[0] == n_peptide_res * 14:
+        peptide_coords = peptide_coords.reshape(n_peptide_res, 14, 3)
+    
+    # Check if we have all-atom [N, 14, 3] or just residue-level [N, 3]
+    is_all_atom = (len(peptide_coords.shape) == 3 and peptide_coords.shape[1] == 14)
+    
+    for i in range(n_peptide_res):
+        rt = peptide_aatype[i]
+        if is_all_atom:
+            for a14_idx in range(14):
+                a37_idx = restype_atom14_to_atom37[rt, a14_idx]
+                if a37_idx > 0 or (a14_idx == 0 and a37_idx == 1): # CA is index 1 in atom37
+                    # Check if this atom exists for this restype
+                    if residue_constants.restype_atom14_mask[rt, a14_idx]:
+                        peptide_atom37_positions[i, a37_idx] = peptide_coords[i, a14_idx]
+                        peptide_atom37_mask[i, a37_idx] = 1.0
+        else:
+            # Residue level: only CA is available (usually index 1 in atom37)
+            ca_idx = residue_constants.atom_order['CA']
+            peptide_atom37_positions[i, ca_idx] = peptide_coords[i]
+            peptide_atom37_mask[i, ca_idx] = 1.0
+
+    # 2) Combine Protein and Peptide
+    # Protein is chain A (index 0), Peptide is chain B (index 1)
+    combined_aatype = np.concatenate([protein_data['aatype'], peptide_aatype])
+    combined_positions = np.concatenate([protein_data['atom_positions'], peptide_atom37_positions])
+    combined_mask = np.concatenate([protein_data['atom_mask'], peptide_atom37_mask])
+    
+    n_prot = len(protein_data['aatype'])
+    n_pep = len(peptide_aatype)
+    combined_residue_index = np.concatenate([np.arange(n_prot), np.arange(n_pep)])
+    combined_chain_index = np.concatenate([np.zeros(n_prot), np.ones(n_pep)])
+    
+    # 3) Create OpenFold Protein object
+    prot_obj = protein.Protein(
+        atom_positions=combined_positions,
+        aatype=combined_aatype,
+        atom_mask=combined_mask,
+        residue_index=combined_residue_index,
+        b_factors=np.zeros_like(combined_mask),
+        chain_index=combined_chain_index
+    )
+    
+    # 4) Convert to PDB and Save
+    pdb_str = protein.to_pdb(prot_obj)
+    with open(pdb_output_path, 'w') as f:
+        f.write(pdb_str)
