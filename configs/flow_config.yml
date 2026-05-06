@@ -7,14 +7,14 @@ entity: 'roos-hutter-university-of-amsterdam' #'neuro-ai-scientist'
 resume: False #"./checkpoints/fold_1_flow_t_50_e_100_loss8/checkpoints/best-model-epoch=epoch=91.ckpt"
 
 # Training
-num_epochs: 1 #1000 # TODO: early stopping?? -> prevent overfitting
+num_epochs: 100 #1000 # TODO: early stopping?? -> prevent overfitting
 device: 'cuda'
 gpus: 1
 
 batch_size: 16
 lr: 2.0e-4 
 num_workers: 4
-all_atom: False
+all_atom: True
 wandb_log: False
 
 # Task
@@ -23,16 +23,16 @@ task_params:
   confidence_score: False
 
 # Dataset
-# data_dir: '/scratch-shared/roos/preprocessed/' # for all atom
-data_dir: "/home/rhutter/MHC-Diff/data/pmhc_xray_8K_aligned/"  # for only alpha carbon
+data_dir: '/scratch-shared/roos/preprocessed/' # for all atom
+# data_dir: "/home/rhutter/MHC-Diff/data/pmhc_xray_8K_aligned/"  # for only alpha carbon
 dataset: 'pmhc_8K_xray'
 dataset_params:
   num_atoms: 20
   num_residues: 20
   norm_values: [1,1]
 
-# generative_model: 'flow_matching_all_atom' # for all atom
-generative_model: 'flow_matching' 
+generative_model: 'flow_matching_all_atom' # for all atom
+# generative_model: 'flow_matching' 
 generative_model_params:
   timesteps: 50
   position_encoding: True
