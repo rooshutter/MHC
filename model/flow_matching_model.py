@@ -66,7 +66,7 @@ class Flow_Matching_Model(nn.Module):
 
         self.all_atom = all_atom
 
-    def forward(self, z_data):
+    def forward(self, z_data, current_epoch=None, max_epochs=None, run_id=None, data_dir=None, save_pdb=False):
 
         molecule, protein_pocket = z_data
 
@@ -75,12 +75,6 @@ class Flow_Matching_Model(nn.Module):
         else:
             molecule_pos = None
 
-        # compute noised samples
-        # z_t_mol: noised molecule at time t
-        # z_t_pro: protein pocket at time t
-        # eps_x_mol: actual noise added to molecule positions
-        # epsilon_pro: actual noise added to protein pocket positions (should be 0)
-        # z_t_mol, z_t_pro, eps_x_mol, epsilon_pro, t = self.noise_process(z_data)
         if self.all_atom:
             z_t_mol, z_t_pro, v_x_mol, v_pro, t = self.compute_flow_match_all_atom(z_data)
         else:
@@ -92,38 +86,8 @@ class Flow_Matching_Model(nn.Module):
             z_t_mol = z_t_mol + torch.randn_like(z_t_mol) * self.noise_scaling
 
         
-        # use neural netwrok to predict vector field
-        # epsilon_hat_mol: predicted noise for molecule positions
-        # epsilon_hat_pro: predicted noise for protein pocket positions
-        # c_s: predicted confidence score
-        # epsilon_hat_mol, epsilon_hat_pro, c_s = self.neural_net(z_t_mol, z_t_pro, t, molecule['idx'], protein_pocket['idx'], molecule_pos)
         v_hat_mol, v_hat_pro, c_s = self.neural_net(z_t_mol, z_t_pro, t, molecule['idx'], protein_pocket['idx'], molecule_pos)
 
-
-        # --- RMSE Calculation ---
-        # with torch.no_grad():
-        #     x0_hat = z_t_mol[:, :3] + t[molecule['idx']] * v_hat_mol[:, :3]
-
-        #     # 2. Scale back to original Angstroms (Unnormalization)
-        #     x0_hat_ang = x0_hat * self.norm_values[0]
-        #     target_ang = molecule['x'] # Ground truth in Angstroms
-
-        #     # 3. Structural RMSE (Optional but recommended: align COM)
-        #     # This prevents translation errors from blowing up your RMSE
-        #     x0_hat_centered = x0_hat_ang - scatter_mean(x0_hat_ang, molecule['idx'], dim=0)[molecule['idx']]
-        #     target_centered = target_ang - scatter_mean(target_ang, molecule['idx'], dim=0)[molecule['idx']]
-
-        #     # 4. Compute RMSE per peptide (Matching your Eval Script logic)
-        #     print(f"Centered predicted positions (Angstroms): {x0_hat_centered[0]}")
-        #     print(f"Centered target positions (Angstroms):    {target_centered[0]}")
-        #     error_mol = scatter_add(torch.sum((x0_hat_centered - target_centered)**2, dim=-1), molecule['idx'], dim=0)
-        #     rmse_per_peptide = torch.sqrt(error_mol / molecule['size'])
-
-        #     # 5. Average across the batch
-        #     batch_rmse = rmse_per_peptide.mean().item()
-            
-        #     print(f"Batch RMSE: {batch_rmse:.4f}") # Helpful for debugging
-        # ------------------------
         
         if self.training:
             loss, info = self.train_loss(molecule, z_t_mol, v_x_mol, 
@@ -136,183 +100,13 @@ class Flow_Matching_Model(nn.Module):
 
         return loss.mean(0), info
     
-    def compute_flow_match_all_atom(self, z_data, t_is_0 = False):
-        molecule, protein_pocket = z_data
-        batch_size = molecule['size'].size(0)
-        device = molecule['x'].device
-                
-        size_mol = molecule['size'][0]
-        size_pro = protein_pocket['size'][0]
-        # print(f"{molecule['x'].shape=}")
-        print(f"{molecule['h'].shape=}")
-        # molecule['x'] = molecule['x'].view(batch_size, size_mol, *molecule['x'].shape[1:])
-        molecule['h'] = molecule['h'].view(batch_size, size_mol, *molecule['h'].shape[1:])
-        # print(f"{molecule['x'].shape=}")
-        print(f"{molecule['h'].shape=}")
-        # print(f"{protein_pocket['x'].shape=}")
-        print(f"{protein_pocket['h'].shape=}")
-        # protein_pocket['x'] = protein_pocket['x'].view(batch_size, size_pro, *protein_pocket['x'].shape[1:])
-        protein_pocket['h'] = protein_pocket['h'].view(batch_size, size_pro, *protein_pocket['h'].shape[1:])
-        # print(f"{protein_pocket['x'].shape=}")
-        print(f"{protein_pocket['h'].shape=}")
-
-        print(f"{molecule['torsion_angles_sin_cos'].shape=}")
-        print(f"{molecule['backbone_rigid_tensor'].shape=}")
-        print(f"{protein_pocket['backbone_rigid_tensor'].shape=}")
-        molecule['torsion_angles_sin_cos'] = molecule['torsion_angles_sin_cos'].view(batch_size, size_mol, *molecule['torsion_angles_sin_cos'].shape[1:])
-        molecule['backbone_rigid_tensor'] = molecule['backbone_rigid_tensor'].view(batch_size, size_mol, *molecule['backbone_rigid_tensor'].shape[1:])
-        protein_pocket['backbone_rigid_tensor'] = protein_pocket['backbone_rigid_tensor'].view(batch_size, size_pro, *protein_pocket['backbone_rigid_tensor'].shape[1:])
-        print(f"{molecule['torsion_angles_sin_cos'].shape=}")
-        print(f"{molecule['backbone_rigid_tensor'].shape=}")
-        print(f"{protein_pocket['backbone_rigid_tensor'].shape=}")
-
-        
-        # normalisation with norm_values (dataset dependend) -> changes likelyhood (adjusted for in vlb)!
-        # molecule['x'] = molecule['x'] / self.norm_values[0]
-        molecule['h'] = molecule['h'] / self.norm_values[1]
-        # protein_pocket['x'] = protein_pocket['x'] / self.norm_values[0]
-        protein_pocket['h'] = protein_pocket['h'] / self.norm_values[1]
-
-        
-        # sample t ~ U(0,...,T) for each graph individually
-        t_low = 0 if self.train else 1
-        t = torch.randint(t_low, self.T + 1, size=(batch_size, 1, 1), device=device)
-        
-        # normalize t
-        t = t / self.T
-
-        # option for computing t = 0 representations
-        t = torch.zeros((batch_size, 1, 1), device=device) if t_is_0 else t
-        
-        # prepare joint point cloud
-        peptide_backbone_rigid_tensor = molecule['backbone_rigid_tensor']
-        T_peptide = Rigid.from_tensor_4x4(peptide_backbone_rigid_tensor)
-        T_peptide = T_peptide.to_tensor_7()
-        print(f"{T_peptide.shape=}")
-
-        xh_mol = torch.cat((T_peptide, molecule['h']), dim=-1)
-        print(f"{xh_mol.shape=}")
-
-        protein_backbone_rigid_tensor = protein_pocket['backbone_rigid_tensor']
-        T_protein = Rigid.from_tensor_4x4(protein_backbone_rigid_tensor)
-        T_protein = T_protein.to_tensor_7()
-        print(f"{T_protein.shape=}")
-
-        xh_pro = torch.cat((T_protein, protein_pocket['h']), dim=-1)
-        print(f"{xh_pro.shape=}")
-        
-
-        # center of mass handling
-        # print("com_handling:", self.com_handling) peptide
-        # if self.com_handling == 'both':
-        #     # old centering approach
-        #     xh_mol[:,:self.x_dim] = xh_mol[:,:self.x_dim] - scatter_mean(xh_mol[:,:self.x_dim], molecule['idx'], dim=0)[molecule['idx']]
-        #     xh_pro[:,:self.x_dim] = xh_pro[:,:self.x_dim] - scatter_mean(xh_pro[:,:self.x_dim], protein_pocket['idx'], dim=0)[protein_pocket['idx']]
-        # elif self.com_handling == 'no_COM':
-        #     dumy_variable = 0
-        # else:
-        #     # data is translated to 0, COM noise added and again translated to 0
-        #     mean = scatter_mean(xh_mol[:,:self.x_dim], molecule['idx'], dim=0)
-        #     xh_mol[:,:self.x_dim] = xh_mol[:,:self.x_dim] - mean[molecule['idx']]
-        #     xh_pro[:,:self.x_dim] = xh_pro[:,:self.x_dim] - mean[protein_pocket['idx']]
-
-        T_peptide_z = Rigid.identity(
-            molecule['h'].shape[:-1],
-            molecule['h'].dtype,
-            device,
-            self.training,
-            fmt="quat",
-        )
-        print(f"Using all-atom noise with shape: {T_peptide_z.shape}")
-        
-        z_x_pro = torch.zeros(size=(len(xh_pro), xh_pro.shape[1], T_peptide.shape[-1]), device=device)
-        print(f"{z_x_pro.shape=}")
-
-        # print(f"{self.com_handling=}") peptide
-        # if self.com_handling == 'both':
-        #     # alternative centering approach
-        #     z_x_mol = z_x_mol - scatter_mean(z_x_mol, molecule['idx'], dim=0)[molecule['idx']]
-        #     z_x_pro = torch.zeros(size=(len(xh_pro), self.x_dim), device=device)
-        # else:
-        #     dumy_variable = 0
-
-        # print("features_fixed:", self.features_fixed) true
-        if self.features_fixed:
-            print(f"{len(xh_mol)=}")
-            z_h_mol = torch.zeros(size=(len(xh_mol), xh_mol.shape[1], self.num_atoms), device=device)
-            # z_h_mol = torch.zeros(size=(len(xh_mol), self.num_atoms), device=device)
-            z_h_pro = torch.zeros(size=(len(xh_pro), xh_pro.shape[1], self.num_residues), device=device)
-        else:
-            # for h we need standard normal noise (this would be sampling new peptides)
-            z_h_mol = torch.randn(size=(len(xh_mol), xh_mol.shape[1], self.num_atoms), device=device)
-            z_h_pro = torch.randn(size=(len(xh_pro), xh_pro.shape[1], self.num_residues), device=device)
-
-        # z_mol = torch.cat((z_x_mol, z_h_mol), dim=1)
-        print(f"{z_x_pro.shape=}")
-        print(f"{z_h_pro.shape=}")
-        z_pro = torch.cat((z_x_pro, z_h_pro), dim=-1)
-
-        # z_t_mol_x = t[molecule['idx']] * molecule['x'] + (1 - t[molecule['idx']]) * z_x_mol
-        # z_t_mol_x = (1 - t[molecule['idx']]) * molecule['x'] + (t[molecule['idx']]) * z_x_mol
-        print(f"{T_peptide.shape=}")
-        print(f"{T_peptide_z.shape=}")
-        T_peptide_z = T_peptide_z.to_tensor_7()
-        print(f"{T_peptide_z.shape=}")
-
-        print(f"{t.shape=}")
-        # print(f"{t[molecule['idx']].shape=}")
-        T_peptide_t = (1 - t) * T_peptide
-        T_peptide_t += t * T_peptide_z
-        print(f"{T_peptide_t.shape=}")
-        print(f"{z_h_mol.shape=}")
-
-        z_t_mol = torch.cat((T_peptide_t, z_h_mol), dim=-1)
-        
-        z_t_pro = xh_pro.clone().detach()
-
-
-        # if self.com_handling == 'both':
-        #     dumy_variable = 0
-        # elif self.com_handling == 'no_COM':
-        #     dumy_variable = 0
-        # else:
-        #     # data is translated to 0, COM noise added and again translated to 0 (turn off for old centering approach)
-        #     mean = scatter_mean(z_t_mol[:,:self.x_dim], molecule['idx'], dim=0)
-        #     z_t_mol[:,:self.x_dim] = z_t_mol[:,:self.x_dim] - mean[molecule['idx']]
-        #     z_t_pro[:,:self.x_dim] = z_t_pro[:,:self.x_dim] - mean[protein_pocket['idx']]
-
-
-        # v = x_1 - x_0
-        print(f"{xh_mol.shape=}")
-        print(f"{xh_mol[:,:,:T_peptide_z.shape[-1]].shape=}")
-        print(f"{T_peptide_z.shape=}")
-        v_x_mol = xh_mol[:,:,:T_peptide_z.shape[-1]] - T_peptide_z 
-        print(f"{v_x_mol.shape=}")
-        
-        print(f"{xh_pro.shape=}")
-        print(f"{z_pro.shape=}")
-        v_pro = xh_pro - z_pro
-
-        # if self.com_handling == 'both':
-        #     dumy_variable = 0
-        # elif self.com_handling == 'no_COM':
-        #     dumy_variable = 0
-        # else:
-        #     mean = scatter_mean(v_x_mol, molecule['idx'], dim=0)
-        #     v_x_mol = v_x_mol - mean[molecule['idx']]
-        #     v_pro[:,:self.x_dim] = v_pro[:,:self.x_dim] - mean[protein_pocket['idx']]
-
-
-        return z_t_mol, z_t_pro, v_x_mol, v_pro, t
 
     def compute_flow_match(self, z_data, t_is_0 = False):
 
         molecule, protein_pocket = z_data
         batch_size = molecule['size'].size(0)
         device = molecule['x'].device
-        print(f"{batch_size=}")
     
-        
         # normalisation with norm_values (dataset dependend) -> changes likelyhood (adjusted for in vlb)!
         molecule['x'] = molecule['x'] / self.norm_values[0]
         molecule['h'] = molecule['h'] / self.norm_values[1]
@@ -322,48 +116,21 @@ class Flow_Matching_Model(nn.Module):
         
         # sample t ~ U(0,...,T) for each graph individually
         t_low = 0 if self.train else 1
-        if self.all_atom:
-            t = torch.randint(t_low, self.T + 1, size=(batch_size, 1, 1), device=device)
-        else:
-            t = torch.randint(t_low, self.T + 1, size=(batch_size, 1), device=device)
+        t = torch.randint(t_low, self.T + 1, size=(batch_size, 1), device=device)
 
         # normalize t
         t = t / self.T
 
         # option for computing t = 0 representations
-        if self.all_atom:
-            t = torch.zeros((batch_size, 1, 1), device=device) if t_is_0 else t
-        else:
-            t = torch.zeros((batch_size, 1), device=device) if t_is_0 else t
+        t = torch.zeros((batch_size, 1), device=device) if t_is_0 else t
         
-        # prepare joint point cloud
-        # print(f"{molecule['x'].shape=}")
-        # print(f"{molecule['h'].shape=}")
-        # print(f"{protein_pocket['x'].shape=}")
-        # print(f"{protein_pocket['h'].shape=}")
-        if self.all_atom:
-            peptide_backbone_rigid_tensor = molecule['backbone_rigid_tensor']
-            print(f"peptide_backbone_rigid_tensor shape: {peptide_backbone_rigid_tensor.shape}")
-            T_peptide = Rigid.from_tensor_4x4(peptide_backbone_rigid_tensor)
-            # T_peptide = T_peptide.to_tensor_7()
-            print(f"T_peptide shape: {T_peptide.shape}")
 
-            mol_h = molecule['h'].unsqueeze(1)
-            mol_h = mol_h.expand(-1, molecule['x'].shape[1], -1)
-            xh_mol = torch.cat((molecule['x'], mol_h), dim=-1)
-
-            protein_backbone_rigid_tensor = protein_pocket['backbone_rigid_tensor']
-            T_protein = Rigid.from_tensor_4x4(protein_backbone_rigid_tensor)
-            print(f"T_protein shape: {T_protein.shape}")
-
-            pro_h = protein_pocket['h'].unsqueeze(1)
-            pro_h = pro_h.expand(-1, protein_pocket['x'].shape[1], -1)
-            xh_pro = torch.cat((protein_pocket['x'], pro_h), dim=-1)
-        else:
-            xh_mol = torch.cat((molecule['x'], molecule['h']), dim=1)
-            # xh_mol = torch.cat((molecule['x'], molecule['h']), dim=-1)
-            xh_pro = torch.cat((protein_pocket['x'], protein_pocket['h']), dim=1)
-            # xh_pro = torch.cat((protein_pocket['x'], protein_pocket['h']), dim=-1)
+        
+        
+        xh_mol = torch.cat((molecule['x'], molecule['h']), dim=1)
+        # xh_mol = torch.cat((molecule['x'], molecule['h']), dim=-1)
+        xh_pro = torch.cat((protein_pocket['x'], protein_pocket['h']), dim=1)
+        # xh_pro = torch.cat((protein_pocket['x'], protein_pocket['h']), dim=-1)
 
         # center of mass handling
         # print("com_handling:", self.com_handling) peptide
@@ -379,45 +146,12 @@ class Flow_Matching_Model(nn.Module):
             xh_mol[:,:self.x_dim] = xh_mol[:,:self.x_dim] - mean[molecule['idx']]
             xh_pro[:,:self.x_dim] = xh_pro[:,:self.x_dim] - mean[protein_pocket['idx']]
 
-        # print(f"Centered molecule positions:                             {xh_mol[:,:self.x_dim][0]}")
         
-        if self.all_atom:
-            print(f"{molecule['h'].shape=}")
-            print(f"{molecule['x'].shape=}")
-            print(f"{protein_pocket['h'].shape=}")
-            print(f"{protein_pocket['x'].shape=}")
-            print(f"{molecule['size']=}")
-            print(f"{molecule['size'].shape=}")
-            T_peptide = Rigid.identity(
-                (molecule['x'].shape[0], molecule['size']),
-                molecule['x'].dtype,
-                device,
-                self.training,
-                fmt="quat",
-            )
-            z_x_mol = T_peptide
-            print(f"Using all-atom noise with shape: {z_x_mol.shape}")
-        else:
-            # compute noised sample z_t
-            # for x cord. we mean center the normal noise for each graph
-            # we only diffuse position of the molecules
-            z_x_mol = torch.randn(size=(len(xh_mol), self.x_dim), device=device) #* self.noise_scaling
+        z_x_mol = torch.randn(size=(len(xh_mol), self.x_dim), device=device) #* self.noise_scaling
         
         z_x_pro = torch.zeros(size=(len(xh_pro), self.x_dim), device=device)
 
 
-        # print(f"Noise positions:                                         {z_x_mol[0]}")
-
-        # print(f"{self.com_handling=}") peptide
-        # if self.com_handling == 'both':
-        #     # alternative centering approach
-        #     z_x_mol = z_x_mol - scatter_mean(z_x_mol, molecule['idx'], dim=0)[molecule['idx']]
-        #     z_x_pro = torch.zeros(size=(len(xh_pro), self.x_dim), device=device)
-        # else:
-        #     dumy_variable = 0
-        # print(f"Noised molecule positions after centering:               {z_x_mol[0]}")
-
-        # print("features_fixed:", self.features_fixed) true
         if self.features_fixed:
             z_h_mol = torch.zeros(size=(len(xh_mol), self.num_atoms), device=device)
             z_h_pro = torch.zeros(size=(len(xh_pro), self.num_residues), device=device)
@@ -429,22 +163,11 @@ class Flow_Matching_Model(nn.Module):
         # z_mol = torch.cat((z_x_mol, z_h_mol), dim=1)
         z_pro = torch.cat((z_x_pro, z_h_pro), dim=1)
 
-        # z_t_mol_x = t[molecule['idx']] * molecule['x'] + (1 - t[molecule['idx']]) * z_x_mol
-        # z_t_mol_x = (1 - t[molecule['idx']]) * molecule['x'] + (t[molecule['idx']]) * z_x_mol
-        # print(f"{t[molecule['idx']].shape=}")
-        # print(f"{xh_mol.shape=}")
-        # print(f"{xh_mol[:,:,:self.x_dim].shape=}")
-        # print(f"{z_x_mol.shape=}")
-        # print(f"{T_peptide.shape=}")
-        if self.all_atom:
-            z_t_mol_x = (1 - t[molecule['idx']]) * T_peptide
-            z_t_mol_x += (t[molecule['idx']]) * z_x_mol
-        else:
-            z_t_mol_x = (1 - t[molecule['idx']]) * xh_mol[:,:self.x_dim] + (t[molecule['idx']]) * z_x_mol
+
+        z_t_mol_x = (1 - t[molecule['idx']]) * xh_mol[:,:self.x_dim] + (t[molecule['idx']]) * z_x_mol
         z_t_mol = torch.cat((z_t_mol_x, z_h_mol), dim=1)
         z_t_pro = xh_pro.clone().detach()
 
-        # print(f"Noised molecule positions at time t:                     {z_t_mol_x[0]}")
 
         if self.com_handling == 'both':
             dumy_variable = 0
@@ -456,18 +179,9 @@ class Flow_Matching_Model(nn.Module):
             z_t_mol[:,:self.x_dim] = z_t_mol[:,:self.x_dim] - mean[molecule['idx']]
             z_t_pro[:,:self.x_dim] = z_t_pro[:,:self.x_dim] - mean[protein_pocket['idx']]
 
-        # print(f"Noised molecule positions at time t after centering:     {z_t_mol[:,:self.x_dim][0]}")
-
-        # v = x_1 - x_0
-        # xh_mol[:,:self.x_dim] - z_x_mol
-        # v_target_mol = xh_mol - z_mol
-        # v_target_pro = xh_pro - z_pro
-        # print(f"Original molecule positions:                             {xh_mol[:,:self.x_dim][0]}")
-        # print(f"Noised molecule positions:                               {z_x_mol[0]}")
         v_x_mol = xh_mol[:,:self.x_dim] - z_x_mol 
         # v_x_mol = z_x_mol - xh_mol[:,:self.x_dim]
 
-        # print(f"True velocity:                                           {v_x_mol[0]}")
         v_pro = xh_pro - z_pro
         # v_pro = z_pro - xh_pro
 
@@ -480,7 +194,6 @@ class Flow_Matching_Model(nn.Module):
             v_x_mol = v_x_mol - mean[molecule['idx']]
             v_pro[:,:self.x_dim] = v_pro[:,:self.x_dim] - mean[protein_pocket['idx']]
 
-        # print(f"True velocity after centering:                           {v_x_mol[0]}")
 
         return z_t_mol, z_t_pro, v_x_mol, v_pro, t
 
@@ -510,8 +223,6 @@ class Flow_Matching_Model(nn.Module):
         )
 
         # seperate loss computation for t = 0 and t != 0
-        print(f"{loss_x_mol_t0.shape=}")
-        print(f"{t_0_mask.shape=}")
         loss_x_mol_t0 = - loss_x_mol_t0 * t_0_mask
         loss_x_protein_t0 = - loss_x_protein_t0 * t_0_mask
         loss_h_t0 = - loss_h_t0 * t_0_mask
@@ -780,7 +491,7 @@ class Flow_Matching_Model(nn.Module):
     
 
     @torch.no_grad()
-    def sample_structure(self, num_samples, molecule, protein_pocket, sampling_without_noise, data_dir, run_id):
+    def sample_structure(self, num_samples, molecule, protein_pocket, sampling_without_noise, data_dir, run_id, save_trajectory=False):
         
         device = molecule['x'].device
         num_graphs = molecule['size'].size(0)
@@ -887,19 +598,7 @@ class Flow_Matching_Model(nn.Module):
                 options={'step_size': 1.0 / self.T} 
             )
 
-            # print("\n--- ODE Integration Progress ---")
-            # for idx, t_val in enumerate(t_span):
-            #     step_xh = trajectory[idx]
-            #     step_x = step_xh[:, :3]
-                
-            #     # Calculate RMSE for this specific intermediate step
-            #     # Note: target (mol_norm_x) is already normalized to the same scale
-            #     error_mol = scatter_add(torch.sum((step_x - mol_norm_x)**2, dim=-1), molecule['idx'], dim=0)
-            #     rmse_per_peptide = torch.sqrt(error_mol / molecule['size'])
-            #     batch_rmse = rmse_per_peptide.mean().item()
-                
-            #     print(f"Time t={t_val.item():.2f} | Avg Coord: {step_x[0]} | Batch RMSE: {batch_rmse:.4f}")
-            # print("---------------------------------\n")
+         
             
             current_xh_mol = trajectory[-1]
             c_s = ode_func.last_c_s
@@ -973,311 +672,4 @@ class ODEWrapper(nn.Module):
         v_xh_final[:, :3] = v_x
         
         return v_xh_final
-    
-
-@torch.no_grad()
-def sample_structure2(self, num_samples, molecule, protein_pocket, sampling_without_noise, data_dir, run_id):
-
-    device = molecule['x'].device
-    if self.position_encoding:
-        molecule_pos = molecule['pos_in_seq']
-    else:
-        molecule_pos = None
-    num_samples = len(molecule['size'])
-
-    # print(f"True molecule positions:                                          {molecule['x'][0]}")
-
-    # Record protein_pocket center of mass before
-    protein_pocket_com_before = scatter_mean(protein_pocket['x'], protein_pocket['idx'], dim=0)
-
-    # Normalisation
-    # molecule['x'] = molecule['x'] / self.norm_values[0]
-    molecule['h'] = molecule['h'] / self.norm_values[1]
-    protein_pocket['x'] = protein_pocket['x'] / self.norm_values[0]
-    protein_pocket['h'] = protein_pocket['h'] / self.norm_values[1]
-
-    # start with random peptide position (target hidden)
-    rand_eps_x = torch.randn((len(molecule['x']), self.x_dim), device=device) #* self.noise_scaling
-    # print(f"Random noise added to molecule positions:                         {rand_eps_x[0]}")
-
-    molecule_x = protein_pocket_com_before[molecule['idx']] + rand_eps_x
-    # print(f"Initial molecule positions with noise added:                      {molecule_x[0]}")
-
-    # could generate new peptides (not implemented currently)
-    if self.features_fixed:
-        molecule_h = molecule['h'].clone().detach()
-    else:
-        raise NotImplementedError
-
-    # combine position and features
-    xh_mol = torch.cat((molecule_x, molecule_h), dim=1)
-    xh_pro = torch.cat((protein_pocket['x'], protein_pocket['h']), dim=1)
-
-    if self.com_handling == 'both':
-        # old centering approach
-        xh_mol[:,:self.x_dim] = xh_mol[:,:self.x_dim] - scatter_mean(xh_mol[:,:self.x_dim], molecule['idx'], dim=0)[molecule['idx']]
-        xh_pro[:,:self.x_dim] = xh_pro[:,:self.x_dim] - scatter_mean(xh_pro[:,:self.x_dim], protein_pocket['idx'], dim=0)[protein_pocket['idx']]
-    elif self.com_handling == 'no_COM':
-            dumy_variable = 0
-    else:
-        # data is translated to 0, COM noise added and again translated to 0
-        mean = scatter_mean(xh_mol[:,:self.x_dim], molecule['idx'], dim=0)
-        xh_mol[:,:self.x_dim] = xh_mol[:,:self.x_dim] - mean[molecule['idx']]
-        xh_pro[:,:self.x_dim] = xh_pro[:,:self.x_dim] - mean[protein_pocket['idx']]
-
-    # print(f"Noised molecule positions after centering:                        {xh_mol[:,:self.x_dim][0]}")
-
-    max_T = self.T
-
-    # Only for confidence testing
-    if self.confidence_score == True:
-        confidence = []
-
-    z_t_mol = xh_mol.clone().detach()
-
-    # print(f"Initial z_t_mol:                                                  {z_t_mol[0]}")
-
-    solver = "simple"
-
-    if solver == "simple":
-
-        # Iterativly denoise stepwise for t = T,...,1; stepsize default is 1
-        for s in reversed(range(0, max_T, self.sampling_stepsize)):
-        # for s in range(0, max_T, self.sampling_stepsize):
-            # print(f"s={s}")
-            # time arrays
-            # s_array = torch.full((num_samples, 1), fill_value=s, device=device)
-            # t_array = s_array + self.sampling_stepsize
-            # s_array_norm = s_array / self.T
-            # t_array_norm = t_array / self.T
-            # dt = t_array_norm[0] - s_array_norm[0]
-            dt = 1.0 / self.T
-            t_val = s / self.T
-            t_vec = torch.full((num_samples, 1), fill_value=t_val, device=device)
-
-            # print(f"{dt=}")
-            # print(f"In loop z_t_mol:                                          {z_t_mol[:,:self.x_dim][0]}")
-
-            # z_t_mol_old = z_t_mol.clone().detach()
-
-            # x_t + self(x_t=x_t, t=t_start) * (t_end - t_start) / 2)
-            # v_hat_mol, v_hat_pro, c_s = self.neural_net(z_t_mol_old, xh_pro, s_array_norm, molecule['idx'], protein_pocket['idx'], molecule_pos)
-            # z_t_mol = z_t_mol_old + v_hat_mol * dt / 2
-
-            # print(f"{z_t_mol[:,:self.x_dim][0]=}")
-
-            # # x_t + (t_end - t_start) * self(t=t_start + (t_end - t_start) / 2, x_t=
-            # t = s_array_norm + (t_array_norm - s_array_norm) / 2
-            # v_hat_mol, v_hat_pro, c_s = self.neural_net(z_t_mol, xh_pro, t, molecule['idx'], protein_pocket['idx'], molecule_pos)
-            # # z_t_mol = z_t_mol_old + (s_array_norm[0] - t_array_norm[0]) + v_hat_mol
-            # z_t_mol = z_t_mol_old + dt * v_hat_mol
-
-
-            v_hat_mol, v_hat_pro, c_s = self.neural_net(
-                z_t_mol, xh_pro, t_vec, 
-                molecule['idx'], protein_pocket['idx'], molecule_pos
-            ) 
-
-            # v_x = v_hat_mol[:, :self.x_dim]
-            print(f"In loop v_hat_mol:                                              {v_hat_mol[0]}")
-
-            z_t_mol = z_t_mol - v_hat_mol * dt
-
-            print(f"In loop reconstructed z_t_mol:                            {z_t_mol[:,:self.x_dim][0]}")
-            
-
-        
-            # Only for confidence testing
-            if self.confidence_score == True:
-                C_S = scatter_add(c_s, molecule['idx'], dim=0).squeeze(1) / molecule['size']
-                confidence += [C_S]
-
-            if self.com_handling == 'both':
-                dumy_variable = 0
-            elif self.com_handling == 'no_COM':
-                dumy_variable = 0
-            else:
-                # project both pocket and peptide to 0 COM again (only mol mean changes)
-                mean = scatter_mean(z_t_mol[:,:self.x_dim], molecule['idx'], dim=0)
-                z_t_mol[:,:self.x_dim] = z_t_mol[:,:self.x_dim] - mean[molecule['idx']]
-                xh_pro[:,:self.x_dim] = xh_pro[:,:self.x_dim] - mean[protein_pocket['idx']]
-
-            if self.com_handling == 'both':
-                # old centering approach
-                z_t_mol[:,:self.x_dim] = z_t_mol[:,:self.x_dim] - scatter_mean(z_t_mol[:,:self.x_dim], molecule['idx'], dim=0)[molecule['idx']]
-                xh_pro[:,:self.x_dim] = xh_pro[:,:self.x_dim] - scatter_mean(xh_pro[:,:self.x_dim], protein_pocket['idx'], dim=0)[protein_pocket['idx']]
-            else:
-                dumy_variable = 0
-
-
-
-            # x0_hat = z_t_mol[:, :3] + t_vec[molecule['idx']] * v_hat_mol[:, :3]
-
-            # 4. Compute RMSE per peptide (Matching your Eval Script logic)
-            print(f"Centered predicted positions (Angstroms): {z_t_mol[:,:self.x_dim][0]}")
-            print(f"Centered target positions (Angstroms):    {molecule['x'][0]}")
-            error_mol = scatter_add(torch.sum((z_t_mol[:,:self.x_dim] - molecule['x'])**2, dim=-1), molecule['idx'], dim=0)
-            rmse_per_peptide = torch.sqrt(error_mol / molecule['size'])
-
-            # 5. Average across the batch
-            batch_rmse = rmse_per_peptide.mean().item()
-            
-            print(f"Batch RMSE: {batch_rmse:.4f}") # Helpful for debugging
-
-    elif solver == "euler":
-    
-        # Define the ODE function
-        ode_func = VelocityODEWrapper(
-            model=self,
-            xh_pro=xh_pro,
-            molecule=molecule,
-            molecule_pos=molecule_pos,
-            protein_pocket=protein_pocket
-        )
-
-        # Integration: From t=1 (Noise) to t=0 (Data)
-        # Flow Matching uses t=1 as the source (noise) and t=0 as the target
-        t_span = torch.tensor([1.0, 0.0], device=device)
-
-        trajectory = odeint(
-            ode_func, 
-            xh_mol[:, :self.x_dim], 
-            t_span, 
-            method='euler', 
-            options={'step_size': 1.0 / self.T}
-        )
-        
-        # Extract the final result at t=0.0
-        print(f"{trajectory.shape=}")
-        xh_mol_final_x = trajectory[-1]
-        c_s = ode_func.last_c_s
-        print(f"{xh_mol_final_x[0]=}")
-        
-        # Re-attach the features to get your final z_t_mol
-        z_t_mol = torch.cat([xh_mol_final_x, molecule['h']], dim=1)
-
-        if self.com_handling == 'both':
-            dumy_variable = 0
-        elif self.com_handling == 'no_COM':
-            dumy_variable = 0
-        else:
-            # project both pocket and peptide to 0 COM again (only mol mean changes)
-            mean = scatter_mean(z_t_mol[:,:self.x_dim], molecule['idx'], dim=0)
-            z_t_mol[:,:self.x_dim] = z_t_mol[:,:self.x_dim] - mean[molecule['idx']]
-            xh_pro[:,:self.x_dim] = xh_pro[:,:self.x_dim] - mean[protein_pocket['idx']]
-
-        if self.com_handling == 'both':
-            # old centering approach
-            z_t_mol[:,:self.x_dim] = z_t_mol[:,:self.x_dim] - scatter_mean(z_t_mol[:,:self.x_dim], molecule['idx'], dim=0)[molecule['idx']]
-            xh_pro[:,:self.x_dim] = xh_pro[:,:self.x_dim] - scatter_mean(xh_pro[:,:self.x_dim], protein_pocket['idx'], dim=0)[protein_pocket['idx']]
-        else:
-            dumy_variable = 0
-
-
-
-    xh_mol_final = z_t_mol.clone().detach()
-    xh_pro_final = xh_pro.clone().detach()
-
-    print(f"Noised molecule positions after final centering:                 {xh_mol_final[:,:self.x_dim][0]}")
-
-    if self.com_handling == 'both':
-            dumy_variable = 0
-    elif self.com_handling == 'no_COM':
-            dumy_variable = 0
-    else:
-        # project both pocket and peptide to 0 COM again (only mol mean changes)
-        mean = scatter_mean(xh_mol_final[:,:self.x_dim], molecule['idx'], dim=0)
-        xh_mol_final[:,:self.x_dim] = xh_mol_final[:,:self.x_dim] - mean[molecule['idx']]
-        xh_pro_final[:,:self.x_dim] = xh_pro_final[:,:self.x_dim] - mean[protein_pocket['idx']]
-
-    print(f"Noised molecule positions after final centering (second time):   {xh_mol_final[:,:self.x_dim][0]}")
-
-    # Unnormalisation
-    x_mol_final = xh_mol_final[:,:self.x_dim] * self.norm_values[0]
-    h_mol_final = xh_mol_final[:,self.x_dim:] * self.norm_values[0]
-    x_pro_final = xh_pro_final[:,:self.x_dim] * self.norm_values[0]
-    h_pro_final = xh_pro_final[:,self.x_dim:] * self.norm_values[0]
-
-    # print(f"Unnormalized molecule positions:                                 {x_mol_final[0]=}")
-    # Round h to one_hot encoding
-    h_mol_final = F.one_hot(torch.argmax(h_mol_final, dim=1), self.num_atoms)
-
-    # Recombine x and h
-    xh_mol_final = torch.cat([x_mol_final, h_mol_final], dim=1)
-    xh_pro_final = torch.cat([x_pro_final, h_pro_final], dim=1)
-
-    # print(f"Recombined molecule positions and features:                      {xh_mol_final[:,:self.x_dim][0]}")
-
-    # Correct for center of mass difference
-    protein_pocket_com_after = scatter_mean(x_pro_final, protein_pocket['idx'], dim=0)
-
-    # Testing if we only learn the form
-    # Moving mol targets COM to 0
-    # mol_target = molecule['x']  - scatter_mean(molecule['x'], molecule['idx'], dim=0)[molecule['idx']]
-
-    # print(f"Moved molecule targets COM to 0:                                 {mol_target[:,:self.x_dim][0]}")
-
-    xh_mol_final[:,:self.x_dim] += (protein_pocket_com_before - protein_pocket_com_after)[molecule['idx']]
-    xh_pro_final[:,:self.x_dim] += (protein_pocket_com_before - protein_pocket_com_after)[protein_pocket['idx']]
-
-    print(f"Adjusted molecule positions for COM difference:                  {xh_mol_final[0]}")
-    print(f"True molecule positions:                                         {molecule['x'][0]}")
-    print(f"True protein features:                                           {molecule['h'][0]}")
-    # Moving mol targets COM to original COM
-    # mol_target += (protein_pocket_com_before - protein_pocket_com_after)[molecule['idx']]
-    # print(f"Moved molecule targets COM to original COM:                      {mol_target[:,:self.x_dim][0]}")
-    sampled_structures = (xh_mol_final, xh_pro_final, c_s)
-
-    self.safe_pdbs(xh_mol_final, molecule, run_id, data_dir, time_step='F')
-
-    # Only for confidence testing
-    if self.confidence_score == True:
-        print(C_S)  
-    
-    return sampled_structures
-
-class VelocityODEWrapper(nn.Module):
-    def __init__(self, model, xh_pro, molecule, molecule_pos, protein_pocket):
-        super().__init__()
-        self.model = model
-        self.xh_pro = xh_pro
-        self.molecule = molecule
-        self.molecule_pos = molecule_pos
-        self.protein_pocket = protein_pocket
-        self.last_c_s = None
-
-    def forward(self, t, x):
-        # x is the current position integrated by the solver [N_nodes, 3]
-        # Reconstruct z_t_mol using the solver's x and the original fixed features h
-        print(f"{t=}")
-        print(f"{x[0]=}")
-        z_t_mol = torch.cat([x, self.molecule['h']], dim=1)
-        print(f"{z_t_mol[0]=}")
-        
-        # Create the time tensor t for the neural network call
-        batch_size = self.molecule['size'].size(0)
-        t_vec = torch.ones((batch_size, 1), device=x.device) * t
-        print(f"{batch_size=}")
-        print(f"{t_vec[0]=}")
-
-        print(f"{z_t_mol[0]=}")
-        print(f"{self.xh_pro[0]=}")
-        print(f"{self.molecule['idx'][0]=}")
-        print(f"{self.molecule_pos[0]=}")
-        
-        # Call neural_net with your variable names
-        v_hat_mol, v_hat_pro, c_s = self.model.neural_net(z_t_mol, self.xh_pro, t_vec, self.molecule['idx'], self.protein_pocket['idx'], self.molecule_pos)
-        print(f"{v_hat_mol[0]=}")
-
-        self.last_c_s = c_s
-
-        # Extract coordinate velocity
-        v_x_mol = v_hat_mol[:, :self.model.x_dim]
-        
-        # Project velocity to center-of-mass = 0 subspace to maintain translational invariance
-        # This matches the logic in your training loop [cite: 142, 146]
-        # mean_v = scatter_mean(v_x_mol, self.molecule['idx'], dim=0)
-        # v_x_mol = v_x_mol - mean_v[self.molecule['idx']]
-        
-        return v_x_mol
 

@@ -19,8 +19,10 @@ from openfold.np import residue_constants
 def create_new_pdb_hdf5(
         peptide, peptide_idx, graph_name, run_id, data_dir, time_step, sample_id, atom_level=False
 ):
-    # hdf5_file = h5py.File(f'{data_dir}/test.hdf5', 'r')
-    hdf5_file = h5py.File(f'{data_dir}BA_cluster1.hdf5', 'r')
+    if data_dir == "/scratch-shared/roos/preprocessed/":
+        hdf5_file = h5py.File(f'{data_dir}BA_cluster1.hdf5', 'r')
+    else:
+        hdf5_file = h5py.File(f'{data_dir}/test.hdf5', 'r')
         
     pdb_names = hdf5_file['pdb_names'][:]
     pdb_strings = hdf5_file['pdb_strings'][:]

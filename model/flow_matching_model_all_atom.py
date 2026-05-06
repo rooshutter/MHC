@@ -545,11 +545,6 @@ class Flow_Matching_Model_all_atom(nn.Module):
 
         xh_pro = torch.cat((T_protein, protein_pocket['h']), dim=-1)
 
-        print(f"{len(xh_mol.shape)=}")
-        if len(xh_mol.shape) == 2: 
-            xh_mol = xh_mol.view(batch_size, size_mol, -1)
-            xh_pro = xh_pro.view(batch_size, size_pro, -1)
-
         # T_peptide_z = Rigid.identity(
         #     molecule['h'].shape[:-1],
         #     molecule['h'].dtype,
@@ -1472,6 +1467,7 @@ class Flow_Matching_Model_all_atom(nn.Module):
         #         else:
         #             current_xh_mol += v_hat_mol * dt
 
+        solver = "euler" #"rk4"
 
         ode_func = ODEWrapper(
             self, T_peptide, xh_pro, molecule, molecule_pos, protein_pocket, 
