@@ -10,9 +10,7 @@ import torch
 import pytorch_lightning as pl
 
 if __name__ == "__main__":
-
-    torch.autograd.set_detect_anomaly(True) # roos
-	
+    
     # Setup working directory and importing
     desired_directory = '/home/rhutter/MHC-Diff/'
     os.chdir(desired_directory)
@@ -22,8 +20,10 @@ if __name__ == "__main__":
     # Set seed for reproducibitliy
     seed = 42
     torch.manual_seed(seed)
-    torch.backends.cudnn.deterministic = True
-    torch.backends.cudnn.benchmark = False
+    # Note: deterministic=True + benchmark=False disables cuDNN kernel tuning, slowing training
+    # torch.backends.cudnn.deterministic = True
+    # torch.backends.cudnn.benchmark = False
+    torch.backends.cudnn.benchmark = True  # Let cuDNN auto-tune for faster convolutions
 
     # read in config
     parser = argparse.ArgumentParser()
@@ -55,7 +55,8 @@ if __name__ == "__main__":
                 args.lr,
                 args.num_workers,
                 args.device,
-                args.all_atom
+                args.all_atom,
+                run_name=args.run_name
     )
 
     # wandb logger
@@ -110,8 +111,7 @@ if __name__ == "__main__":
         )
 
     # train
-    with torch.autograd.set_detect_anomaly(True): #roos
-        if args.resume is False:
-            trainer.fit(model)
-        else:
-            trainer.fit(model, ckpt_path=args.resume)
+    if args.resume is False:
+        trainer.fit(model)
+    else:
+        trainer.fit(model, ckpt_path=args.resume)

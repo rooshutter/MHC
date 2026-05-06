@@ -1,7 +1,7 @@
 # Logging Traing only
-logdir: "./checkpoints/fold_1_flow_t_50_e_100_fix_2" 
+logdir: "./checkpoints/fold_1_flow_t_50_e_100_bs16_mp_hd32_timeh100" 
 project: 'Structur_prediction_Experiments'
-run_name: 'pmhc_8K_xray_fm_t_50_e_100_fix_2'
+run_name: 'pmhc_8K_xray_fm_t_50_e_100_bs16_mp_hd32_timeh100'
 entity: 'roos-hutter-university-of-amsterdam' #'neuro-ai-scientist'
 
 resume: False #"./checkpoints/fold_1_flow_t_50_e_100_loss8/checkpoints/best-model-epoch=epoch=91.ckpt"
@@ -11,11 +11,11 @@ num_epochs: 100 #1000 # TODO: early stopping?? -> prevent overfitting
 device: 'cuda'
 gpus: 1
 
-batch_size: 32
+batch_size: 16
 lr: 2.0e-4 
 num_workers: 4
 all_atom: True
-wandb_log: True
+wandb_log: False
 
 # Task
 task_params:
@@ -46,7 +46,7 @@ network_params:
   # general network parameters
   conditioned_on_time: True
   joint_dim: 32
-  hidden_dim: 64
+  hidden_dim: 32
   num_layers: 3
   # edges
   edge_embedding_dim: 8
@@ -64,11 +64,11 @@ network_params:
   reflection_equivariant: False
 
 # Eval
-checkpoint: './checkpoints/fold_1_flow_t_50_e_100_fix_1/checkpoints/best-model-epoch=epoch=94.ckpt' 
+checkpoint: './checkpoints/fold_1_flow_t_50_e_100_bs16_mp_hd32/checkpoints/last.ckpt' #best-model-epoch=epoch=48.ckpt' 
 num_samples: 10
 sample_batch_size: 10
 sampling_without_noise: False
-sample_savepath: './results/rmse_values/flow/fold_1_flow_t_50_e_100_fix_2/samples_test'
+sample_savepath: './results/rmse_values/flow/fold_1_flow_t_50_e_100_bs16_mp_hd32_timeh100/samples_test'
 
 
 

@@ -14,6 +14,7 @@ from model.diffusion_model import Conditional_Diffusion_Model
 from model.architecture import NN_Model
 from model.flow_matching_model import Flow_Matching_Model
 from model.flow_matching_model_all_atom import Flow_Matching_Model_all_atom
+# from model.flow_matching_model_all_atom_fast import Flow_Matching_Model_all_atom
 
 import numpy as np
 import os
@@ -41,6 +42,7 @@ class Structure_Prediction_Model(pl.LightningModule):
             num_workers: int,
             device,
             all_atom: bool = False,
+            run_name: str = "default",
 
     ):
         """
@@ -113,6 +115,8 @@ class Structure_Prediction_Model(pl.LightningModule):
         self.batch_size = batch_size
         self.num_workers = num_workers
         self.all_atom = all_atom
+        self.run_name = run_name
+        self.last_saved_epoch = -1
 
     # Data section
 
@@ -216,32 +220,14 @@ class Structure_Prediction_Model(pl.LightningModule):
             if self.all_atom:
                 if stage == 'fit':
 
-                    # self.train_dataset = PDB_Dataset_combine("/scratch-shared/roos/preprocessed/", self.data_dir, 'train')
-                    # self.val_dataset = PDB_Dataset_combine("/scratch-shared/roos/preprocessed/", self.data_dir, 'val')
-                    
-
                     self.train_dataset = PDB_Dataset_swift("/scratch-shared/roos/preprocessed/", 'train')
                     self.val_dataset = PDB_Dataset_swift("/scratch-shared/roos/preprocessed/", 'valid')
-
-                    
-                    
-                    # print(f"{len(self.train_dataset.pdb_names)=}")
-                    # print(f"{len(self.val_dataset.pdb_names)=}")
                     
                 elif stage == 'test':
 
                     self.test_dataset = PDB_Dataset_swift("/scratch-shared/roos/preprocessed/", 'BA')
-                    # self.test_dataset = PDB_Dataset_combine("/scratch-shared/roos/preprocessed/", self.data_dir, 'test')
-                    # print(f"{len(self.test_dataset.pdb_names)=}")
 
             
-            # self.test_dataset = PDB_Dataset_combine("/scratch-shared/roos/preprocessed/", self.data_dir, 'test')
-            # train_val_overlap, train_test_overlap, val_test_overlap = self.check_overlap(self.train_dataset, self.val_dataset, self.test_dataset)
-            # overlap = self.check_coordinate_overlap(self.train_dataset, self.test_dataset, name_a="Train", name_b="Test")
-            # overlap = self.check_coordinate_overlap(self.train_dataset, self.val_dataset, name_a="Train", name_b="Val")
-            # overlap = self.check_coordinate_overlap(self.val_dataset, self.test_dataset, name_a="Val", name_b="Test")
-
-
         elif self.dataset == 'pmhc_100K_xray':
 
             if stage == 'fit':
@@ -318,9 +304,19 @@ class Structure_Prediction_Model(pl.LightningModule):
     # training section
 
     def training_step(self, data_batch):
+        save_pdb = False
+        if self.current_epoch > self.last_saved_epoch:
+            save_pdb = True
+            self.last_saved_epoch = self.current_epoch
+
         mol_pro_batch = self.get_molecule_and_protein(data_batch)
         # TODO: could add augment_noise and augment_rotation but excluded in DiffDock
-        loss, info = self.model(mol_pro_batch)
+        loss, info = self.model(mol_pro_batch, 
+                                current_epoch=self.current_epoch, 
+                                max_epochs=self.trainer.max_epochs,
+                                run_id=self.run_name,
+                                data_dir=self.data_dir,
+                                save_pdb=save_pdb)
         self.log('train_loss', loss)
 
         for key, value in info.items():
@@ -330,12 +326,38 @@ class Structure_Prediction_Model(pl.LightningModule):
 
     def validation_step(self, data_batch, *args):
         mol_pro_batch = self.get_molecule_and_protein(data_batch)
-        loss, info = self.model(mol_pro_batch)
+        loss, info = self.model(mol_pro_batch, 
+                                current_epoch=self.current_epoch, 
+                                max_epochs=self.trainer.max_epochs,
+                                run_id=self.run_name,
+                                data_dir=self.data_dir,
+                                save_pdb=False)
         self.log('val_loss', loss)
 
         for key, value in info.items():
             val_key = key + '_val'
             self.log(val_key, value)
+
+    # def training_step(self, data_batch):
+    #     mol_pro_batch = self.get_molecule_and_protein(data_batch)
+    #     # TODO: could add augment_noise and augment_rotation but excluded in DiffDock
+    #     loss, info = self.model(mol_pro_batch)
+    #     self.log('train_loss', loss)
+
+    #     for key, value in info.items():
+    #         self.log(key, value)
+
+    #     return loss
+
+    # def validation_step(self, data_batch, *args):
+    #     mol_pro_batch = self.get_molecule_and_protein(data_batch)
+    #     loss, info = self.model(mol_pro_batch)
+    #     self.log('val_loss', loss)
+
+    #     for key, value in info.items():
+    #         val_key = key + '_val'
+    #         self.log(val_key, value)
+    
 
     def configure_optimizers(self):
         optimizer = torch.optim.AdamW(self.parameters(), lr=self.lr, amsgrad=True, weight_decay=1e-4)

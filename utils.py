@@ -151,42 +151,74 @@ def create_new_pdb_hdf5_swift(
     sample_id: int,
     split: str = "test",
     fold: str = "1",
-    atom_level=False
+    atom_level=False,
+    save_peptide_only=False
 ):
     """
     Saves a new PDB for SwiftMHC entries.
     Loads protein and peptide metadata from HDF5 and uses prediction for peptide coords.
     """
     # 1) Determine HDF5 path (following dataset_8k_xray.py logic)
-    # hdf5_path = Path(data_dir) / f"{split}_fold{fold}.hdf5"
-    hdf5_path = Path(data_dir) / f"BA_cluster{fold}.hdf5"
-    if not hdf5_path.exists():
-        # Fallback if names are different
-        hdf5_path = Path(data_dir) / f"{split}_fold.hdf5"
+    # Search for the file containing the graph_name
+    possible_files = [
+        Path(data_dir) / f"BA_cluster{fold}.hdf5",
+        Path(data_dir) / f"train_fold{fold}.hdf5",
+        Path(data_dir) / f"valid_fold{fold}.hdf5",
+    ]
+    # Add xray clusters if they exist
+    for i in range(10):
+        possible_files.append(Path(data_dir) / f"xray_cluster{i}.hdf5")
+    
+    hdf5_path = None
+    group = None
+    f5_handle = None
 
-    with h5py.File(hdf5_path, 'r') as f5:
-        if graph_name not in f5:
-            # Fallback: search keys
-            found_key = None
-            for k in f5.keys():
-                if graph_name in k or k in graph_name:
-                    found_key = k
+    for p in possible_files:
+        if p.exists():
+            try:
+                f5 = h5py.File(p, 'r')
+                if graph_name in f5:
+                    hdf5_path = p
+                    group = f5[graph_name]
+                    # We found it, but we need to keep the handle or copy data
+                    protein_data = {
+                        'aatype': group['protein']['aatype'][:],
+                        'atom_positions': group['protein']['all_atom_positions'][:],
+                        'atom_mask': group['protein']['all_atom_mask'][:]
+                    }
+                    peptide_data = {
+                        'aatype': group['peptide']['aatype'][:]
+                    }
+                    f5.close()
                     break
-            if found_key:
-                print(f"Warning: {graph_name} not found directly in {hdf5_path}. Using {found_key} instead.")
-                group = f5[found_key]
-            else:
-                raise KeyError(f"{graph_name} not found in {hdf5_path}. Available keys (first 10): {list(f5.keys())[:10]}")
-        else:
-            group = f5[graph_name]
-        protein_data = {
-            'aatype': group['protein']['aatype'][:],
-            'atom_positions': group['protein']['all_atom_positions'][:],
-            'atom_mask': group['protein']['all_atom_mask'][:]
-        }
-        peptide_data = {
-            'aatype': group['peptide']['aatype'][:]
-        }
+                else:
+                    # Try partial match fallback
+                    found_key = None
+                    for k in f5.keys():
+                        if graph_name in k or k in graph_name:
+                            found_key = k
+                            break
+                    if found_key:
+                        print(f"Warning: {graph_name} not found directly in {p}. Using {found_key} instead.")
+                        hdf5_path = p
+                        group = f5[found_key]
+                        protein_data = {
+                            'aatype': group['protein']['aatype'][:],
+                            'atom_positions': group['protein']['all_atom_positions'][:],
+                            'atom_mask': group['protein']['all_atom_mask'][:]
+                        }
+                        peptide_data = {
+                            'aatype': group['peptide']['aatype'][:]
+                        }
+                        f5.close()
+                        break
+                    f5.close()
+            except Exception as e:
+                print(f"Error checking {p}: {e}")
+                continue
+
+    if hdf5_path is None:
+        raise KeyError(f"{graph_name} not found in any expected HDF5 file in {data_dir}.")
 
     # 2) Build output path
     out_dir = Path('results') / 'structures' / run_id
@@ -199,7 +231,8 @@ def create_new_pdb_hdf5_swift(
         peptide_data=peptide_data,
         protein_data=protein_data,
         pdb_output_path=str(pdb_output_path),
-        atom_level=atom_level
+        atom_level=atom_level,
+        save_peptide_only=save_peptide_only
     )
 
 
@@ -208,7 +241,8 @@ def write_updated_peptide_coords_pdb_swiftmhc(
     peptide_data: dict,
     protein_data: dict,
     pdb_output_path: str,
-    atom_level=False
+    atom_level=False,
+    save_peptide_only=False
 ):
     """
     Writes a PDB file for SwiftMHC complex using OpenFold's protein tools.
@@ -246,12 +280,11 @@ def write_updated_peptide_coords_pdb_swiftmhc(
         rt = peptide_aatype[i]
         if is_all_atom:
             for a14_idx in range(14):
-                a37_idx = restype_atom14_to_atom37[rt, a14_idx]
-                if a37_idx > 0 or (a14_idx == 0 and a37_idx == 1): # CA is index 1 in atom37
-                    # Check if this atom exists for this restype
-                    if residue_constants.restype_atom14_mask[rt, a14_idx]:
-                        peptide_atom37_positions[i, a37_idx] = peptide_coords[i, a14_idx]
-                        peptide_atom37_mask[i, a37_idx] = 1.0
+                # Check if this atom14 slot holds a real atom for this residue type
+                if residue_constants.restype_atom14_mask[rt, a14_idx]:
+                    a37_idx = restype_atom14_to_atom37[rt, a14_idx]
+                    peptide_atom37_positions[i, a37_idx] = peptide_coords[i, a14_idx]
+                    peptide_atom37_mask[i, a37_idx] = 1.0
         else:
             # Residue level: only CA is available (usually index 1 in atom37)
             ca_idx = residue_constants.atom_order['CA']
@@ -259,24 +292,31 @@ def write_updated_peptide_coords_pdb_swiftmhc(
             peptide_atom37_mask[i, ca_idx] = 1.0
 
     # 2) Combine Protein and Peptide
-    # Protein is chain A (index 0), Peptide is chain B (index 1)
-    combined_aatype = np.concatenate([protein_data['aatype'], peptide_aatype])
-    combined_positions = np.concatenate([protein_data['atom_positions'], peptide_atom37_positions])
-    combined_mask = np.concatenate([protein_data['atom_mask'], peptide_atom37_mask])
-    
-    n_prot = len(protein_data['aatype'])
-    n_pep = len(peptide_aatype)
-    combined_residue_index = np.concatenate([np.arange(n_prot), np.arange(n_pep)])
-    combined_chain_index = np.concatenate([np.zeros(n_prot), np.ones(n_pep)])
+    if save_peptide_only:
+        final_aatype = peptide_aatype
+        final_positions = peptide_atom37_positions
+        final_mask = peptide_atom37_mask
+        final_residue_index = np.arange(len(peptide_aatype))
+        final_chain_index = np.zeros(len(peptide_aatype))
+    else:
+        # Protein is chain A (index 0), Peptide is chain B (index 1)
+        final_aatype = np.concatenate([protein_data['aatype'], peptide_aatype])
+        final_positions = np.concatenate([protein_data['atom_positions'], peptide_atom37_positions])
+        final_mask = np.concatenate([protein_data['atom_mask'], peptide_atom37_mask])
+        
+        n_prot = len(protein_data['aatype'])
+        n_pep = len(peptide_aatype)
+        final_residue_index = np.concatenate([np.arange(n_prot), np.arange(n_pep)])
+        final_chain_index = np.concatenate([np.zeros(n_prot), np.ones(n_pep)])
     
     # 3) Create OpenFold Protein object
     prot_obj = protein.Protein(
-        atom_positions=combined_positions,
-        aatype=combined_aatype,
-        atom_mask=combined_mask,
-        residue_index=combined_residue_index,
-        b_factors=np.zeros_like(combined_mask),
-        chain_index=combined_chain_index
+        atom_positions=final_positions,
+        aatype=final_aatype,
+        atom_mask=final_mask,
+        residue_index=final_residue_index,
+        b_factors=np.zeros_like(final_mask),
+        chain_index=final_chain_index
     )
     
     # 4) Convert to PDB and Save

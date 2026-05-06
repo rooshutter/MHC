@@ -23,3 +23,4 @@ safe_rot_to_quat.py
 scratch_nan.py
 scratch.py
 test_quat.py
+adding_sidechains.py

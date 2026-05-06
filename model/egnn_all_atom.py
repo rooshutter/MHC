@@ -109,16 +109,6 @@ class GCL(nn.Module):
             agg = torch.cat([x, agg], dim=1)
         out = x + self.node_mlp(agg)
         return out, agg
-    
-    # def norm_angle(self, s):
-    #     norm_denom = torch.sqrt(
-    #         torch.clamp(
-    #             torch.sum(s ** 2, dim=-1, keepdim=True),
-    #             min=1e-8,
-    #         )
-    #     )
-    #     s = s / norm_denom
-    #     return s
 
     def forward(self, h, edge_index, edge_attr=None, node_attr=None, node_mask=None, edge_mask=None):
         row, col = edge_index
@@ -140,7 +130,7 @@ class EquivariantUpdate(nn.Module):
         self.coords_range = coords_range
         self.reflection_equiv = reflection_equiv
         input_edge = hidden_nf * 2 + edges_in_d
-        input_rot = hidden_nf * 2 + 1 #+ 3 # dist_sq is size 3
+        input_rot = hidden_nf * 2 + 1 + edges_in_d #+ 3 # dist_sq is size 3
         
         self.coord_mlp = nn.Sequential(
             nn.Linear(input_edge, hidden_nf),
@@ -148,8 +138,8 @@ class EquivariantUpdate(nn.Module):
             nn.Linear(hidden_nf, hidden_nf),
             act_fn,
             nn.Linear(hidden_nf, 1, bias=False))
-        # Zero initialization for coordinates
-        nn.init.zeros_(self.coord_mlp[-1].weight)
+
+        nn.init.zeros_(self.coord_mlp[-1].weight) # roos 
         
         self.cross_product_mlp = nn.Sequential(
             nn.Linear(input_edge, hidden_nf),
@@ -168,19 +158,10 @@ class EquivariantUpdate(nn.Module):
             act_fn,
             nn.Linear(hidden_nf, 3, bias=False)
         )
-        # Zero initialization for rotation updates (identity)
-        nn.init.zeros_(self.rot_mlp[-1].weight)
-
-        # self.cross_product_rot_mlp = nn.Sequential(
-        #     nn.Linear(129, hidden_nf),
-        #     act_fn,
-        #     nn.Linear(hidden_nf, hidden_nf),
-        #     act_fn,
-        #     nn.Linear(hidden_nf, 9, bias=False)
-        # ) if not self.reflection_equiv else None
+        nn.init.zeros_(self.rot_mlp[-1].weight) # roos
 
         self.angle_mlp = nn.Sequential(
-            nn.Linear(input_edge, hidden_nf),
+            nn.Linear(input_edge + 14, hidden_nf),
             act_fn,
             nn.Linear(hidden_nf, hidden_nf),
             act_fn,
@@ -215,26 +196,13 @@ class EquivariantUpdate(nn.Module):
                                    normalization_factor=self.normalization_factor,
                                    aggregation_method=self.aggregation_method)
 
-        # print(f"{agg[:mol_dim][0]=}")
-        # print(f"{agg[mol_dim:][0]=}")
         if update_coords_mask is not None:
             agg = update_coords_mask * agg
-        # print(f"{agg[:mol_dim][0]=}")
-        # print(f"{agg[mol_dim:][0]=}")
 
-        agg = torch.clamp(agg, min=-20.0, max=20.0) #added
-
-        # print(f"{agg[:mol_dim][0]=}")
-        # print(f"{agg[mol_dim:][0]=}")
-
-        # print(f"{x[:mol_dim][0]=}")
-        # print(f"{x[mol_dim:][0]=}")
+        agg = torch.clamp(agg, min=-20.0, max=20.0)
 
         x = x + agg
 
-        # print(f"{x[:mol_dim][0]=}")
-        # print(f"{x[mol_dim:][0]=}")
-        
         return x
     
     def rot_model(self, h, rot, edge_index, coord_diff, coord_cross,
@@ -242,30 +210,14 @@ class EquivariantUpdate(nn.Module):
                     mol_dim=None):
 
         row, col = edge_index
-
         rot_diff = torch.bmm(rot[row].transpose(-2, -1), rot[col])
-
-        # print(f"{rot_diff.shape=}")
         rot_diff = rotmat_to_rotvec(rot_diff)
-        # print(f"{rot_diff.shape=}")
-
-        # dist_sq = torch.norm(log_map(rot_diff), dim=-1, keepdim=True)**2
         dist_sq = torch.sum(rot_diff**2, dim=-1, keepdim=True)
- 
-        input_tensor = torch.cat([h[row], h[col], dist_sq], dim=-1)
-        # input_tensor = torch.cat([h[row], h[col], edge_attr, dist_sq], dim=-1)
-        
+        input_tensor = torch.cat([h[row], h[col], edge_attr, dist_sq], dim=-1)
         rot_matrix = self.rot_mlp(input_tensor)
-        # print(f"{rot_matrix.shape=}")
-        # rot_matrix = rot_matrix.view(-1, 3, 3)
 
         if self.tanh:
             rot_matrix = torch.tanh(rot_matrix) * self.coords_range
-        
-        
-        # trans = torch.einsum('bij,bci->bcj', rot_matrix, rot_diff)
-        # trans = torch.clamp(trans, min=-100, max=100) #This is never activated but just in case it case it explosed it may save the train
-        # rot_diff = log_map(torch.bmm(R_i.transpose(1, 2), R_j))
         
         trans = rot_diff * rot_matrix
 
@@ -279,29 +231,10 @@ class EquivariantUpdate(nn.Module):
         
 
         if update_coords_mask is not None:
-            # update_coords_mask = update_coords_mask.unsqueeze(-1)
             agg = update_coords_mask * agg
 
-        # print(f"{agg[:mol_dim][0]=}") 
-        # print(f"{agg[mol_dim:][0]=}")
-
         agg = rotvec_to_rotmat(agg)
-        # print(f"{agg.shape=}")
-
-        # batch_size = agg[mol_dim:].shape[0]
-        # identity = torch.eye(3, device=agg.device).unsqueeze(0).expand(batch_size, -1, -1)
-        # agg[mol_dim:] = agg[mol_dim:] + identity
-
-        # print(f"{agg[:mol_dim][0]=}") 
-        # print(f"{agg[mol_dim:][0]=}")
-
-        # print(f"{rot[:mol_dim][0]=}") 
-        # print(f"{rot[mol_dim:][0]=}")
-
         rot = torch.einsum("ijk, ikn -> ijn", agg, rot)
-
-        # print(f"{rot[:mol_dim][0]=}") 
-        # print(f"{rot[mol_dim:][0]=}")
         
         rot_peptide = rot[:mol_dim]
         d6_x = rot_peptide[:, :, 0]
@@ -310,34 +243,19 @@ class EquivariantUpdate(nn.Module):
         rot_peptide = rotation_6d_to_matrix(d6)
         rot = torch.cat([rot_peptide, rot[mol_dim:]], dim=0)
 
-        # RT_R = torch.matmul(rot.transpose(-2, -1), rot)
-        # batch_size = rot.shape[0]
-        # identity = torch.eye(3, device=rot.device).repeat(batch_size, 1, 1) 
-        # diff = torch.abs(RT_R - identity)
-        # indices = torch.where(diff > 1e-4)
-        # if len(indices[0]) > 0:
-        #     print(f"Indices where RT_R is not close to identity: {indices}")
-        #     print(f"Values at those indices: {diff[indices]}")
-        # max_error = torch.max(diff)
-        # print(f"Maximum error in the entire batch: {max_error.item():.10f}")
-        # is_orthogonal = torch.allclose(RT_R, identity, atol=1e-4)
-        # print(f"Is the batch orthogonal? {is_orthogonal}")
-
         return rot
     
     def angle_model(self, h, a, edge_index, coord_diff, coord_cross,
                     edge_attr, edge_mask, update_coords_mask=None, angle_mask=None, mol_dim=None):
         row, col = edge_index
-        input_tensor = torch.cat([h[row], h[col], edge_attr], dim=1)
         
-        # angle_diff = a[row] - a[col]
-        # angle_diff = torch.atan2(torch.sin(angle_diff), torch.cos(angle_diff))
-        a_row = a[row].view(-1, 7, 2)  # (sin_i, cos_i)
-        a_col = a[col].view(-1, 7, 2)  # (sin_j, cos_j)
-        # sin(θ_i - θ_j), cos(θ_i - θ_j)
+        a_row = a[row].view(-1, 7, 2) 
+        a_col = a[col].view(-1, 7, 2) 
         sin_diff = a_row[..., 0] * a_col[..., 1] - a_row[..., 1] * a_col[..., 0]
         cos_diff = a_row[..., 1] * a_col[..., 1] + a_row[..., 0] * a_col[..., 0]
-        angle_diff = torch.stack([sin_diff, cos_diff], dim=-1).view(-1, 14)  # (E, 14)
+        angle_diff = torch.stack([sin_diff, cos_diff], dim=-1).view(-1, 14) 
+
+        input_tensor = torch.cat([h[row], h[col], edge_attr, angle_diff], dim=1)
 
         if self.tanh:
             trans = angle_diff * torch.tanh(self.angle_mlp(input_tensor))
@@ -350,40 +268,14 @@ class EquivariantUpdate(nn.Module):
         agg = unsorted_segment_sum(trans, row, num_segments=a.size(0),
                                    normalization_factor=self.normalization_factor,
                                    aggregation_method=self.aggregation_method)
-        
-        # print(f"{agg[:mol_dim][0]=}")
-        # print(f"{agg[mol_dim:][0]=}")
 
         if update_coords_mask is not None:
             agg = update_coords_mask * agg
 
-        # print(f"{agg[:mol_dim][0]=}")
-        # print(f"{agg[mol_dim:][0]=}")
-
-        # print(f"{a[:mol_dim][0]=}")
-        # print(f"{a[mol_dim:][0]=}")
-
-        # agg = torch.clamp(agg, min=-5.0, max=5.0)
-
-        # print(f"{agg[:mol_dim][0]=}")
-        # print(f"{agg[mol_dim:][0]=}")
-
-
         a = a + agg 
 
-        # print(f"{a[:mol_dim][0]=}")
-        # print(f"{a[mol_dim:][0]=}")
-
         a_reshaped = a.view(-1, 7, 2)
-
-        # print(f"{a_reshaped[:mol_dim][0]=}")
-        # print(f"{a_reshaped[mol_dim:][0]=}")
-
         a = norm_angle(a_reshaped)
-
-        # print(f"{a[:mol_dim][0]=}")
-        # print(f"{a[mol_dim:][0]=}")
-
         a = a.view(-1, 14)
 
         if angle_mask is not None:
@@ -391,21 +283,11 @@ class EquivariantUpdate(nn.Module):
             a_mol = a_mol * angle_mask.view(-1, 7).unsqueeze(-1)
             a = torch.cat([a_mol.view(-1, 14), a[mol_dim:]], dim=0)
 
-        # print(f"{a[:mol_dim][0]=}")
-        # print(f"{a[mol_dim:][0]=}")
-
         return a
 
     def forward(self, h, rot, x, angles, edge_index, coord_diff, coord_cross,
                 edge_attr=None, node_mask=None, edge_mask=None,
                 update_coords_mask=None, mol_dim=None, angle_mask=None):
-
-        # rot2 = rot[:mol_dim]
-        # RT_R = torch.matmul(rot2.transpose(-2, -1), rot2)
-        # identity = torch.eye(3, device=rot2.device).expand_as(rot2)
-        # is_orthogonal = torch.allclose(RT_R, identity, atol=1e-2)
-        # print(f"Is the batch orthogonal? {is_orthogonal}")
-
 
         x = self.coord_model(h, x, edge_index, coord_diff, coord_cross,
                               edge_attr, edge_mask,
@@ -473,7 +355,6 @@ class EquivariantBlock(nn.Module):
                                            node_mask, edge_mask, update_coords_mask=update_coords_mask, mol_dim=mol_dim,
                                            angle_mask=angle_mask)
 
-        # Important, the bias of the last linear might be non-zero
         if node_mask is not None:
             h = h * node_mask
         return h, rot, x, a
@@ -505,8 +386,6 @@ class EGNN_all_atom(nn.Module):
             edge_feat_nf = 2
         
         edge_feat_nf = edge_feat_nf + in_edge_nf
-        # self.embedding = nn.Linear(in_node_nf+14, self.hidden_nf)
-        # self.embedding_out = nn.Linear(self.hidden_nf, out_node_nf+14)
 
         self.embedding = nn.Linear(in_node_nf, self.hidden_nf)
         self.embedding_out = nn.Linear(self.hidden_nf, out_node_nf)
@@ -526,13 +405,6 @@ class EGNN_all_atom(nn.Module):
                 batch_mask=None, edge_attr=None, rot=None, angles=None, mol_dim=None, angle_mask=None):
         
         rot = rot.reshape(-1, 3, 3)
-        
-        # rot2 = rot
-        # RT_R = torch.matmul(rot2.transpose(-2, -1), rot2)
-        # print(f"{RT_R[0]=}")
-        # identity = torch.eye(3, device=rot2.device).expand_as(rot2)
-        # is_orthogonal = torch.allclose(RT_R, identity, atol=1e-2)
-        # print(f"Is the batch orthogonal? {is_orthogonal}")
 
         # Edit Emiel: Remove velocity as input
         edge_feat, _ = coord2diff(x, edge_index)
@@ -543,8 +415,6 @@ class EGNN_all_atom(nn.Module):
         if edge_attr is not None:
             edge_feat = torch.cat([edge_feat, edge_attr], dim=1)
 
-        # if self.all_atom:
-        #     h = torch.cat([h, q], dim=-1)
         h = self.embedding(h)
 
         for i in range(0, self.n_layers):
@@ -646,10 +516,6 @@ def unsorted_segment_sum(data, segment_ids, num_segments, normalization_factor, 
     """Custom PyTorch op to replicate TensorFlow's `unsorted_segment_sum`.
         Normalization: 'sum' or 'mean'.
     """
-    # print(f"{data.shape=}")
-    # print(f"{segment_ids.shape=}")
-    
-    # result_shape = (num_segments, data.size(1))
     result_shape = (num_segments,) + data.shape[1:]
     result = data.new_full(result_shape, 0)  # Init empty result tensor.
     
@@ -657,8 +523,6 @@ def unsorted_segment_sum(data, segment_ids, num_segments, normalization_factor, 
         segment_ids = segment_ids.unsqueeze(-1).expand(-1, data.size(1))
     else:
         segment_ids = segment_ids.unsqueeze(-1).unsqueeze(-1).expand(-1, data.size(1), data.size(2))
-    # print(f"{data.shape=}")
-    # print(f"{segment_ids.shape=}")
     result.scatter_add_(0, segment_ids, data)
     if aggregation_method == 'sum':
         result = result / normalization_factor

@@ -164,7 +164,11 @@ class NN_Model(nn.Module):
                 epsilon_hat_pro: size = [batch_node_dim_pro, x + num_residues]
         '''
         if self.all_atom:
-            mol_dim = z_t_mol.shape[0] * z_t_mol.shape[1]
+            if z_t_mol.dim() == 3:
+                mol_dim = z_t_mol.shape[0] * z_t_mol.shape[1]
+            else:
+                mol_dim = z_t_mol.shape[0]
+                
             z_t_mol_rot = z_t_mol.reshape(-1, z_t_mol.shape[-1])[:, :self.rot_dim]
             z_t_pro_rot = z_t_pro.reshape(-1, z_t_pro.shape[-1])[:, :self.rot_dim]
             rot = torch.cat((z_t_mol_rot, z_t_pro_rot), dim=0)

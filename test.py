@@ -93,6 +93,11 @@ if __name__ == "__main__":
     saved_samples['rmse'] = []
     saved_samples['rmse_mean'] = []
     saved_samples['rmse_best'] = []
+    saved_samples['rmse_ca_mean'] = []
+    saved_samples['rmse_ca_best'] = []
+
+    total_sampling_time = 0.0
+    total_structures_sampled = 0
 
     start_time_total = time.time()
 
@@ -114,15 +119,25 @@ if __name__ == "__main__":
         mol_pro_batch = lightning_model.get_molecule_and_protein(mol_pro_samples)
         molecule, protein_pocket = mol_pro_batch
 
-        print(f'Prior to sampling time {time.time() - start_time}')
+        t_before_sampling = time.time()
+        print(f'Prior to sampling time {t_before_sampling - start_time}')
 
-        xh_mol_final, xh_pro_final, _ = lightning_model.model.sample_structure(num_samples, molecule, protein_pocket, args.sampling_without_noise, args.data_dir, args.run_name)
+        # Save trajectory only for the first batch (i == 0)
+        save_trajectory = (i == 0)
+        # save_trajectory = False
+        xh_mol_final, xh_pro_final, _ = lightning_model.model.sample_structure(num_samples, molecule, protein_pocket, args.sampling_without_noise, args.data_dir, args.run_name, save_trajectory=save_trajectory)
         if args.all_atom:
             x_mol_final = xh_mol_final[:,:3].reshape(-1, molecule['x'].shape[1], 3)
         else:
             x_mol_final = xh_mol_final[:,:3]
 
-        print(f'After sampling time {time.time() - start_time}')
+        t_after_sampling = time.time()
+        sampling_time = t_after_sampling - t_before_sampling
+        n_structures = num_samples * sample_batch_size
+        total_sampling_time += sampling_time
+        total_structures_sampled += n_structures
+        print(f'After sampling time {t_after_sampling - start_time}')
+        print(f'Sampling time: {sampling_time:.3f}s for {n_structures} structures ({sampling_time / n_structures:.4f}s per structure)')
         
         if args.all_atom:
             molecule['h'] = molecule['h'].reshape(-1, molecule['h'].shape[-1])
@@ -140,38 +155,40 @@ if __name__ == "__main__":
         # Goal structure ['x_predicted']: [sample_key][10 * [9,3]], ['x_target']: [sample_key][1 * [9,3]]
 
         # Calculate the RMSE error
-        # print('------------')
-        # print(f"{x_mol_final.shape=}")
-        # print(f"{molecule['x'].shape=}")
-        # print(f"{x_mol_final[0]=}")
-        # print(f"{molecule['x'][0]=}")
         if args.all_atom:
-            # molecule['x'] = molecule['x'].reshape(100, 9, 14, 3) # reshape to [100, 9, 14, 3]
-            # x_mol_final = x_mol_final.reshape(100, 9, 14, 3) 
-            # min = (molecule['x'] - x_mol_final)**2
-            # mean = torch.mean(min, dim=(1,2,3))
-            # rmse = torch.sqrt(mean)
-            print(f"{molecule['x'][0][0]=}")
-            print(f"{x_mol_final[0][0]=}")
-            
+            print(f"{molecule['x'][0]=}")
+            print(f"{x_mol_final[0]=}")
+
             error_mol = scatter_add(torch.sum((molecule['x'] - x_mol_final)**2, dim=(-2, -1)), molecule['idx'], dim=0)
             rmse = torch.sqrt(error_mol / (molecule['size'] * molecule["x"].shape[1]))
+
+            x_ca_pred = x_mol_final[:, 1, :]  
+            x_ca_true = molecule['x'][:, 1, :] 
+            error_ca = scatter_add(torch.sum((x_ca_true - x_ca_pred)**2, dim=-1), molecule['idx'], dim=0)
+            rmse_ca = torch.sqrt(error_ca / molecule['size'])
         else:
             error_mol = scatter_add(torch.sum((molecule['x'] - x_mol_final)**2, dim=-1), molecule['idx'], dim=0)
             rmse = torch.sqrt(error_mol / (molecule['size']))
+            # CA-only not applicable for non-all-atom mode
+            rmse_ca = rmse
 
         rmse_sample_mean = [rmse[j*num_samples:(j+1)*num_samples].mean(0) for j in range(sample_batch_size)]
         rmse_sample_best = [rmse[j*num_samples:(j+1)*num_samples].min(0)[0] for j in range(sample_batch_size)]
+        rmse_ca_sample_mean = [rmse_ca[j*num_samples:(j+1)*num_samples].mean(0) for j in range(sample_batch_size)]
+        rmse_ca_sample_best = [rmse_ca[j*num_samples:(j+1)*num_samples].min(0)[0] for j in range(sample_batch_size)]
 
         end_time = time.time()
 
         saved_samples['rmse'] += [rmse[j*num_samples:(j+1)*num_samples] for j in range(sample_batch_size)]
         print(len(saved_samples['rmse']), rmse.shape)
-        print(f'RMSE sample mean: {rmse_sample_mean}')
-        print(f'RMSE sample best: {rmse_sample_best}')
-        # print(f'RMSE: {[rmse[j*num_samples:(j+1)*num_samples] for j in range(sample_batch_size)]}')
+        print(f'RMSE (all-atom) sample mean: {rmse_sample_mean}')
+        print(f'RMSE (all-atom) sample best: {rmse_sample_best}')
+        print(f'RMSE (CA-only) sample mean: {rmse_ca_sample_mean}')
+        print(f'RMSE (CA-only) sample best: {rmse_ca_sample_best}')
         saved_samples['rmse_mean'] += [rmse_sample_mean[j] for j in range(sample_batch_size)]
         saved_samples['rmse_best'] += [rmse_sample_best[j] for j in range(sample_batch_size)]
+        saved_samples['rmse_ca_mean'] += [rmse_ca_sample_mean[j] for j in range(sample_batch_size)]
+        saved_samples['rmse_ca_best'] += [rmse_ca_sample_best[j] for j in range(sample_batch_size)]
 
         print(f'Time: {end_time - start_time}')
 
@@ -180,20 +197,34 @@ if __name__ == "__main__":
 
     saved_samples['rmse_mean'] = torch.stack(saved_samples['rmse_mean'], dim=0)
     saved_samples['rmse_best'] = torch.stack(saved_samples['rmse_best'], dim=0)
+    saved_samples['rmse_ca_mean'] = torch.stack(saved_samples['rmse_ca_mean'], dim=0)
+    saved_samples['rmse_ca_best'] = torch.stack(saved_samples['rmse_ca_best'], dim=0)
     rmse_mean = saved_samples['rmse_mean'].mean(0)
     rmse_best = saved_samples['rmse_best'].mean(0)
+    rmse_ca_mean = saved_samples['rmse_ca_mean'].mean(0)
+    rmse_ca_best = saved_samples['rmse_ca_best'].mean(0)
 
     print(f"{saved_samples['rmse_mean']=}")
     print(f"{saved_samples['rmse_best']=}")
+    print(f"{saved_samples['rmse_ca_mean']=}")
+    print(f"{saved_samples['rmse_ca_best']=}")
 
     print(f'Mean RMSE across all mean/best sample: mean {round(rmse_mean.item(),3)}, best {round(rmse_best.item(),3)}')
     print(f'This took {time_total} seconds for 1000*10 samples')
+    print(f'Mean RMSE (all-atom): mean {round(rmse_mean.item(),3)}, best {round(rmse_best.item(),3)}')
+    print(f'Mean RMSE (CA-only):  mean {round(rmse_ca_mean.item(),3)}, best {round(rmse_ca_best.item(),3)}')
+
+    avg_time_per_structure = total_sampling_time / total_structures_sampled if total_structures_sampled > 0 else 0.0
+    print(f'Average sampling time per structure: {avg_time_per_structure:.4f}s ({total_sampling_time:.1f}s total for {total_structures_sampled} structures)')
+
     print(f'This took {time_total} seconds for {len(test_dataset)}*{num_samples} samples')
-    
+
 
     final_metrics = {
         'rmse_mean': rmse_mean,
         'rmse_best': rmse_best,
+        'rmse_ca_mean': rmse_ca_mean,
+        'rmse_ca_best': rmse_ca_best,
         'time_total': time_total
     }
 
