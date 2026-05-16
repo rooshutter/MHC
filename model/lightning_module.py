@@ -43,7 +43,8 @@ class Structure_Prediction_Model(pl.LightningModule):
             device,
             all_atom: bool = False,
             run_name: str = "default",
-
+            variational: bool = True,
+            solver: str = "euler",
     ):
         """
         Parameters:
@@ -90,6 +91,7 @@ class Structure_Prediction_Model(pl.LightningModule):
             dataset_params.num_residues,
             device,
             all_atom,
+            
         )
 
         self.model = frameworks[generative_model](
@@ -107,6 +109,8 @@ class Structure_Prediction_Model(pl.LightningModule):
             dataset_params.num_residues,
             dataset_params.norm_values,
             all_atom,
+            variational,
+            solver,
         )
         
         self.dataset = dataset

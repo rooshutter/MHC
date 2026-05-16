@@ -70,6 +70,8 @@ if __name__ == "__main__":
                     num_workers=args.num_workers,
                     device=args.device,
                     all_atom=args.all_atom,
+                    variational=args.variational,
+                    solver=args.solver,
     )   
 
     lightning_model = lightning_model.to(device)

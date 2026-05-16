@@ -171,6 +171,12 @@ class EquivariantUpdate(nn.Module):
         self.normalization_factor = normalization_factor
         self.aggregation_method = aggregation_method
 
+        # self.ba_mlp = torch.nn.Sequential(
+        #     torch.nn.Linear(20, 64),
+        #     torch.nn.ReLU(),
+        #     torch.nn.Linear(64, 1),
+        # )
+
 
     def coord_model(self, h, x, edge_index, coord_diff, coord_cross,
                     edge_attr, edge_mask, update_coords_mask=None, mol_dim=None):
@@ -234,7 +240,7 @@ class EquivariantUpdate(nn.Module):
             agg = update_coords_mask * agg
 
         agg = rotvec_to_rotmat(agg)
-        rot = torch.einsum("ijk, ikn -> ijn", agg, rot)
+        rot = torch.einsum("ijk, ikn -> ijn", rot, agg)
         
         rot_peptide = rot[:mol_dim]
         d6_x = rot_peptide[:, :, 0]
@@ -285,9 +291,19 @@ class EquivariantUpdate(nn.Module):
 
         return a
 
+    def ba_model(self, h, a, edge_index, coord_diff, coord_cross,
+                    edge_attr, edge_mask, update_coords_mask=None, angle_mask=None, mol_dim=None, mask=None):
+        ba = 0
+        # mask = molecule['cross_residues_mask'].reshape(molecule['h'].shape[0], molecule['h'].shape[1])
+        print(h.shape)
+        print(mask.shape)
+        ba = self.ba_mlp(h, mask)
+        return ba
+
+
     def forward(self, h, rot, x, angles, edge_index, coord_diff, coord_cross,
                 edge_attr=None, node_mask=None, edge_mask=None,
-                update_coords_mask=None, mol_dim=None, angle_mask=None):
+                update_coords_mask=None, mol_dim=None, angle_mask=None, mask=None):
 
         x = self.coord_model(h, x, edge_index, coord_diff, coord_cross,
                               edge_attr, edge_mask,
@@ -298,13 +314,17 @@ class EquivariantUpdate(nn.Module):
         a = self.angle_model(h, angles, edge_index, coord_diff, coord_cross,
                             edge_attr, edge_mask, update_coords_mask=update_coords_mask,
                             angle_mask=angle_mask, mol_dim=mol_dim)
+        # ba = self.ba_model(h, a, edge_index, coord_diff, coord_cross,
+        #                     edge_attr, edge_mask, update_coords_mask=update_coords_mask,
+        #                     angle_mask=angle_mask, mol_dim=mol_dim, mask=mask)
+        ba=0
 
         if node_mask is not None:
             x = x * node_mask
             rot = rot * node_mask
             a = a * node_mask
 
-        return rot, x, a
+        return rot, x, a, ba
 
 
 class EquivariantBlock(nn.Module):
@@ -337,7 +357,7 @@ class EquivariantBlock(nn.Module):
 
     def forward(self, h, rot, x, angles, edge_index, node_mask=None, edge_mask=None,
                 edge_attr=None, update_coords_mask=None, batch_mask=None, mol_dim=None,
-                angle_mask=None):
+                angle_mask=None, mask=None):
 
         distances, coord_diff = coord2diff(x, edge_index, self.norm_constant)
         if self.reflection_equiv:
@@ -351,13 +371,13 @@ class EquivariantBlock(nn.Module):
         for i in range(0, self.n_layers):
             h, _ = self._modules["gcl_%d" % i](h, edge_index, edge_attr=edge_attr,
                                                node_mask=node_mask, edge_mask=edge_mask)
-        rot, x, a = self._modules["gcl_equiv"](h, rot, x, angles, edge_index, coord_diff, coord_cross, edge_attr,
+        rot, x, a, ba = self._modules["gcl_equiv"](h, rot, x, angles, edge_index, coord_diff, coord_cross, edge_attr,
                                            node_mask, edge_mask, update_coords_mask=update_coords_mask, mol_dim=mol_dim,
-                                           angle_mask=angle_mask)
+                                           angle_mask=angle_mask, mask=mask)
 
         if node_mask is not None:
             h = h * node_mask
-        return h, rot, x, a
+        return h, rot, x, a, ba
 
 
 class EGNN_all_atom(nn.Module):
@@ -402,7 +422,7 @@ class EGNN_all_atom(nn.Module):
         self.to(self.device)
 
     def forward(self, h, x, edge_index, node_mask=None, edge_mask=None, update_coords_mask=None,
-                batch_mask=None, edge_attr=None, rot=None, angles=None, mol_dim=None, angle_mask=None):
+                batch_mask=None, edge_attr=None, rot=None, angles=None, mol_dim=None, angle_mask=None, mask=None):
         
         rot = rot.reshape(-1, 3, 3)
 
@@ -418,10 +438,10 @@ class EGNN_all_atom(nn.Module):
         h = self.embedding(h)
 
         for i in range(0, self.n_layers):
-            h, rot, x, a = self._modules["e_block_%d" % i](
+            h, rot, x, a, ba = self._modules["e_block_%d" % i](
                 h, rot, x, angles, edge_index, node_mask=node_mask, edge_mask=edge_mask,
                 edge_attr=edge_feat, update_coords_mask=update_coords_mask,
-                batch_mask=batch_mask, mol_dim=mol_dim, angle_mask=angle_mask)
+                batch_mask=batch_mask, mol_dim=mol_dim, angle_mask=angle_mask, mask=mask)
 
         # TODO: For adding confidence heads
         h_last_layer = h
@@ -434,7 +454,7 @@ class EGNN_all_atom(nn.Module):
 
         rot = rot.view(-1, 9)
 
-        return h_out, x, h_last_layer, rot, a
+        return h_out, x, h_last_layer, rot, a, ba
 
 
 class GNN(nn.Module):

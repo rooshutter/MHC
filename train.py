@@ -56,7 +56,8 @@ if __name__ == "__main__":
                 args.num_workers,
                 args.device,
                 args.all_atom,
-                run_name=args.run_name
+                run_name=args.run_name,
+                variational=args.variational,
     )
 
     # wandb logger

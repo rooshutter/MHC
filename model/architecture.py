@@ -148,7 +148,7 @@ class NN_Model(nn.Module):
 
 
 
-    def forward(self, z_t_mol, z_t_pro, t, molecule_idx, protein_pocket_idx, molecule_pos=None, angle_mask=None):
+    def forward(self, z_t_mol, z_t_pro, t, molecule_idx, protein_pocket_idx, molecule_pos=None, angle_mask=None, mask=None):
 
         '''
         Takes in noised sample and outputs predicted added noise
@@ -256,6 +256,8 @@ class NN_Model(nn.Module):
                 edge_types = self.edge_embedding(edge_types)
             else:
                 edge_types = None
+            
+            ba = False
 
             if self.architecture == 'egnn':
 
@@ -264,11 +266,11 @@ class NN_Model(nn.Module):
 
                 # neural net forward pass
                 if self.all_atom:
-                    h_new, x_new, h_last_layer, rot, angles = self.egnn(h_joint, x_joint, edges,
+                    h_new, x_new, h_last_layer, rot, angles, ba = self.egnn(h_joint, x_joint, edges,
                                                             update_coords_mask=protein_pocket_fixed,
                                                             batch_mask=idx_joint, edge_attr=edge_types, 
                                                             rot=rot, angles=angles, mol_dim=mol_dim,
-                                                            angle_mask=angle_mask)
+                                                            angle_mask=angle_mask, mask=mask)
                 else:
                     h_new, x_new, h_last_layer = self.egnn(h_joint, x_joint, edges,
                                             update_coords_mask=protein_pocket_fixed,
@@ -344,7 +346,7 @@ class NN_Model(nn.Module):
             epsilon_hat_mol = torch.cat((displacement_vec[:len(molecule_idx)], h_new_mol), dim=1)
             epsilon_hat_pro = torch.cat((displacement_vec[len(molecule_idx):], h_new_pro), dim=1)
 
-        return epsilon_hat_mol, epsilon_hat_pro, c_s
+        return epsilon_hat_mol, epsilon_hat_pro, c_s, ba
     
     def get_edges(self, batch_mask_ligand, batch_mask_pocket, x_ligand, x_pocket): 
         '''

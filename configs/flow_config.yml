@@ -1,7 +1,7 @@
 # Logging Traing only
-logdir: "./checkpoints/fold_1_flow_t_50_e_100_bs16_mp_hd32_test" 
+logdir: "./checkpoints/fold_1_flow_t_50_e_100_bs16_mp_hd32_b1" 
 project: 'Structur_prediction_Experiments'
-run_name: 'pmhc_8K_xray_fm_t_50_e_100_bs16_mp_hd32_test'
+run_name: 'pmhc_8K_xray_fm_t_50_e_100_bs16_mp_hd32_b1'
 entity: 'roos-hutter-university-of-amsterdam' #'neuro-ai-scientist'
 
 resume: False #"./checkpoints/fold_1_flow_t_50_e_100_loss8/checkpoints/best-model-epoch=epoch=91.ckpt"
@@ -15,7 +15,9 @@ batch_size: 16
 lr: 2.0e-4 
 num_workers: 4
 all_atom: True
-wandb_log: False
+wandb_log: True
+variational: True
+solver: "loop"
 
 # Task
 task_params:
@@ -66,11 +68,11 @@ network_params:
   reflection_equivariant: False
 
 # Eval
-checkpoint: './checkpoints/fold_1_flow_t_50_e_100_bs16_mp_hd32_test/checkpoints/best-model-epoch=epoch=00.ckpt' 
+checkpoint: './checkpoints/fold_1_flow_t_50_e_100_bs16_mp_hd32_b2_h100/checkpoints/last.ckpt' 
 num_samples: 10
 sample_batch_size: 10
 sampling_without_noise: False
-sample_savepath: './results/rmse_values/flow/fold_1_flow_t_50_e_100_bs16_mp_hd32_test/samples_test'
+sample_savepath: './results/rmse_values/flow/fold_1_flow_t_50_e_100_bs16_mp_hd32_b1/samples_test'
 
 
 
