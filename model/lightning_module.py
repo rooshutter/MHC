@@ -14,7 +14,8 @@ from model.diffusion_model import Conditional_Diffusion_Model
 from model.architecture import NN_Model
 from model.flow_matching_model import Flow_Matching_Model
 from model.flow_matching_model_all_atom import Flow_Matching_Model_all_atom
-# from model.flow_matching_model_all_atom_fast import Flow_Matching_Model_all_atom
+from model.flow_matching_model_all_atom_quat import Flow_Matching_Model_all_atom as Flow_Matching_Model_all_atom_quat
+from model.flow_matching_model_all_atom_var import Flow_Matching_Model_all_atom_var
 
 import numpy as np
 import os
@@ -45,6 +46,8 @@ class Structure_Prediction_Model(pl.LightningModule):
             run_name: str = "default",
             variational: bool = True,
             solver: str = "euler",
+            ba: bool = False,
+            use_quat: bool = False,
     ):
         """
         Parameters:
@@ -75,7 +78,7 @@ class Structure_Prediction_Model(pl.LightningModule):
         torch.manual_seed(42)
 
         # choose the generative framework
-        frameworks = {'conditional_diffusion': Conditional_Diffusion_Model, 'flow_matching': Flow_Matching_Model, 'flow_matching_all_atom': Flow_Matching_Model_all_atom}
+        frameworks = {'conditional_diffusion': Conditional_Diffusion_Model, 'flow_matching': Flow_Matching_Model, 'flow_matching_all_atom': Flow_Matching_Model_all_atom_quat if use_quat else Flow_Matching_Model_all_atom, 'flow_matching_all_atom_var': Flow_Matching_Model_all_atom_var}
         assert generative_model in frameworks
 
         # choose the neural net architecture
@@ -91,7 +94,9 @@ class Structure_Prediction_Model(pl.LightningModule):
             dataset_params.num_residues,
             device,
             all_atom,
-            
+            variational,
+            ba=ba,
+            use_quat=use_quat,
         )
 
         self.model = frameworks[generative_model](
@@ -111,6 +116,7 @@ class Structure_Prediction_Model(pl.LightningModule):
             all_atom,
             variational,
             solver,
+            ba=ba,
         )
         
         self.dataset = dataset

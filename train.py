@@ -58,6 +58,9 @@ if __name__ == "__main__":
                 args.all_atom,
                 run_name=args.run_name,
                 variational=args.variational,
+                solver=args.solver,
+                ba=args.ba,
+                use_quat=getattr(args, 'use_quat', False),
     )
 
     # wandb logger

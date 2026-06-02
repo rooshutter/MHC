@@ -1,5 +1,6 @@
 """
 EGNN architecture from Schneuing et al. 2023 & Satorras et al. 2022
+Quaternion variant: rot is represented as quaternions (4-dim) instead of rotation matrices (9-dim).
 """
 
 from torch import nn
@@ -10,6 +11,8 @@ import math
 from torch.nn.utils.parametrizations import orthogonal
 
 from ReQFlow.so3_utils import rotmat_to_rotvec, rotvec_to_rotmat
+from openfold.utils.rigid_utils import quat_to_rot
+from tools.quat import safe_rot_to_quat
 
 
 def rotation_6d_to_matrix(d6):
@@ -205,10 +208,12 @@ class EquivariantUpdate(nn.Module):
 
     def message(self, h, x, rot, a, edge_index, coord_diff, coord_cross,
                               edge_attr, edge_mask, update_coords_mask, mol_dim):
-
+        """rot is quaternions [N, 4]. Convert to rotmat internally for rot_diff."""
         row, col = edge_index
 
-        rot_diff = torch.bmm(rot[row].transpose(-2, -1), rot[col])
+        # Convert quaternions to rotation matrices for rot_diff computation
+        rot_mat = quat_to_rot(rot)  # [N, 3, 3]
+        rot_diff = torch.bmm(rot_mat[row].transpose(-2, -1), rot_mat[col])
         rot_diff = rotmat_to_rotvec(rot_diff)
         dist_sq = torch.sum(rot_diff**2, dim=-1, keepdim=True)
 
@@ -259,19 +264,25 @@ class EquivariantUpdate(nn.Module):
     def rot_model(self, h, rot, m, edge_index, coord_diff, coord_cross,
                     edge_attr, edge_mask, update_coords_mask=None,
                     mol_dim=None):
-
+        """
+        rot is quaternions [N, 4]. Convert to rotmat internally,
+        do the existing computation, then convert back to quaternions.
+        """
         row, col = edge_index
-        rot_diff = torch.bmm(rot[row].transpose(-2, -1), rot[col])
+
+        # Convert quaternions to rotation matrices
+        rot_mat = quat_to_rot(rot)  # [N, 3, 3]
+
+        rot_diff = torch.bmm(rot_mat[row].transpose(-2, -1), rot_mat[col])
         rot_diff = rotmat_to_rotvec(rot_diff)
         dist_sq = torch.sum(rot_diff**2, dim=-1, keepdim=True)
         input_tensor = torch.cat([h[row], h[col], edge_attr, dist_sq], dim=-1)
-        # input_tensor = m
-        rot_matrix = self.rot_mlp(input_tensor)
+        rot_update = self.rot_mlp(input_tensor)
 
         if self.tanh:
-            rot_matrix = torch.tanh(rot_matrix) * self.coords_range
+            rot_update = torch.tanh(rot_update) * self.coords_range
         
-        trans = rot_diff * rot_matrix
+        trans = rot_diff * rot_update
 
         if edge_mask is not None:
             trans = trans * edge_mask   
@@ -279,21 +290,24 @@ class EquivariantUpdate(nn.Module):
         agg = unsorted_segment_sum(trans, row, num_segments=rot.size(0),
                                    normalization_factor=self.normalization_factor,
                                    aggregation_method=self.aggregation_method)
-        
-        
 
         if update_coords_mask is not None:
             agg = update_coords_mask * agg
 
         agg = rotvec_to_rotmat(agg)
-        rot = torch.einsum("ijk, ikn -> ijn", rot, agg)
+        rot_mat = torch.einsum("ijk, ikn -> ijn", rot_mat, agg)
         
-        rot_peptide = rot[:mol_dim]
+        # 6D projection for peptide part (ensures valid rotation)
+        rot_peptide = rot_mat[:mol_dim]
         d6_x = rot_peptide[:, :, 0]
         d6_y = rot_peptide[:, :, 1]
         d6 = torch.cat([d6_x, d6_y], dim=-1)
         rot_peptide = rotation_6d_to_matrix(d6)
-        rot = torch.cat([rot_peptide, rot[mol_dim:]], dim=0)
+        rot_mat = torch.cat([rot_peptide, rot_mat[mol_dim:]], dim=0)
+
+        # Convert back to quaternions
+        rot = safe_rot_to_quat(rot_mat)  # [N, 4]
+        rot = F.normalize(rot, dim=-1, eps=1e-6)
 
         return rot
     
@@ -343,22 +357,15 @@ class EquivariantUpdate(nn.Module):
 
     def ba_model(self, h, a, edge_index, coord_diff, coord_cross,
                     edge_attr, edge_mask, update_coords_mask=None, angle_mask=None, mol_dim=None, mask=None, rot=None):
-
+        """rot is quaternions [N, 4]. Convert to rotmat internally for rot_diff."""
         row, col = edge_index
 
-        # Compute edge-level features
-        # 1. Project coordinate difference onto source and target local frames (6 features)
-        # proj_row = torch.einsum("eji, ej -> ei", rot[row], coord_diff)
-        # proj_col = torch.einsum("eji, ej -> ei", rot[col], coord_diff)
-
-        # 2. Compute relative rotations between frames (9 features)
-        # rot_rel = torch.matmul(rot[row].transpose(-1, -2), rot[col])
-        # rot_rel_flat = rot_rel.reshape(-1, 9)
+        # Convert quaternions to rotation matrices for rot_diff computation
+        rot_mat = quat_to_rot(rot)  # [N, 3, 3]
         
-        rot_diff = torch.bmm(rot[row].transpose(-2, -1), rot[col])
+        rot_diff = torch.bmm(rot_mat[row].transpose(-2, -1), rot_mat[col])
         rot_diff = rotmat_to_rotvec(rot_diff)
         dist_sq = torch.sum(rot_diff**2, dim=-1, keepdim=True)
-            
 
         # 3. Compute torsion angle differences (14 features)
         a_row = a[row].view(-1, 7, 2) 
@@ -393,12 +400,6 @@ class EquivariantUpdate(nn.Module):
                 edge_attr=None, node_mask=None, edge_mask=None,
                 update_coords_mask=None, mol_dim=None, angle_mask=None, mask=None):
 
-        # Save pre-update structural features for BA prediction
-        # (BA should see the actual input structure, not the flow-updated one)
-        angles_orig = angles
-        rot_orig = rot
-        coord_diff_orig = coord_diff
-
         m = self.message(h, x, rot, angles, edge_index, coord_diff, coord_cross,
                               edge_attr, edge_mask,
                               update_coords_mask=update_coords_mask, mol_dim=mol_dim)
@@ -413,9 +414,9 @@ class EquivariantUpdate(nn.Module):
                             edge_attr, edge_mask, update_coords_mask=update_coords_mask,
                             angle_mask=angle_mask, mol_dim=mol_dim)
         if self.ba:
-            ba = self.ba_model(h, angles_orig, edge_index, coord_diff_orig, coord_cross,
+            ba = self.ba_model(h, a, edge_index, coord_diff, coord_cross,
                                 edge_attr, edge_mask, update_coords_mask=update_coords_mask,
-                                angle_mask=angle_mask, mol_dim=mol_dim, mask=mask, rot=rot_orig)
+                                angle_mask=angle_mask, mol_dim=mol_dim, mask=mask, rot=rot)
         else:
             ba = None
 
@@ -532,7 +533,10 @@ class EGNN_all_atom(nn.Module):
     def forward(self, h, x, edge_index, node_mask=None, edge_mask=None, update_coords_mask=None,
                 batch_mask=None, edge_attr=None, rot=None, angles=None, mol_dim=None, angle_mask=None, mask=None):
         
-        rot = rot.reshape(-1, 3, 3)
+        # rot comes in as [N, 4] quaternions
+        rot = rot.reshape(-1, 4)
+        # Normalize quaternions on input
+        rot = F.normalize(rot, dim=-1, eps=1e-6)
 
         # Edit Emiel: Remove velocity as input
         edge_feat, _ = coord2diff(x, edge_index)
@@ -560,7 +564,8 @@ class EGNN_all_atom(nn.Module):
         if node_mask is not None:
             h_out = h_out * node_mask
 
-        rot = rot.view(-1, 9)
+        # rot stays as [N, 4] quaternions
+        rot = rot.view(-1, 4)
 
         return h_out, x, h_last_layer, rot, a, ba
 

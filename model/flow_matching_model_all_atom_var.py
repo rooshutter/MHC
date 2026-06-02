@@ -2,7 +2,6 @@ import torch
 import numpy as np
 import math
 import os
-import time
 from pathlib import Path
 
 import matplotlib.pyplot as plt
@@ -353,7 +352,7 @@ def _compute_cross_violation_loss( #from swiftmhc
 
 
 
-class Flow_Matching_Model_all_atom(nn.Module):
+class Flow_Matching_Model_all_atom_var(nn.Module):
     def __init__(
         self,
         neural_net: nn.Module,
@@ -371,7 +370,6 @@ class Flow_Matching_Model_all_atom(nn.Module):
         all_atom = False,
         variational: bool = True,
         solver: str = "euler",
-        ba: bool = False,
 
     ):
         super().__init__()
@@ -406,7 +404,6 @@ class Flow_Matching_Model_all_atom(nn.Module):
         self.all_atom = all_atom
         self.variational = variational
         self.solver = solver
-        self.ba = ba
 
         # BA prediction is now handled by the dedicated ba_head in NN_Model (architecture.py)
         # self.ba_module = torch.nn.Sequential(
@@ -433,9 +430,6 @@ class Flow_Matching_Model_all_atom(nn.Module):
         
         # Shift all peptide coordinates
         molecule['x'] = molecule['x'] - mean[molecule['idx']].view(-1, 1, 3)
-        if 'atom14_gt_exists' in molecule:
-            molecule['x'] = molecule['x'] * molecule['atom14_gt_exists'].to(molecule['x'].dtype).unsqueeze(-1)
-          
         if molecule['backbone_rigid_tensor'].shape[-1] == 4:
             molecule['backbone_rigid_tensor'][:, :3, 3] -= mean[molecule['idx']]
         else:
@@ -443,10 +437,6 @@ class Flow_Matching_Model_all_atom(nn.Module):
             
         if 'atom14_alt_gt_positions' in molecule:
             molecule['atom14_alt_gt_positions'] = molecule['atom14_alt_gt_positions'] - mean[molecule['idx']].view(-1, 1, 3)
-            if 'atom14_gt_exists' in molecule:
-                molecule['atom14_alt_gt_positions'] = molecule['atom14_alt_gt_positions'] * molecule['atom14_gt_exists'].to(molecule['x'].dtype).unsqueeze(-1)
-
-        #TODO check 0's in positions
 
         # Shift all protein coordinates by the SAME mean
         protein_pocket['x'] = protein_pocket['x'] - mean[protein_pocket['idx']].view(-1, 1, 3)
@@ -478,8 +468,6 @@ class Flow_Matching_Model_all_atom(nn.Module):
 
         mask = molecule['cross_residues_mask'].reshape(molecule['h'].shape[0], molecule['h'].shape[1])
 
-        # ba_hat_not = self.compute_ba(molecule['h'], mask)
-
         if self.ba:
             # Predict binding affinity from the clean ground-truth structure (t = 1)
             z_1_mol, z_1_pro, _, _, t_1 = self.compute_flow_match(z_data, t_is_1=True)
@@ -490,8 +478,6 @@ class Flow_Matching_Model_all_atom(nn.Module):
 
         z_t_mol_cat = torch.cat((z_t_mol['rot'], z_t_mol['trans'], z_t_mol['angles'], molecule['h']), dim=-1)
         v_hat_mol, v_hat_pro, c_s, _ = self.neural_net(z_t_mol_cat, z_t_pro, t, molecule['idx'], protein_pocket['idx'], molecule_pos, molecule['torsion_angles_mask'], mask)
-
-        
         
         if self.training:
             loss, info = self.train_loss(molecule, z_t_mol, v_mol, 
@@ -647,36 +633,62 @@ class Flow_Matching_Model_all_atom(nn.Module):
             "angles": angles_t,
             "h": molecule['h']
         }
+
         z_t_pro = xh_pro.clone().detach()
 
-        # Velocity
-        # Clamp (1-t) to avoid explosion when t is near 1.
-        # Using 1/T as minimum since that's the smallest meaningful time step.
-        one_minus_t = torch.clamp(1 - t, min=1.0 / self.T)
+        # if len(z_t_mol.shape) == 2: 
+        #     z_t_mol = z_t_mol.view(batch_size, size_mol, -1)
+        #     z_t_pro = z_t_pro.view(batch_size, size_pro, -1)
 
+        # Velocity
         xh_mol_rot = xh_mol[:,:,:self.rot_dim].reshape(-1, 9)
+        print(f"{xh_mol_rot.shape=}")
         z_x_mol_rot = z_x_mol[:,:,:self.rot_dim].reshape(-1, 9)
+        print(f"{z_x_mol_rot.shape=}")
         # rot_rel = torch.matmul(z_x_mol_rot.reshape(-1, 3, 3).transpose(-2, -1), xh_mol_rot.reshape(-1, 3, 3))
         z_t_mol_rot = z_t_mol["rot"].reshape(-1,9)
+        print(f"{z_t_mol_rot.shape=}")
         rot_rel = torch.matmul(z_t_mol_rot.reshape(-1, 3, 3).transpose(-2, -1), xh_mol_rot.reshape(-1, 3, 3))
+        print(f"{rot_rel.shape=}")
         v_rot_mol = rotmat_to_rotvec(rot_rel).reshape(batch_size, size_mol, -1)
-        v_rot_mol_vec = v_rot_mol / one_minus_t
-        v_mol_rot = vector_to_skew_matrix(v_rot_mol_vec)
+        print(f"{v_rot_mol.shape=}")
+        print(f"{t.shape=}")
+        v_rot_mol_vec = v_rot_mol / (1 - t)
+        print(f"{v_rot_mol_vec.shape=}")
 
-        v_mol_quat = calc_quat_wt_qt_q1(rotquats_t.reshape(batch_size, size_mol, -1), quat_peptide)
-        v_mol_quat = v_mol_quat / one_minus_t
+        v_mol_rot = vector_to_skew_matrix(v_rot_mol_vec)
+        print(f"{v_mol_rot.shape=}")
+        # print(f"{v_rot_mol_mat[0,0,0]=}")
+
+        # print(f"{rot_peptide.reshape(-1, 3, 3).shape=}")
+        # print(f"{rotmats_t.reshape(-1, 3, 3).shape=}")
+        # v_rot_mol_mat = local_log(rot_peptide.reshape(-1, 3, 3), rotmats_t.reshape(-1, 3, 3)) 
+        # print(f"{v_rot_mol_mat.shape=}")
+        # v_rot_mol_mat = v_rot_mol_mat.reshape(batch_size, size_mol, -1)
+        # print(f"{v_rot_mol_mat.shape=}")
+        # v_rot_mol_mat = v_rot_mol_mat / torch.clamp(1 - t, min=1e-5)
+        # print(f"{v_rot_mol_mat.shape=}")
+        # print(f"{v_rot_mol_mat[0,0,0]=}")
+
+        print(f"{rotquats_t.reshape(batch_size, size_mol, -1).shape=}")
+        print(f"{rotquats_0.shape=}")
+        v_mol_quat = calc_quat_wt_qt_q1(rotquats_t.reshape(batch_size, size_mol, -1), rotquats_0)
+        print(f"{v_mol_quat.shape=}")
+        print(f"{t.shape=}")
+        v_mol_quat = v_mol_quat / torch.clamp(1 - t, min=1e-5)
 
         a_1 = xh_mol[:,:,self.rot_dim:self.rot_dim+self.angle_dim].view(batch_size, size_mol, 7, 2)
         a_t = z_t_mol['angles'].view(batch_size, size_mol, 7, 2)
-        cos_1, sin_1 = a_1[..., 0], a_1[..., 1]
-        cos_t, sin_t = a_t[..., 0], a_t[..., 1]
-        sin_diff = sin_1 * cos_t - cos_1 * sin_t
-        cos_diff = cos_1 * cos_t + sin_1 * sin_t
-        geodesic_distance = torch.atan2(sin_diff, cos_diff)
-        v_mol_angles = geodesic_distance / one_minus_t
+        cross = a_t[..., 0]*a_1[..., 1] - a_t[..., 1]*a_1[..., 0]
+        dot = a_t[..., 0]*a_1[..., 0] + a_t[..., 1]*a_1[..., 1]
+        tan = torch.atan2(cross, dot)
+        print(f"{tan.shape=}")
+        print(f"{t.shape=}")
+        v_mol_angles = tan / (1 - t)
+        print(f"{v_mol_angles.shape=}")
+
         
-        # v_mol_trans = xh_mol[:,:,self.rot_dim:self.rot_dim+self.x_dim] - z_x_mol[:,:,self.rot_dim:self.rot_dim+self.x_dim]
-        v_mol_trans = (xh_mol[:,:,self.rot_dim:self.rot_dim+self.x_dim] - z_t_mol['trans']) / one_minus_t
+        v_mol_trans = xh_mol[:,:,self.rot_dim:self.rot_dim+self.x_dim] - z_x_mol[:,:,self.rot_dim:self.rot_dim+self.x_dim]
         
         # v_x_mol = xh_mol[:,:,:T_peptide_z.shape[-1]+angles_t.shape[-1]] - z_x_mol
         v_mol = {
@@ -752,18 +764,13 @@ class Flow_Matching_Model_all_atom(nn.Module):
         batch_size = len(molecule['affinity'])
         size_mol = molecule['size'][0]
 
-        if self.ba:
-            ba = molecule['affinity']
-            ba_hat = ba_hat.squeeze(-1)
-            error_ba = torch.mean((ba - ba_hat) ** 2, dim=-1)
-            print(f"BA RMSE mean: {torch.sqrt(error_ba.mean() + 1e-8)}")
+        ba = molecule['affinity']
+        ba_hat = ba_hat.squeeze(-1)
+        error_ba = torch.mean((ba - ba_hat) ** 2, dim=-1)
+        print(f"BA RMSE mean: {torch.sqrt(error_ba.mean() + 1e-8)}")
 
-            print(f"{ba_hat[0]=}, {ba[0]=}")
-            affinity_loss = _regression_loss_function(ba_hat.float(), ba.float())
-            print(f"BA Loss: {affinity_loss.mean()}")
-        else:
-            error_ba = 0
-            affinity_loss = 0
+        affinity_loss = _regression_loss_function(ba_hat.float(), ba.float())
+        print(f"BA Loss: {affinity_loss.mean()}")
 
         if self.variational:
             T_peptide = Rigid.from_tensor_4x4(molecule['backbone_rigid_tensor']).to_tensor_7()
@@ -779,66 +786,88 @@ class Flow_Matching_Model_all_atom(nn.Module):
         v_hat_mol = torch.clamp(v_hat_mol, min=-1000.0, max=1000.0) 
         
         # Calculate peptide positions 
-        # if self.variational:
-        v_hat_mol_rot = v_hat_mol[:,:self.rot_dim].reshape(-1, 3, 3)
-        v_hat_mol_quat = safe_rot_to_quat(v_hat_mol_rot)
-        v_hat_mol_trans = v_hat_mol[:,self.rot_dim:self.rot_dim+self.x_dim]
-        v_hat_mol_angles = v_hat_mol[:,self.rot_dim+self.x_dim:self.rot_dim+self.x_dim+self.angle_dim]
-
-        x_hat_mol, v_hat_mol_angles, sidechain_frames = self.predict_pos(molecule, torch.concat([v_hat_mol_quat, v_hat_mol_trans], dim=-1), v_hat_mol_angles)
-        
-        if not self.variational:
-            one_minus_t = torch.clamp(1 - t, min=1.0 / self.T)
-
+        if self.variational:
             v_hat_mol_rot = v_hat_mol[:,:self.rot_dim].reshape(-1, 3, 3)
             v_hat_mol_quat = safe_rot_to_quat(v_hat_mol_rot)
-            quat_hat_mol = v_hat_mol_quat.reshape(batch_size, size_mol, 4)
-            z_t_mol_quat = safe_rot_to_quat(z_t_mol['rot'].reshape(-1, 3, 3))
-            v_hat_mol_quat = calc_quat_wt_qt_q1(z_t_mol_quat.reshape(batch_size, size_mol, 4), v_hat_mol_quat.reshape(batch_size, size_mol, 4)) 
-            v_hat_mol_quat = v_hat_mol_quat / one_minus_t
-            v_hat_mol_quat = v_hat_mol_quat.reshape(-1, 3) # shape [B*N, 3]
+            v_hat_mol_trans = v_hat_mol[:,self.rot_dim:self.rot_dim+self.x_dim]
+            v_hat_mol_angles = v_hat_mol[:,self.rot_dim+self.x_dim:self.rot_dim+self.x_dim+self.angle_dim]
 
-            trans_hat_mol = v_hat_mol[:,self.rot_dim:self.rot_dim+self.x_dim].reshape(batch_size, size_mol, 3)
-            v_hat_mol_trans = (trans_hat_mol - z_t_mol['trans']) / one_minus_t
-            v_hat_mol_trans = v_hat_mol_trans.reshape(-1, 3)
+            x_hat_mol, v_hat_mol_angles, sidechain_frames = self.predict_pos(molecule, torch.concat([v_hat_mol_quat, v_hat_mol_trans], dim=-1), v_hat_mol_angles)
+        else:
 
-            angles_hat_mol = v_hat_mol[:,self.rot_dim+self.x_dim:self.rot_dim+self.x_dim+self.angle_dim].view(batch_size, size_mol, 7, 2)
-            a_t = z_t_mol['angles'].view(batch_size, size_mol, 7, 2)
-            
-            cos_1, sin_1 = angles_hat_mol[..., 0], angles_hat_mol[..., 1]
-            cos_t, sin_t = a_t[..., 0], a_t[..., 1]
-            sin_diff = sin_1 * cos_t - cos_1 * sin_t
-            cos_diff = cos_1 * cos_t + sin_1 * sin_t
+            # reshape t for broadcasting
+            t_expanded = t.view(batch_size, 1, 1).expand(-1, size_mol, -1).reshape(-1, 1)  # (B*N, 1)
 
-            # sin_diff = a_t[..., 0]*a_1[..., 1] - a_t[..., 1]*a_1[..., 0]
-            # cos_diff = a_t[..., 0]*a_1[..., 0] + a_t[..., 1]*a_1[..., 1]
-            geodesic_distance = torch.atan2(sin_diff, cos_diff)
-            v_hat_mol_angles = geodesic_distance / one_minus_t
-            v_hat_mol_angles = v_hat_mol_angles.reshape(-1, 7) # shape [B*N, 7]
+            # --- ROTATION ---
+            # network predicts skew-matrix velocity v in so(3): shape (B*N, 9) -> (B*N, 3, 3)
+            rot_t = z_t_mol['rot'].reshape(batch_size, size_mol, 3, 3)  # (B, N, 3, 3)
+            v_hat_mol_rot = v_hat_mol[:, :self.rot_dim].reshape(batch_size, size_mol, 3, 3)  # (B, N, 3, 3)
+
+            # extract rotation vector from skew matrix, scale by (1-t), exponentiate, left-multiply
+            from ReQFlow.so3_utils import skew_matrix_to_vector
+            v_rotvec = skew_matrix_to_vector(v_hat_mol_rot)                     # (B, N, 3)
+            scaled_rotvec = (1 - t) * v_rotvec                                  # (B, N, 3), t is (B,1,1)
+            delta_R = rotvec_to_rotmat(scaled_rotvec.reshape(-1, 3))            # (B*N, 3, 3)
+            delta_R = delta_R.reshape(batch_size, size_mol, 3, 3)
+            rot_hat = torch.matmul(delta_R, rot_t)                              # (B, N, 3, 3)
+            rot_hat = rot_hat.reshape(-1, 3, 3)                                 # (B*N, 3, 3)
+            quat_hat = safe_rot_to_quat(rot_hat)                                # (B*N, 4)
+            quat_hat = F.normalize(quat_hat, dim=-1, eps=1e-6)
+
+            # for rotation loss later
+            v_hat_mol_rot_flat = rot_hat                                        # (B*N, 3, 3)
+            v_hat_mol_quat = quat_hat                                           # (B*N, 4)
+
+            # --- TRANSLATION ---
+            v_hat_mol_trans = v_hat_mol[:, self.rot_dim:self.rot_dim+self.x_dim]  # (B*N, 3)
+            trans_t = z_t_mol['trans'].reshape(-1, 3)                             # (B*N, 3)
+            trans_hat = trans_t + (1.0 - t_expanded) * v_hat_mol_trans            # (B*N, 3)
+
+            # --- ANGLES ---
+            # angles on S^1: rotate in sin-cos space by (1-t)*v
+            v_hat_mol_angles = v_hat_mol[:, self.rot_dim+self.x_dim:self.rot_dim+self.x_dim+self.angle_dim]
+            # v_hat_mol_angles is (B*N, 14) = 7 angles x 2 (sin, cos velocities)
+            # but true angle velocity is a scalar per angle, so reshape to (B*N, 7)
+            # treat predicted (sin, cos) pair as a rotation angle via atan2
+            v_hat_mol_angles_2d = v_hat_mol_angles.view(-1, 7, 2)               # (B*N, 7, 2)
+            angle_v_scalar = torch.atan2(
+                v_hat_mol_angles_2d[..., 0],
+                v_hat_mol_angles_2d[..., 1]
+            )                                                                    # (B*N, 7)
+            scaled_angle_v = (1.0 - t_expanded) * angle_v_scalar                # (B*N, 7)
+
+            angles_t = z_t_mol['angles'].reshape(-1, 7, 2)                      # (B*N, 7, 2)
+            sin_a, cos_a = angles_t[..., 0], angles_t[..., 1]
+            # rotate a_t by scaled velocity on S^1
+            angle_hat = torch.stack([
+                torch.sin(scaled_angle_v) * cos_a + torch.cos(scaled_angle_v) * sin_a,
+                torch.cos(scaled_angle_v) * cos_a - torch.sin(scaled_angle_v) * sin_a,
+            ], dim=-1)                                                           # (B*N, 7, 2)
+            angle_hat = F.normalize(angle_hat, dim=-1, eps=1e-6)
+            angle_hat = angle_hat.view(-1, 14)                                   # (B*N, 14)
+
+            # --- PREDICT POSITIONS ---
+            x_hat_mol, _, sidechain_frames = self.predict_pos(molecule,torch.cat([quat_hat, trans_hat], dim=-1), angle_hat)
+
+            # reshape for loss computation below
+            v_hat_mol_quat = v_hat_mol_quat.reshape(batch_size, size_mol, 4)
+            v_hat_mol_trans = trans_hat.reshape(batch_size, size_mol, 3)
+            v_hat_mol_angles = angle_hat.reshape(batch_size, size_mol, 14)
         
         # Calculate rotation loss
-        if self.variational:
-            v_hat_mol_quat = v_hat_mol_quat.reshape(batch_size, size_mol, v_hat_mol_quat.shape[-1])
-            v_hat_mol_rot_proj = quat_to_rot(v_hat_mol_quat).reshape(-1, 3, 3)
-            gt_rot = quat_to_rot(v_mol_quat.reshape(-1, 4)).reshape(-1, 3, 3)
-            rot_rel = torch.matmul(v_hat_mol_rot_proj.transpose(-2, -1), gt_rot)
-            rot_vec = rotmat_to_rotvec(rot_rel)
-            error_rot_geodesic = (rot_vec**2).sum(dim=-1)
-            error_rot = scatter_mean(error_rot_geodesic, molecule["idx"], dim=0)
-            rmse = torch.sqrt(error_rot)
-            print(f"Rotation RMSE: {rmse.mean():.4f}")
-        else:
-            # print(f'{v_mol_quat.reshape(-1, 3)[0]=}')
-            # print(f'{v_hat_mol_quat[0]=}')
-            error_rot = scatter_add(torch.sum(((v_mol_quat.reshape(-1, 3) - v_hat_mol_quat))**2, dim=-1), molecule['idx'], dim=0)
-            rmse = torch.sqrt(error_rot / molecule['size'])
-            print(f"Rotation RMSE: {rmse.mean():.4f}")
+        v_hat_mol_quat = v_hat_mol_quat.reshape(batch_size, size_mol, v_hat_mol_quat.shape[-1])
+        v_hat_mol_rot_proj = quat_to_rot(v_hat_mol_quat).reshape(-1, 3, 3)
+        gt_rot = quat_to_rot(v_mol_quat.reshape(-1, 4)).reshape(-1, 3, 3)
+        rot_rel = torch.matmul(v_hat_mol_rot_proj.transpose(-2, -1), gt_rot)
+        rot_vec = rotmat_to_rotvec(rot_rel)
+        error_rot_geodesic = (rot_vec**2).sum(dim=-1)
+        error_rot = scatter_mean(error_rot_geodesic, molecule["idx"], dim=0)
+        rmse = torch.sqrt(error_rot.mean() + 1e-6)
+        print(f"Rotation RMSE: {rmse:.4f}")
         
         # Calculate position loss
         x_mol = molecule['x']
         x_hat_mol = x_hat_mol.reshape(-1, x_hat_mol.shape[-2], x_hat_mol.shape[-1])
-        # print(f'{x_mol[0]=}')
-        # print(f'{x_hat_mol[0]=}')
 
         atom14_exists = molecule["atom14_gt_exists"]
         x_alt_mol = molecule["atom14_alt_gt_positions"]
@@ -852,14 +881,11 @@ class Flow_Matching_Model_all_atom(nn.Module):
         error_x = scatter_add(sse_per_res, molecule["idx"], dim=0)
         n_atoms_per_graph = scatter_add(n_atoms_per_res, molecule["idx"], dim=0)
         rmse_pos = torch.sqrt((error_x / n_atoms_per_graph) + 1e-6)
-        print(f"Position RMSE: {rmse_pos.mean()}")
+        print(f"Position RMSE mean: {rmse_pos.mean()}")
 
         # Calculate FAPE loss
         T_peptide = Rigid.from_tensor_4x4(molecule['backbone_rigid_tensor']).to_tensor_7()
-        if self.variational:
-            fape_loss = _compute_fape_loss(v_hat_mol_quat, v_hat_mol_trans, T_peptide, molecule, protein_pocket, x_hat_mol, sidechain_frames)
-        else:
-            fape_loss = _compute_fape_loss(quat_hat_mol, trans_hat_mol, T_peptide, molecule, protein_pocket, x_hat_mol, sidechain_frames)
+        fape_loss = _compute_fape_loss(v_hat_mol_quat, v_hat_mol_trans, T_peptide, molecule, protein_pocket, x_hat_mol, sidechain_frames)
         print(f"Backbone FAPE: {fape_loss['backbone'].mean()}")
         print(f"Sidechain FAPE: {fape_loss['sidechain'].mean()}")
         print(f"Total FAPE: {fape_loss['total'].mean()}")
@@ -867,22 +893,17 @@ class Flow_Matching_Model_all_atom(nn.Module):
         # Calculate translation loss
         x1_pos = v_mol_trans.reshape(-1, v_mol_trans.shape[-1])
         x1_pos = x1_pos.reshape(-1, x1_pos.shape[-1])
-        # print(f'{x1_pos[0:20]=}')
-        # print(f'{v_hat_mol_trans[0:20]=}')
         error_trans = scatter_add(torch.sum(((x1_pos - v_hat_mol_trans))**2, dim=-1), molecule['idx'], dim=0)
         rmse = torch.sqrt((error_trans / molecule['size']) + 1e-8)
         print(f"Translation RMSE mean: {rmse.mean()}")
 
         # Calculate angle loss
-        angles = molecule['torsion_angles_sin_cos']
+        angles = v_mol_angles
         angles = angles.reshape(angles.shape[0], angles.shape[1], 7, 2)
-        # print(f'{angles[0,0]=}')
-        if self.variational:
-            angles_hat_mol = v_hat_mol_angles.reshape(angles.shape[0], angles.shape[1], angles.shape[2], angles.shape[3])
-        # print(f'{angles_hat_mol[0,0]=}')
+        v_hat_mol_angles = v_hat_mol_angles.reshape(angles.shape[0], angles.shape[1], angles.shape[2], angles.shape[3])
         molecule['torsion_angles_mask'] = molecule['torsion_angles_mask'].reshape(angles.shape[0], angles.shape[1], angles.shape[2])
         molecule['alt_torsion_angles_sin_cos'] = molecule['alt_torsion_angles_sin_cos'].reshape(angles.shape[0], angles.shape[1], angles.shape[2], angles.shape[3])
-        error_angles = _compute_torsion_angle_loss(angles_hat_mol, molecule['torsion_angles_mask'], angles, molecule['alt_torsion_angles_sin_cos'])
+        error_angles = _compute_torsion_angle_loss(v_hat_mol_angles, molecule['torsion_angles_mask'], angles, molecule['alt_torsion_angles_sin_cos'])
         rmse = torch.sqrt((error_angles / molecule['size']) + 1e-8)
         print(f"Angles RMSE mean: {rmse.mean()}")
 
@@ -1011,17 +1032,13 @@ class Flow_Matching_Model_all_atom(nn.Module):
         batch_size = len(molecule['affinity'])
         size_mol = molecule['size'][0]
 
-        if self.ba:
-            ba = molecule['affinity']
-            ba_hat = ba_hat.squeeze(-1)
-            error_ba = torch.mean((ba - ba_hat) ** 2, dim=-1)
-            print(f"BA RMSE mean: {torch.sqrt(error_ba.mean())}")
+        ba = molecule['affinity']
+        ba_hat = ba_hat.squeeze(-1)
+        error_ba = torch.mean((ba - ba_hat) ** 2, dim=-1)
+        print(f"BA RMSE mean: {torch.sqrt(error_ba.mean())}")
 
-            affinity_loss = _regression_loss_function(ba_hat.float(), ba.float())
-            print(f"BA Loss: {affinity_loss.mean()}")
-        else:
-            error_ba = 0
-            affinity_loss = 0
+        affinity_loss = _regression_loss_function(ba_hat.float(), ba.float())
+        print(f"BA Loss: {affinity_loss.mean()}")
 
         if self.variational:
             T_peptide = Rigid.from_tensor_4x4(molecule['backbone_rigid_tensor']).to_tensor_7()
@@ -1033,46 +1050,81 @@ class Flow_Matching_Model_all_atom(nn.Module):
             v_mol_quat = v_mol['quat'] # shape [B*N, 3]
             v_mol_trans = v_mol['trans'] # shape [B*N, 3]
             v_mol_angles = v_mol['angles'] # shape [B*N, 7]
+            print(f"{v_mol_quat.shape=}")
     
         # Calculate peptide positions 
-        # if self.variational:
-        v_hat_mol_rot = v_hat_mol[:,:self.rot_dim].reshape(-1, 3, 3) # shape [B*N, 3, 3]
-        v_hat_mol_quat = safe_rot_to_quat(v_hat_mol_rot) # shape [B*N, 4]
-        v_hat_mol_trans = v_hat_mol[:,self.rot_dim:self.rot_dim+self.x_dim] # shape [B*N, 3]
-        v_hat_mol_angles = v_hat_mol[:,self.rot_dim+self.x_dim:self.rot_dim+self.x_dim+self.angle_dim] # shape [B*N, 14]
-
-        x_hat_mol, v_hat_mol_angles, sidechain_frames = self.predict_pos(molecule, torch.concat([v_hat_mol_quat, v_hat_mol_trans], dim=-1), v_hat_mol_angles)
-        
-        if not self.variational:
-            one_minus_t = torch.clamp(1 - t, min=1.0 / self.T)
-
+        if self.variational:
             v_hat_mol_rot = v_hat_mol[:,:self.rot_dim].reshape(-1, 3, 3)
             v_hat_mol_quat = safe_rot_to_quat(v_hat_mol_rot)
-            quat_hat_mol = v_hat_mol_quat.reshape(batch_size, size_mol, 4)
-            z_t_mol_quat = safe_rot_to_quat(z_t_mol['rot'].reshape(-1, 3, 3))
-            v_hat_mol_quat = calc_quat_wt_qt_q1(z_t_mol_quat.reshape(batch_size, size_mol, 4), v_hat_mol_quat.reshape(batch_size, size_mol, 4)) 
-            v_hat_mol_quat = v_hat_mol_quat / one_minus_t
-            v_hat_mol_quat = v_hat_mol_quat.reshape(-1, 3) # shape [B*N, 3]
+            v_hat_mol_trans = v_hat_mol[:,self.rot_dim:self.rot_dim+self.x_dim]
+            v_hat_mol_angles = v_hat_mol[:,self.rot_dim+self.x_dim:self.rot_dim+self.x_dim+self.angle_dim]
 
-            trans_hat_mol = v_hat_mol[:,self.rot_dim:self.rot_dim+self.x_dim].reshape(batch_size, size_mol, 3)
-            v_hat_mol_trans = (trans_hat_mol - z_t_mol['trans']) / one_minus_t
-            v_hat_mol_trans = v_hat_mol_trans.reshape(-1, 3)
+            x_hat_mol, v_hat_mol_angles, sidechain_frames = self.predict_pos(molecule, torch.concat([v_hat_mol_quat, v_hat_mol_trans], dim=-1), v_hat_mol_angles)
+        else:
 
-            angles_hat_mol = v_hat_mol[:,self.rot_dim+self.x_dim:self.rot_dim+self.x_dim+self.angle_dim].view(batch_size, size_mol, 7, 2)
-            a_t = z_t_mol['angles'].view(batch_size, size_mol, 7, 2)
-            cos_1, sin_1 = angles_hat_mol[..., 0], angles_hat_mol[..., 1]
-            cos_t, sin_t = a_t[..., 0], a_t[..., 1]
-            sin_diff = sin_1 * cos_t - cos_1 * sin_t
-            cos_diff = cos_1 * cos_t + sin_1 * sin_t
+            # reshape t for broadcasting
+            t_expanded = t.view(batch_size, 1, 1).expand(-1, size_mol, -1).reshape(-1, 1)  # (B*N, 1)
 
-            # sin_diff = a_t[..., 0]*a_1[..., 1] - a_t[..., 1]*a_1[..., 0]
-            # cos_diff = a_t[..., 0]*a_1[..., 0] + a_t[..., 1]*a_1[..., 1]
-            geodesic_distance = torch.atan2(sin_diff, cos_diff)
-            v_hat_mol_angles = geodesic_distance / one_minus_t
-            v_hat_mol_angles = v_hat_mol_angles.reshape(-1, 7) # shape [B*N, 7]
+            # --- ROTATION ---
+            # network predicts skew-matrix velocity v in so(3): shape (B*N, 9) -> (B*N, 3, 3)
+            rot_t = z_t_mol['rot'].reshape(batch_size, size_mol, 3, 3)  # (B, N, 3, 3)
+            v_hat_mol_rot = v_hat_mol[:, :self.rot_dim].reshape(batch_size, size_mol, 3, 3)  # (B, N, 3, 3)
+
+            # extract rotation vector from skew matrix, scale by (1-t), exponentiate, left-multiply
+            from ReQFlow.so3_utils import skew_matrix_to_vector
+            v_rotvec = skew_matrix_to_vector(v_hat_mol_rot)                     # (B, N, 3)
+            scaled_rotvec = (1 - t) * v_rotvec                                  # (B, N, 3), t is (B,1,1)
+            delta_R = rotvec_to_rotmat(scaled_rotvec.reshape(-1, 3))            # (B*N, 3, 3)
+            delta_R = delta_R.reshape(batch_size, size_mol, 3, 3)
+            rot_hat = torch.matmul(delta_R, rot_t)                              # (B, N, 3, 3)
+            rot_hat = rot_hat.reshape(-1, 3, 3)                                 # (B*N, 3, 3)
+            quat_hat = safe_rot_to_quat(rot_hat)                                # (B*N, 4)
+            quat_hat = F.normalize(quat_hat, dim=-1, eps=1e-6)
+
+            # for rotation loss later
+            v_hat_mol_rot_flat = rot_hat                                        # (B*N, 3, 3)
+            v_hat_mol_quat = quat_hat                                           # (B*N, 4)
+
+            # --- TRANSLATION ---
+            v_hat_mol_trans = v_hat_mol[:, self.rot_dim:self.rot_dim+self.x_dim]  # (B*N, 3)
+            trans_t = z_t_mol['trans'].reshape(-1, 3)                             # (B*N, 3)
+            trans_hat = trans_t + (1.0 - t_expanded) * v_hat_mol_trans            # (B*N, 3)
+
+            # --- ANGLES ---
+            # angles on S^1: rotate in sin-cos space by (1-t)*v
+            v_hat_mol_angles = v_hat_mol[:, self.rot_dim+self.x_dim:self.rot_dim+self.x_dim+self.angle_dim]
+            # v_hat_mol_angles is (B*N, 14) = 7 angles x 2 (sin, cos velocities)
+            # but true angle velocity is a scalar per angle, so reshape to (B*N, 7)
+            # treat predicted (sin, cos) pair as a rotation angle via atan2
+            v_hat_mol_angles_2d = v_hat_mol_angles.view(-1, 7, 2)               # (B*N, 7, 2)
+            angle_v_scalar = torch.atan2(
+                v_hat_mol_angles_2d[..., 0],
+                v_hat_mol_angles_2d[..., 1]
+            )                                                                    # (B*N, 7)
+            scaled_angle_v = (1.0 - t_expanded) * angle_v_scalar                # (B*N, 7)
+
+            angles_t = z_t_mol['angles'].reshape(-1, 7, 2)                      # (B*N, 7, 2)
+            sin_a, cos_a = angles_t[..., 0], angles_t[..., 1]
+            # rotate a_t by scaled velocity on S^1
+            angle_hat = torch.stack([
+                torch.sin(scaled_angle_v) * cos_a + torch.cos(scaled_angle_v) * sin_a,
+                torch.cos(scaled_angle_v) * cos_a - torch.sin(scaled_angle_v) * sin_a,
+            ], dim=-1)                                                           # (B*N, 7, 2)
+            angle_hat = F.normalize(angle_hat, dim=-1, eps=1e-6)
+            angle_hat = angle_hat.view(-1, 14)                                   # (B*N, 14)
+
+            # --- PREDICT POSITIONS ---
+            x_hat_mol, _, sidechain_frames = self.predict_pos(molecule,torch.cat([quat_hat, trans_hat], dim=-1), angle_hat)
+
+            # reshape for loss computation below
+            v_hat_mol_quat = v_hat_mol_quat.reshape(batch_size, size_mol, 4)
+            v_hat_mol_trans = trans_hat.reshape(batch_size, size_mol, 3)
+            v_hat_mol_angles = angle_hat.reshape(batch_size, size_mol, 14)
+        
 
         # Calculate rotation loss
         if self.variational:
+            print(f"{v_hat_mol_quat.shape=}")
             v_hat_mol_quat = v_hat_mol_quat.reshape(batch_size, size_mol, v_hat_mol_quat.shape[-1])
             v_hat_mol_rot_proj = quat_to_rot(v_hat_mol_quat).reshape(-1, 3, 3)
             gt_rot = quat_to_rot(v_mol_quat.reshape(-1, 4)).reshape(-1, 3, 3)
@@ -1080,13 +1132,12 @@ class Flow_Matching_Model_all_atom(nn.Module):
             rot_vec = rotmat_to_rotvec(rot_rel)
             error_rot_geodesic = (rot_vec**2).sum(dim=-1)
             error_rot = scatter_mean(error_rot_geodesic, molecule["idx"], dim=0)
-            rmse = torch.sqrt(error_rot)
-            print(f"Rotation RMSE: {rmse.mean():.4f}")
         else:
-            error_rot = scatter_add(torch.sum(((v_mol_quat.reshape(-1, 3) - v_hat_mol_quat))**2, dim=-1), molecule['idx'], dim=0)
-            rmse = torch.sqrt(error_rot / molecule['size'])
-            print(f"Rotation RMSE: {rmse.mean():.4f}")
-        
+            print(f'{v_hat_mol_rot.reshape(-1, 9) .shape=}')
+            print(f'{v_mol_rot.reshape(-1, 9) .shape=}')
+            error_rot = scatter_mean(torch.sum((v_hat_mol_rot.reshape(-1, 9) - v_mol_rot.reshape(-1, 9))**2, dim=-1), molecule["idx"], dim=0)
+        rmse = torch.sqrt(error_rot.mean() + 1e-6)
+        print(f"Rotation RMSE: {rmse:.4f}")
         
         if self.position_encoding:
             molecule_pos = molecule['pos_in_seq']
@@ -1109,36 +1160,34 @@ class Flow_Matching_Model_all_atom(nn.Module):
         error_x = scatter_add(sse_per_res, molecule["idx"], dim=0)
         n_atoms_per_graph = scatter_add(n_atoms_per_res, molecule["idx"], dim=0)
         rmse_pos = torch.sqrt(error_x / n_atoms_per_graph)
-        print(f"Position RMSE: {rmse_pos.mean()}")
+        print(f"Position RMSE mean: {rmse_pos.mean()}")
 
         # Calculate FAPE loss
         T_peptide = Rigid.from_tensor_4x4(molecule['backbone_rigid_tensor']).to_tensor_7()
-        if self.variational:
-            fape_loss = _compute_fape_loss(v_hat_mol_quat, v_hat_mol_trans, T_peptide, molecule, protein_pocket, x_hat_mol, sidechain_frames)
-        else:
-            fape_loss = _compute_fape_loss(quat_hat_mol, trans_hat_mol, T_peptide, molecule, protein_pocket, x_hat_mol, sidechain_frames)
+        fape_loss = _compute_fape_loss(v_hat_mol_quat, v_hat_mol_trans, T_peptide, molecule, protein_pocket, x_hat_mol, sidechain_frames)
         print(f"Backbone FAPE: {fape_loss['backbone'].mean()}")
         print(f"Sidechain FAPE: {fape_loss['sidechain'].mean()}")
         print(f"Total FAPE: {fape_loss['total'].mean()}")
 
         # Calculate translation loss
-        v_mol_trans = v_mol_trans.reshape(-1, v_mol_trans.shape[-1])
+        x1_pos = v_mol_trans
+        x1_pos = x1_pos.reshape(-1, x1_pos.shape[-1])
         v_hat_mol_trans = v_hat_mol_trans.reshape(-1, v_hat_mol_trans.shape[-1])
         # translation_loss_weight = 2.0
         # trans_scale = 0.1
         # error_trans = scatter_add(torch.sum(((x1_pos - v_hat_mol_pos) * trans_scale)**2, dim=-1), molecule['idx'], dim=0) * translation_loss_weight
-        error_trans = scatter_add(torch.sum(((v_mol_trans - v_hat_mol_trans))**2, dim=-1), molecule['idx'], dim=0)
+        error_trans = scatter_add(torch.sum(((x1_pos - v_hat_mol_trans))**2, dim=-1), molecule['idx'], dim=0)
         rmse = torch.sqrt(error_trans / molecule['size'])
         print(f"Translation RMSE mean: {rmse.mean()}")
 
         # Calculate angles loss
         angles = molecule['torsion_angles_sin_cos']
         angles = angles.reshape(angles.shape[0], angles.shape[1], 7, 2)
-        if self.variational:
-            angles_hat_mol = v_hat_mol_angles.reshape(angles.shape[0], angles.shape[1], angles.shape[2], angles.shape[3])
+        v_hat_mol_angles = v_hat_mol_angles.reshape(angles.shape[0], angles.shape[1], angles.shape[2], angles.shape[3])
+        # error_angles = scatter_add(torch.sum((angles - v_hat_mol_angles)**2, dim=-1), molecule['idx'], dim=0)
         molecule['torsion_angles_mask'] = molecule['torsion_angles_mask'].reshape(angles.shape[0], angles.shape[1], angles.shape[2])
         molecule['alt_torsion_angles_sin_cos'] = molecule['alt_torsion_angles_sin_cos'].reshape(angles.shape[0], angles.shape[1], angles.shape[2], angles.shape[3])
-        error_angles = _compute_torsion_angle_loss(angles_hat_mol, molecule['torsion_angles_mask'], angles, molecule['alt_torsion_angles_sin_cos'])
+        error_angles = _compute_torsion_angle_loss(v_hat_mol_angles, molecule['torsion_angles_mask'], angles, molecule['alt_torsion_angles_sin_cos'])
         rmse = torch.sqrt(error_angles / molecule['size'])
         print(f"Angles RMSE mean: {rmse.mean()}")
 
@@ -1168,9 +1217,11 @@ class Flow_Matching_Model_all_atom(nn.Module):
             v_target_0_trans = v_hat_mol_trans.reshape(-1, 3)
             v_target_0_angles = v_hat_mol_angles.reshape(-1, 7, 2)
         else:
-            v_target_0_trans = trans_hat_mol.reshape(-1, 3)
-            v_target_0_quat = quat_hat_mol.reshape(-1, 4)
-            v_target_0_angles = angles_hat_mol.reshape(-1, 7, 2)
+            # v_target_0_mol = v_target_0_mol.reshape(-1, v_target_0_mol.shape[-1])
+            v_target_0_rot = v_target_0_mol['rot'].reshape(-1, 3, 3)
+            v_target_0_trans = v_target_0_mol['trans'].reshape(-1, 3)
+            v_target_0_quat = safe_rot_to_quat(v_target_0_rot)
+            v_target_0_angles = v_target_0_mol['angles'] #.reshape(-1, 14)
         x_target_0_mol, _, _ = self.predict_pos(molecule, torch.concat([v_target_0_quat, v_target_0_trans], dim=-1), v_target_0_angles)
         x_target_0_mol = x_target_0_mol.reshape(-1, x_target_0_mol.shape[-2], x_target_0_mol.shape[-1])
 
@@ -1539,21 +1590,20 @@ class Flow_Matching_Model_all_atom(nn.Module):
 
         return torch.cat([omega_sin[..., None], omega_cos[..., None]], dim=-1)
 
-    # def compute_ba(self, peptide_embd, peptide_mask):
+    def compute_ba(self, peptide_embd, peptide_mask):
 
+        # [*, peptide_maxlen, output_size]
+        peptide_scores = self.ba_module(peptide_embd)
 
-    #     # [*, peptide_maxlen, output_size]
-    #     peptide_scores = self.ba_module(peptide_embd)
+        peptide_mask = peptide_mask.to(bool)
 
-    #     peptide_mask = peptide_mask.to(bool)
+        # [*, peptide_maxlen, output_size]
+        masked_scores = torch.where(peptide_mask.unsqueeze(-1), peptide_scores, 0.0)
 
-    #     # [*, peptide_maxlen, output_size]
-    #     masked_scores = torch.where(peptide_mask.unsqueeze(-1), peptide_scores, 0.0)
+        # [*, output_size]
+        ba = masked_scores.sum(dim=-2)
 
-    #     # [*, output_size]
-    #     ba = masked_scores.sum(dim=-2)
-
-    #     return ba
+        return ba
     
 
     @torch.no_grad()
@@ -1649,7 +1699,7 @@ class Flow_Matching_Model_all_atom(nn.Module):
                 current_h_mol = current_xh_mol[:, self.rot_dim+self.x_dim+self.angle_dim:]  
 
                 # Predict velocity v_hat
-                v_hat_mol, _, c_s, ba_hat = self.neural_net(
+                v_hat_mol, _, c_s, _ = self.neural_net(
                     current_xh_mol, xh_pro, t_array, 
                     molecule['idx'], protein_pocket['idx'], molecule_pos, molecule['torsion_angles_mask']
                 )
@@ -1801,7 +1851,7 @@ class Flow_Matching_Model_all_atom(nn.Module):
         print(f"trans_hat: {trans_hat[0]}")
         print(f"angles_true: {molecule['torsion_angles_sin_cos'][0][0]}")
         print(f"angles_hat: {angles_hat[0].view(7, 2)}")
-
+        
         # Calculate final position of peptide from predicted rotaiton, translation and angles
         x_hat_mol, angles_hat, sidechain_frames = self.predict_pos(molecule, T_peptide_hat, angles_hat)
         h_mol_final = h_mol_final.unsqueeze(2).expand(-1, -1, x_hat_mol.shape[2], -1)
@@ -1839,12 +1889,6 @@ class Flow_Matching_Model_all_atom(nn.Module):
         xh_mol_final = torch.cat([x_hat_mol, h_mol_final], dim=-1)
 
         mask = molecule['cross_residues_mask'].reshape(molecule['h'].shape[0], molecule['h'].shape[1])
-        
-        # Time the BA prediction separately
-        if device.type == 'cuda':
-            torch.cuda.synchronize()
-        t_before_ba = time.time()
-        
         if self.ba:
             z_final_mol = torch.cat((
                 rot_hat.reshape(-1, 9),
@@ -1875,16 +1919,10 @@ class Flow_Matching_Model_all_atom(nn.Module):
         else:
             ba_hat = torch.zeros(num_graphs, device=device)
             ba_true_struct = torch.zeros(num_graphs, device=device)
-        
-        if device.type == 'cuda':
-            torch.cuda.synchronize()
-        t_after_ba = time.time()
-        ba_time = t_after_ba - t_before_ba
-        
         print(f"ba_hat: {ba_hat[0]}")
         ba_true = molecule['affinity']
         print(f"ba_true: {ba_true[0]}")
-        ba = {"ba_hat": ba_hat, "ba_true": ba_true, "ba_true_struct": ba_true_struct, "ba_time": ba_time}
+        ba = {"ba_hat": ba_hat, "ba_true": ba_true, "ba_true_struct": ba_true_struct}
 
         self.safe_pdbs(xh_mol_final, molecule, run_id, data_dir, time_step='F', atom_level=True, save_peptide_only=True)
         self.safe_pdbs(molecule['x'].reshape(-1, 3), molecule, run_id, data_dir, time_step='GT', atom_level=True, save_peptide_only=True)

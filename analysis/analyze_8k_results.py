@@ -85,9 +85,17 @@ def compute_docked_average(rmse_list: list, cutoff: float = 10.0) -> tuple:
 
 def analyze_fold(samples: dict, fold_name: str) -> dict:
     """Analyze results for a single fold."""
+    
+    # Use CA metrics if available, otherwise fall back to all-atom
+    rmse_best_key = 'rmse_ca_best' if 'rmse_ca_best' in samples and len(samples['rmse_ca_best']) > 0 else 'rmse_best'
+    rmse_all_key = 'rmse_ca' if 'rmse_ca' in samples and len(samples['rmse_ca']) > 0 else 'rmse'
+    
+    print(rmse_best_key)
+    print(rmse_all_key)
+        
     results = {
         'fold': fold_name,
-        'n_samples': len(samples.get('rmse_best', [])),
+        'n_samples': len(samples.get(rmse_best_key, [])),
     }
     
     # Separate X-ray and PANDORA structures
@@ -95,8 +103,8 @@ def analyze_fold(samples: dict, fold_name: str) -> dict:
     xray_avg, pandora_avg = [], []
     
     graph_names = samples.get('graph_name', [])
-    rmse_best = samples.get('rmse_best', [])
-    rmse_all = samples.get('rmse', [])
+    rmse_best = samples.get(rmse_best_key, [])
+    rmse_all = samples.get(rmse_all_key, [])
     
     n = min(len(graph_names), len(rmse_best))
     
@@ -198,6 +206,8 @@ def main():
     all_results = []
     all_xray_best = []
     all_xray_avg = []
+    all_pandora_best = []
+    all_pandora_avg = []
     
     for sample_file in sample_files:
         print(f"\nAnalyzing: {sample_file}")
@@ -216,11 +226,15 @@ def main():
         results = analyze_fold(samples, fold_name)
         all_results.append(results)
         
-        # Aggregate X-ray values
+        # Aggregate X-ray and PANDORA values
         if 'xray_best_values' in results:
             all_xray_best.append(results['xray_best_values'])
         if 'xray_avg_values' in results:
             all_xray_avg.append(results['xray_avg_values'])
+        if 'pandora_best_values' in results:
+            all_pandora_best.append(results['pandora_best_values'])
+        if 'pandora_avg_values' in results:
+            all_pandora_avg.append(results['pandora_avg_values'])
         
         # Print fold summary
         print(f"  Fold: {fold_name}")
@@ -233,7 +247,16 @@ def main():
             print(f"  X-ray RMSD (avg-of-10):  mean={results['xray_avg_mean']:.3f}, "
                   f"median={results['xray_avg_median']:.3f}")
             if 'xray_divergent_avg' in results:
-                print(f"  Divergent samples (>10Å): avg {results['xray_divergent_avg']:.2f}/10 per structure")
+                print(f"  X-ray Divergent samples (>10Å): avg {results['xray_divergent_avg']:.2f}/10 per structure")
+                
+        if 'pandora_best_mean' in results:
+            print(f"  PANDORA RMSD (best-of-10): mean={results['pandora_best_mean']:.3f}, "
+                  f"median={results['pandora_best_median']:.3f}")
+        if 'pandora_avg_mean' in results:
+            print(f"  PANDORA RMSD (avg-of-10):  mean={results['pandora_avg_mean']:.3f}, "
+                  f"median={results['pandora_avg_median']:.3f}")
+            if 'pandora_divergent_avg' in results:
+                print(f"  PANDORA Divergent samples (>10Å): avg {results['pandora_divergent_avg']:.2f}/10 per structure")
     
     # Create summary DataFrame
     df_data = []
@@ -278,6 +301,24 @@ def main():
         print(f"  Median: {combined_avg.median().item():.3f} Å")
         print(f"  Min:    {combined_avg.min().item():.3f} Å")
         print(f"  Max:    {combined_avg.max().item():.3f} Å")
+
+    if len(all_pandora_best) > 0:
+        combined_best = torch.cat(all_pandora_best)
+        print(f"\nPANDORA RMSD (best-of-10) across all folds:")
+        print(f"  N:      {len(combined_best)}")
+        print(f"  Mean:   {combined_best.mean().item():.3f} Å")
+        print(f"  Median: {combined_best.median().item():.3f} Å")
+        print(f"  Min:    {combined_best.min().item():.3f} Å")
+        print(f"  Max:    {combined_best.max().item():.3f} Å")
+    
+    if len(all_pandora_avg) > 0:
+        combined_avg = torch.cat(all_pandora_avg)
+        print(f"\nPANDORA RMSD (avg-of-10) across all folds:")
+        print(f"  N:      {len(combined_avg)}")
+        print(f"  Mean:   {combined_avg.mean().item():.3f} Å")
+        print(f"  Median: {combined_avg.median().item():.3f} Å")
+        print(f"  Min:    {combined_avg.min().item():.3f} Å")
+        print(f"  Max:    {combined_avg.max().item():.3f} Å")
     
     # Cross-fold averages
     print(f"\nPer-fold averages:")
@@ -285,6 +326,8 @@ def main():
     print(f"  X-ray best-of-10 median: {df['xray_best_median'].mean():.3f} Å")
     print(f"  X-ray avg-of-10 mean:    {df['xray_avg_mean'].mean():.3f} Å")
     print(f"  PANDORA best-of-10 mean: {df['pandora_best_mean'].mean():.3f} Å")
+    print(f"  PANDORA best-of-10 median: {df['pandora_best_median'].mean():.3f} Å")
+    print(f"  PANDORA avg-of-10 mean:    {df['pandora_avg_mean'].mean():.3f} Å")
     
     # Save results
     csv_path = os.path.join(args.output_dir, '8k_results_summary.csv')

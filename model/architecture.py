@@ -7,6 +7,7 @@ from torch_geometric.data import Data, Batch
 
 from model.egnn import EGNN, GNN
 from model.egnn_all_atom import EGNN_all_atom
+from model.egnn_all_atom_quat import EGNN_all_atom as EGNN_all_atom_quat
 from model.positional_encoding import sin_pE
 from model.confidence_score import Confidence_Score
 
@@ -28,6 +29,9 @@ class NN_Model(nn.Module):
             num_residues: int,
             device: str,
             all_atom: bool = False,
+            variational: bool = False,
+            ba: bool = False,
+            use_quat: bool = False,
     ):
         
         """
@@ -49,8 +53,11 @@ class NN_Model(nn.Module):
         self.architecture = architecture
         self.features_fixed = features_fixed
         self.all_atom = all_atom
+        self.variational = variational
+        self.ba = ba
+        self.use_quat = use_quat
         self.x_dim = 3
-        self.rot_dim = 9
+        self.rot_dim = 4 if use_quat else 9
         self.angle_dim = 14
         self.act_fn = nn.SiLU()
 
@@ -116,14 +123,15 @@ class NN_Model(nn.Module):
 
             if architecture == 'egnn':
                 if self.all_atom:
-                    self.egnn = EGNN_all_atom(in_node_nf=self.joint_dim, in_edge_nf=self.edge_embedding_dim,
+                    EGNNClass = EGNN_all_atom_quat if self.use_quat else EGNN_all_atom
+                    self.egnn = EGNNClass(in_node_nf=self.joint_dim, in_edge_nf=self.edge_embedding_dim,
                                  hidden_nf=self.hidden_dim, device=device, act_fn=self.act_fn,
                                  n_layers=self.num_layers, attention=network_params.attention, tanh=network_params.tanh,
                                  norm_constant=network_params.norm_constant,
                                  inv_sublayers=network_params.inv_sublayers, sin_embedding=network_params.sin_embedding,
                                  normalization_factor=network_params.normalization_factor,
                                  aggregation_method=network_params.aggregation_method,
-                                 reflection_equiv=network_params.reflection_equivariant, all_atom=self.all_atom) # edge_sin_attr=self.edge_sin_attrs
+                                 reflection_equiv=network_params.reflection_equivariant, all_atom=self.all_atom, variational=self.variational, ba=self.ba) 
                 else:
                     self.egnn = EGNN(in_node_nf=self.joint_dim, in_edge_nf=self.edge_embedding_dim,
                                     hidden_nf=self.hidden_dim, device=device, act_fn=self.act_fn,
@@ -143,9 +151,6 @@ class NN_Model(nn.Module):
 
         else:
             raise Exception(f"Wrong architecture {architecture}")
-
-
-
 
 
     def forward(self, z_t_mol, z_t_pro, t, molecule_idx, protein_pocket_idx, molecule_pos=None, angle_mask=None, mask=None):
@@ -257,7 +262,7 @@ class NN_Model(nn.Module):
             else:
                 edge_types = None
             
-            ba = False
+            ba = None
 
             if self.architecture == 'egnn':
 
@@ -345,6 +350,12 @@ class NN_Model(nn.Module):
         else:
             epsilon_hat_mol = torch.cat((displacement_vec[:len(molecule_idx)], h_new_mol), dim=1)
             epsilon_hat_pro = torch.cat((displacement_vec[len(molecule_idx):], h_new_pro), dim=1)
+
+        # Predict BA from final peptide embeddings via dedicated head
+        if self.ba:
+            ba = ba[:len(molecule_idx)] 
+            ba = scatter_mean(ba.squeeze(-1), molecule_idx, dim=0) 
+            
 
         return epsilon_hat_mol, epsilon_hat_pro, c_s, ba
     

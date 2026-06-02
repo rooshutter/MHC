@@ -1,2 +1,2 @@
 fold,n_samples,n_xray,n_pandora,xray_best_mean,xray_best_median,xray_avg_mean,xray_avg_median,pandora_best_mean,pandora_best_median,pandora_avg_mean,pandora_avg_median
-fold_1_flow_t_50_e_100_train_vio,780,0,780,,,,,1.8061460256576538,1.809288740158081,2.6421799659729004,2.653942584991455
+fold_1_flow_t_50_e_100_bs16_mp_hd32_ba_egnn_rot,780,0,780,,,,,0.7817200422286987,0.7777183055877686,1.1276005506515503,1.127100944519043

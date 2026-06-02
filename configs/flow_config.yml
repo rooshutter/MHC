@@ -1,7 +1,7 @@
 # Logging Traing only
-logdir: "./checkpoints/fold_1_flow_t_50_e_100_bs16_mp_hd32_b1" 
+logdir: "./checkpoints/fold_1_flow_t_50_e_100_bs16_mp_hd32_ba_egnn_rot" 
 project: 'Structur_prediction_Experiments'
-run_name: 'pmhc_8K_xray_fm_t_50_e_100_bs16_mp_hd32_b1'
+run_name: 'pmhc_8K_xray_fm_t_50_e_100_bs16_mp_hd32_ba_egnn_rot'
 entity: 'roos-hutter-university-of-amsterdam' #'neuro-ai-scientist'
 
 resume: False #"./checkpoints/fold_1_flow_t_50_e_100_loss8/checkpoints/best-model-epoch=epoch=91.ckpt"
@@ -18,6 +18,8 @@ all_atom: True
 wandb_log: True
 variational: True
 solver: "loop"
+ba: True
+use_quat: False
 
 # Task
 task_params:
@@ -33,8 +35,8 @@ dataset_params:
   num_residues: 20
   norm_values: [1,1]
 
-generative_model: 'flow_matching_all_atom' # for all atom
-# generative_model: 'flow_matching' 
+generative_model: 'flow_matching_all_atom' # for all atom non variational
+# generative_model: 'flow_matching'  # for only alpha carbon
 generative_model_params:
   timesteps: 50
   position_encoding: True
@@ -68,11 +70,11 @@ network_params:
   reflection_equivariant: False
 
 # Eval
-checkpoint: './checkpoints/fold_1_flow_t_50_e_100_bs16_mp_hd32_b2_h100/checkpoints/last.ckpt' 
+checkpoint: './checkpoints/fold_1_flow_t_50_e_100_bs16_mp_hd32_ba_egnn_rot/checkpoints/last.ckpt' 
 num_samples: 10
 sample_batch_size: 10
 sampling_without_noise: False
-sample_savepath: './results/rmse_values/flow/fold_1_flow_t_50_e_100_bs16_mp_hd32_b1/samples_test'
+sample_savepath: './results/rmse_values/flow/fold_1_flow_t_50_e_100_bs16_mp_hd32_ba_egnn_rot/samples_test'
 
 
 

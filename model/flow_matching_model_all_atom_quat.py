@@ -388,7 +388,7 @@ class Flow_Matching_Model_all_atom(nn.Module):
         self.num_residues = num_residues
         self.norm_values = norm_values
         self.x_dim = 3
-        self.rot_dim = 9
+        self.rot_dim = 4  # quaternion representation
         self.angle_dim = 14
         self.eps = 1e-7
 
@@ -471,10 +471,11 @@ class Flow_Matching_Model_all_atom(nn.Module):
 
         z_t_mol, z_t_pro, v_mol, v_pro, t = self.compute_flow_match(z_data)
     
-        if self.noise_scaling > 0: # TODO: fix that it should output a orthogonal matrix with det=1
-            z_t_mol = z_t_mol + torch.randn_like(z_t_mol) * self.noise_scaling
-            z_t_mol_q = z_t_mol[:, :, :4] / (z_t_mol[:, :, :4].norm(dim=-1, keepdim=True) + self.eps)
-            z_t_mol = torch.cat((z_t_mol_q, z_t_mol[:,:,4:]), dim=-1)
+        if self.noise_scaling > 0:
+            z_t_mol['rot'] = z_t_mol['rot'] + torch.randn_like(z_t_mol['rot']) * self.noise_scaling
+            z_t_mol['rot'] = F.normalize(z_t_mol['rot'], dim=-1, eps=1e-6)
+            z_t_mol['trans'] = z_t_mol['trans'] + torch.randn_like(z_t_mol['trans']) * self.noise_scaling
+            z_t_mol['angles'] = z_t_mol['angles'] + torch.randn_like(z_t_mol['angles']) * self.noise_scaling
 
         mask = molecule['cross_residues_mask'].reshape(molecule['h'].shape[0], molecule['h'].shape[1])
 
@@ -552,8 +553,8 @@ class Flow_Matching_Model_all_atom(nn.Module):
         T_peptide = T_peptide.to_tensor_7()
         quat_peptide = T_peptide[:,:,:4]
         quat_peptide = quat_peptide.view(-1, quat_peptide.shape[-1])
-        rot_peptide = quat_to_rot(quat_peptide)
-        rot_peptide = rot_peptide.view(T_peptide.shape[0], T_peptide.shape[1], -1)
+        # For quat variant, store as quaternions directly (4-dim)
+        rot_peptide = quat_peptide.view(T_peptide.shape[0], T_peptide.shape[1], 4)
         trans_peptide = T_peptide[:,:,4:]
         T_peptide = torch.cat((rot_peptide, trans_peptide), dim=-1)
         
@@ -565,8 +566,8 @@ class Flow_Matching_Model_all_atom(nn.Module):
         T_protein = T_protein.to_tensor_7()
         quat_protein = T_protein[:,:,:4]
         quat_protein = quat_protein.view(-1, quat_protein.shape[-1])
-        rot_protein = quat_to_rot(quat_protein)
-        rot_protein = rot_protein.view(T_protein.shape[0], T_protein.shape[1], -1)
+        # For quat variant, store as quaternions directly (4-dim)
+        rot_protein = quat_protein.view(T_protein.shape[0], T_protein.shape[1], 4)
         trans_protein = T_protein[:,:,4:]
         T_protein = torch.cat((rot_protein, trans_protein), dim=-1)
 
@@ -585,8 +586,9 @@ class Flow_Matching_Model_all_atom(nn.Module):
         z_trans = z_trans - scatter_mean(z_trans.view(-1, 3), molecule['idx'], dim=0)[molecule['idx']].view(z_trans.shape)
         rotmats_0 = _uniform_so3(molecule['h'].shape[0], molecule['h'].shape[1], device)
         rotquats_0 = safe_rot_to_quat(rotmats_0)
-        rotmats_0 = rotmats_0.view(rotmats_0.shape[0], rotmats_0.shape[1], -1)
-        T_peptide_z = torch.cat((rotmats_0, z_trans), dim=-1)
+        # For quat variant, store noise as quaternions (4-dim)
+        rotquats_0_flat = rotquats_0.view(rotquats_0.shape[0], rotquats_0.shape[1], 4)
+        T_peptide_z = torch.cat((rotquats_0_flat, z_trans), dim=-1)
 
         # Get torsion angle noise
         random_angles = torch.rand((molecule['h'].shape[0], molecule['h'].shape[1], 7), device=device) * 2 * math.pi
@@ -615,13 +617,13 @@ class Flow_Matching_Model_all_atom(nn.Module):
         rotquats_0 = torch.where(dot < 0, -rotquats_0, rotquats_0)
         rotquats_t = quaternion_slerp_exp(t.squeeze(-1).expand(-1, T_peptide.shape[1]), quat_peptide, rotquats_0) 
         rotquats_t = rotquats_t.view(-1, rotquats_t.shape[-1])
-        rotmats_t = quat_to_rot(rotquats_t) 
-        rotmats_t = rotmats_t.view(T_peptide.shape[0], T_peptide.shape[1], -1)
+        # For quat variant, store interpolated rotation as quaternions (4-dim)
+        rotquats_t_flat = rotquats_t.view(T_peptide.shape[0], T_peptide.shape[1], 4)
 
         # Interpolate translation
         T_peptide_t = (1 - t) * T_peptide_z + t * xh_mol[:, :, :T_peptide_z.shape[-1]] 
 
-        T_peptide_t = torch.cat((rotmats_t, T_peptide_t[:,:,rotmats_t.shape[-1]:]), dim=-1)
+        T_peptide_t = torch.cat((rotquats_t_flat, T_peptide_t[:,:,rotquats_t_flat.shape[-1]:]), dim=-1)
 
         # Interpolate angles
         angle_mask = molecule['torsion_angles_mask']
@@ -642,7 +644,7 @@ class Flow_Matching_Model_all_atom(nn.Module):
         
         # z_t_mol = torch.cat((T_peptide_t, angles_t, molecule['h']), dim=-1)
         z_t_mol = {
-            "rot": rotmats_t,
+            "rot": rotquats_t_flat,
             "trans": T_peptide_t[:,:,self.rot_dim:],
             "angles": angles_t,
             "h": molecule['h']
@@ -654,11 +656,13 @@ class Flow_Matching_Model_all_atom(nn.Module):
         # Using 1/T as minimum since that's the smallest meaningful time step.
         one_minus_t = torch.clamp(1 - t, min=1.0 / self.T)
 
-        xh_mol_rot = xh_mol[:,:,:self.rot_dim].reshape(-1, 9)
-        z_x_mol_rot = z_x_mol[:,:,:self.rot_dim].reshape(-1, 9)
-        # rot_rel = torch.matmul(z_x_mol_rot.reshape(-1, 3, 3).transpose(-2, -1), xh_mol_rot.reshape(-1, 3, 3))
-        z_t_mol_rot = z_t_mol["rot"].reshape(-1,9)
-        rot_rel = torch.matmul(z_t_mol_rot.reshape(-1, 3, 3).transpose(-2, -1), xh_mol_rot.reshape(-1, 3, 3))
+        xh_mol_rot = xh_mol[:,:,:self.rot_dim].reshape(-1, 4)  # quaternions
+        z_x_mol_rot = z_x_mol[:,:,:self.rot_dim].reshape(-1, 4)
+        # Convert to rotmats for rotvec computation
+        xh_mol_rotmat = quat_to_rot(xh_mol_rot)  # [N, 3, 3]
+        z_t_mol_rot = z_t_mol["rot"].reshape(-1, 4)
+        z_t_mol_rotmat = quat_to_rot(z_t_mol_rot)  # [N, 3, 3]
+        rot_rel = torch.matmul(z_t_mol_rotmat.transpose(-2, -1), xh_mol_rotmat)
         v_rot_mol = rotmat_to_rotvec(rot_rel).reshape(batch_size, size_mol, -1)
         v_rot_mol_vec = v_rot_mol / one_minus_t
         v_mol_rot = vector_to_skew_matrix(v_rot_mol_vec)
@@ -779,9 +783,9 @@ class Flow_Matching_Model_all_atom(nn.Module):
         v_hat_mol = torch.clamp(v_hat_mol, min=-1000.0, max=1000.0) 
         
         # Calculate peptide positions 
-        # if self.variational:
-        v_hat_mol_rot = v_hat_mol[:,:self.rot_dim].reshape(-1, 3, 3)
-        v_hat_mol_quat = safe_rot_to_quat(v_hat_mol_rot)
+        # EGNN quat outputs quaternions directly (4-dim)
+        v_hat_mol_quat = v_hat_mol[:,:self.rot_dim]  # [B*N, 4] quaternions
+        v_hat_mol_quat = F.normalize(v_hat_mol_quat, dim=-1, eps=1e-6)
         v_hat_mol_trans = v_hat_mol[:,self.rot_dim:self.rot_dim+self.x_dim]
         v_hat_mol_angles = v_hat_mol[:,self.rot_dim+self.x_dim:self.rot_dim+self.x_dim+self.angle_dim]
 
@@ -790,10 +794,10 @@ class Flow_Matching_Model_all_atom(nn.Module):
         if not self.variational:
             one_minus_t = torch.clamp(1 - t, min=1.0 / self.T)
 
-            v_hat_mol_rot = v_hat_mol[:,:self.rot_dim].reshape(-1, 3, 3)
-            v_hat_mol_quat = safe_rot_to_quat(v_hat_mol_rot)
+            v_hat_mol_quat = v_hat_mol[:,:self.rot_dim]  # [B*N, 4]
+            v_hat_mol_quat = F.normalize(v_hat_mol_quat, dim=-1, eps=1e-6)
             quat_hat_mol = v_hat_mol_quat.reshape(batch_size, size_mol, 4)
-            z_t_mol_quat = safe_rot_to_quat(z_t_mol['rot'].reshape(-1, 3, 3))
+            z_t_mol_quat = z_t_mol['rot'].reshape(-1, 4)  # already quaternions
             v_hat_mol_quat = calc_quat_wt_qt_q1(z_t_mol_quat.reshape(batch_size, size_mol, 4), v_hat_mol_quat.reshape(batch_size, size_mol, 4)) 
             v_hat_mol_quat = v_hat_mol_quat / one_minus_t
             v_hat_mol_quat = v_hat_mol_quat.reshape(-1, 3) # shape [B*N, 3]
@@ -1035,9 +1039,9 @@ class Flow_Matching_Model_all_atom(nn.Module):
             v_mol_angles = v_mol['angles'] # shape [B*N, 7]
     
         # Calculate peptide positions 
-        # if self.variational:
-        v_hat_mol_rot = v_hat_mol[:,:self.rot_dim].reshape(-1, 3, 3) # shape [B*N, 3, 3]
-        v_hat_mol_quat = safe_rot_to_quat(v_hat_mol_rot) # shape [B*N, 4]
+        # EGNN quat outputs quaternions directly (4-dim)
+        v_hat_mol_quat = v_hat_mol[:,:self.rot_dim]  # [B*N, 4] quaternions
+        v_hat_mol_quat = F.normalize(v_hat_mol_quat, dim=-1, eps=1e-6)
         v_hat_mol_trans = v_hat_mol[:,self.rot_dim:self.rot_dim+self.x_dim] # shape [B*N, 3]
         v_hat_mol_angles = v_hat_mol[:,self.rot_dim+self.x_dim:self.rot_dim+self.x_dim+self.angle_dim] # shape [B*N, 14]
 
@@ -1046,10 +1050,10 @@ class Flow_Matching_Model_all_atom(nn.Module):
         if not self.variational:
             one_minus_t = torch.clamp(1 - t, min=1.0 / self.T)
 
-            v_hat_mol_rot = v_hat_mol[:,:self.rot_dim].reshape(-1, 3, 3)
-            v_hat_mol_quat = safe_rot_to_quat(v_hat_mol_rot)
+            v_hat_mol_quat = v_hat_mol[:,:self.rot_dim]  # [B*N, 4]
+            v_hat_mol_quat = F.normalize(v_hat_mol_quat, dim=-1, eps=1e-6)
             quat_hat_mol = v_hat_mol_quat.reshape(batch_size, size_mol, 4)
-            z_t_mol_quat = safe_rot_to_quat(z_t_mol['rot'].reshape(-1, 3, 3))
+            z_t_mol_quat = z_t_mol['rot'].reshape(-1, 4)  # already quaternions
             v_hat_mol_quat = calc_quat_wt_qt_q1(z_t_mol_quat.reshape(batch_size, size_mol, 4), v_hat_mol_quat.reshape(batch_size, size_mol, 4)) 
             v_hat_mol_quat = v_hat_mol_quat / one_minus_t
             v_hat_mol_quat = v_hat_mol_quat.reshape(-1, 3) # shape [B*N, 3]
@@ -1179,9 +1183,8 @@ class Flow_Matching_Model_all_atom(nn.Module):
         # use neural network to predict noise for t = 0
         v_hat_0_mol, v_hat_0_pro, _, _ = self.neural_net(z_0_mol, z_0_pro, t_0, molecule['idx'], protein_pocket['idx'], molecule_pos, molecule['torsion_angles_mask'], mask)
         v_hat_0_mol = v_hat_0_mol.reshape(-1, v_hat_0_mol.shape[-1])
-        v_hat_0_mol_rot = v_hat_0_mol[:, :self.rot_dim].reshape(-1, 3, 3)
+        v_hat_0_mol_quat = F.normalize(v_hat_0_mol[:, :self.rot_dim], dim=-1, eps=1e-6)  # [B*N, 4]
         v_hat_0_mol_trans = v_hat_0_mol[:, self.rot_dim:self.rot_dim+self.x_dim]
-        v_hat_0_mol_quat = safe_rot_to_quat(v_hat_0_mol_rot)
         v_hat_0_mol_angles = v_hat_0_mol[:, self.rot_dim + self.x_dim:self.rot_dim + self.x_dim + self.angle_dim]
         x_hat_0_mol, _, _ = self.predict_pos(molecule, torch.concat([v_hat_0_mol_quat, v_hat_0_mol_trans], dim=-1), v_hat_0_mol_angles)
 
@@ -1590,8 +1593,10 @@ class Flow_Matching_Model_all_atom(nn.Module):
         z_trans = torch.randn((*molecule['h'].shape[:-1], 3), device=device)
         z_trans = z_trans - scatter_mean(z_trans.view(-1, 3), molecule['idx'], dim=0)[molecule['idx']].view(z_trans.shape)
         rotmats_0 = _uniform_so3(molecule['h'].shape[0], molecule['h'].shape[1], device)
-        rotmats_0 = rotmats_0.view(rotmats_0.shape[0], rotmats_0.shape[1], -1)
-        T_peptide_z = torch.cat((rotmats_0, z_trans), dim=-1)
+        # Store as quaternions (4-dim) for quat variant
+        rotquats_0 = safe_rot_to_quat(rotmats_0)
+        rotquats_0 = rotquats_0.view(rotquats_0.shape[0], rotquats_0.shape[1], 4)
+        T_peptide_z = torch.cat((rotquats_0, z_trans), dim=-1)
 
         # mol_norm_x = molecule['x'] / self.norm_values[0]
         protein_pocket['x'] = protein_pocket['x'] / self.norm_values[0]
@@ -1603,8 +1608,8 @@ class Flow_Matching_Model_all_atom(nn.Module):
         T_protein = T_protein.to_tensor_7()
         quat_protein = T_protein[:,:,:4]
         quat_protein = quat_protein.view(-1, quat_protein.shape[-1])
-        rot_protein = quat_to_rot(quat_protein)
-        rot_protein = rot_protein.view(T_protein.shape[0], T_protein.shape[1], -1)
+        # Store as quaternions (4-dim) for quat variant
+        rot_protein = quat_protein.view(T_protein.shape[0], T_protein.shape[1], 4)
         trans_protein = T_protein[:,:,4:]
         T_protein = torch.cat((rot_protein, trans_protein), dim=-1)
 
@@ -1643,7 +1648,8 @@ class Flow_Matching_Model_all_atom(nn.Module):
                 t_val = k / steps
                 t_array = torch.full((num_graphs, 1, 1), fill_value=t_val, device=device)
 
-                current_rot_mol = current_xh_mol[:, :self.rot_dim].reshape(num_graphs * size_mol, 3, 3)
+                current_rot_quat = current_xh_mol[:, :self.rot_dim]  # [N, 4] quaternions
+                current_rot_quat = F.normalize(current_rot_quat, dim=-1, eps=1e-6)
                 current_trans_mol = current_xh_mol[:, self.rot_dim:self.rot_dim+self.x_dim]
                 current_angle_mol = current_xh_mol[:, self.rot_dim+self.x_dim:self.rot_dim+self.x_dim+self.angle_dim]
                 current_h_mol = current_xh_mol[:, self.rot_dim+self.x_dim+self.angle_dim:]  
@@ -1655,20 +1661,23 @@ class Flow_Matching_Model_all_atom(nn.Module):
                 )
 
                 # Euler Step: x_{t+dt} = x_t + v(x_t, t) * dt
-
-                v_hat_mol_rot = v_hat_mol[:, :self.rot_dim].reshape(num_graphs * size_mol, 3, 3)
-                v_hat_mol_quat = safe_rot_to_quat(v_hat_mol_rot)
-                v_hat_mol_quat = F.normalize(v_hat_mol_quat, dim=-1, eps=1e-6)
-                v_hat_mol_rot_proj = quat_to_rot(v_hat_mol_quat).reshape(num_graphs * size_mol, 3, 3)
+                # EGNN quat outputs quaternions directly
+                v_hat_mol_quat = F.normalize(v_hat_mol[:, :self.rot_dim], dim=-1, eps=1e-6)
                 
                 v_hat_mol_trans = v_hat_mol[:, self.rot_dim:self.rot_dim+self.x_dim]
                 v_hat_mol_angle = v_hat_mol[:, self.rot_dim+self.x_dim:self.rot_dim+self.x_dim+self.angle_dim]
                 v_hat_mol_h = v_hat_mol[:, self.rot_dim+self.x_dim+self.angle_dim:]  
 
-                rot_mat = torch.matmul(current_rot_mol.transpose(-2, -1), v_hat_mol_rot_proj)
+                # Convert quats to rotmats for rotvec-based Euler step
+                current_rot_mat = quat_to_rot(current_rot_quat)  # [N, 3, 3]
+                v_hat_rot_mat = quat_to_rot(v_hat_mol_quat)  # [N, 3, 3]
+                rot_mat = torch.matmul(current_rot_mat.transpose(-2, -1), v_hat_rot_mat)
                 rot_vec = rotmat_to_rotvec(rot_mat) / max(1 - t_val, 1.0 / steps)
-                current_rot_mol = torch.matmul(current_rot_mol, rotvec_to_rotmat(dt * rot_vec))
-                current_rot_mol = current_rot_mol.reshape(num_graphs * size_mol, 9)
+                current_rot_mat = torch.matmul(current_rot_mat, rotvec_to_rotmat(dt * rot_vec))
+                # Convert back to quaternions
+                current_rot_quat = safe_rot_to_quat(current_rot_mat)
+                current_rot_quat = F.normalize(current_rot_quat, dim=-1, eps=1e-6)
+                current_rot_quat = current_rot_quat.reshape(num_graphs * size_mol, 4)
 
                 current_trans_mol += dt * (v_hat_mol_trans - current_trans_mol) / max(1 - t_val, 1.0 / steps)
 
@@ -1686,7 +1695,7 @@ class Flow_Matching_Model_all_atom(nn.Module):
                 else:
                     current_h_mol += dt * v_hat_mol_h / max(1 - t_val, 1.0 / steps)
 
-                current_xh_mol = torch.cat((current_rot_mol, current_trans_mol, current_angle_mol, current_h_mol), dim=-1)
+                current_xh_mol = torch.cat((current_rot_quat, current_trans_mol, current_angle_mol, current_h_mol), dim=-1)
 
         elif self.solver in ("euler", "rk4"):
 
@@ -1717,19 +1726,8 @@ class Flow_Matching_Model_all_atom(nn.Module):
                 for t_idx in range(len(t_span)):
                     xh_t = trajectory[t_idx]
                     
-                    # Extract and process as in the final step
-                    rot_t = xh_t[:, :self.rot_dim].reshape(-1, 3, 3)
-                    
-                    # Project to SO(3)
-                    U, S, V = torch.svd(rot_t)
-                    rot_t_projected = torch.matmul(U, V.transpose(-2, -1))
-                    det = torch.det(rot_t_projected)
-                    V_det = V.clone()
-                    V_det[:, :, 2] *= det.view(-1, 1)
-                    rot_t = torch.matmul(U, V_det.transpose(-2, -1))
-                    
-                    quat_t = safe_rot_to_quat(rot_t)
-                    quat_t = F.normalize(quat_t, dim=-1, eps=1e-6)
+                    # Extract quaternions directly (4-dim)
+                    quat_t = F.normalize(xh_t[:, :self.rot_dim], dim=-1, eps=1e-6)
                     trans_t = xh_t[:, self.rot_dim:self.rot_dim+self.x_dim]
                     angles_t = xh_t[:, self.rot_dim+self.x_dim:self.rot_dim+self.x_dim+self.angle_dim]
                     
@@ -1745,31 +1743,19 @@ class Flow_Matching_Model_all_atom(nn.Module):
                     x_hat_t = x_hat_t.reshape(-1, 3)
                     
                     # Only save for the first 3 peptides across all samples
-                    # Create a mask for the first 3 peptides
                     save_mask = torch.zeros(molecule['size'].size(0), dtype=torch.bool, device=device)
                     for s in range(num_samples):
                         for j in range(min(3, sample_batch_size)):
                             save_mask[s * sample_batch_size + j] = True
                     
-                    # We use a specialized trajectory saver
                     self.save_trajectory_step(x_hat_t, molecule, run_id, t_idx, num_samples, save_mask, data_dir)
 
 
             current_xh_mol = trajectory[-1]
             c_s = ode_func.last_c_s
 
-        rot_hat = current_xh_mol[:,:self.rot_dim]
-        rot_hat = rot_hat.reshape(-1, 3, 3)
-        
-        U, S, V = torch.svd(rot_hat)
-        rot_hat_projected = torch.matmul(U, V.transpose(-2, -1))
-        det = torch.det(rot_hat_projected)
-        V_det = V.clone()
-        V_det[:, :, 2] *= det.view(-1, 1)
-        rot_hat = torch.matmul(U, V_det.transpose(-2, -1))
-
-        quat_hat = safe_rot_to_quat(rot_hat)
-        quat_hat = F.normalize(quat_hat, dim=-1, eps=1e-6)
+        # Extract final quaternions directly
+        quat_hat = F.normalize(current_xh_mol[:,:self.rot_dim], dim=-1, eps=1e-6)
         trans_hat = current_xh_mol[:,self.rot_dim:self.rot_dim+self.x_dim]
         angles_hat = current_xh_mol[:,self.rot_dim+self.x_dim:self.rot_dim+self.x_dim+self.angle_dim]
         
@@ -1801,7 +1787,7 @@ class Flow_Matching_Model_all_atom(nn.Module):
         print(f"trans_hat: {trans_hat[0]}")
         print(f"angles_true: {molecule['torsion_angles_sin_cos'][0][0]}")
         print(f"angles_hat: {angles_hat[0].view(7, 2)}")
-
+        
         # Calculate final position of peptide from predicted rotaiton, translation and angles
         x_hat_mol, angles_hat, sidechain_frames = self.predict_pos(molecule, T_peptide_hat, angles_hat)
         h_mol_final = h_mol_final.unsqueeze(2).expand(-1, -1, x_hat_mol.shape[2], -1)
@@ -1847,7 +1833,7 @@ class Flow_Matching_Model_all_atom(nn.Module):
         
         if self.ba:
             z_final_mol = torch.cat((
-                rot_hat.reshape(-1, 9),
+                quat_hat,
                 trans_hat,
                 angles_hat.reshape(-1, self.angle_dim),
                 molecule['h'].reshape(-1, molecule['h'].shape[-1])
@@ -1855,12 +1841,11 @@ class Flow_Matching_Model_all_atom(nn.Module):
             z_final_pro = xh_pro.reshape(-1, xh_pro.shape[-1])
             t_final = torch.ones((num_graphs, 1, 1), device=device)
             
-            quat_peptide = T_peptide[:, :, :4]
-            rot_mol_true = quat_to_rot(quat_peptide.reshape(-1, 4)).reshape(-1, 9)
+            quat_mol_true = T_peptide[:, :, :4].reshape(-1, 4)
             trans_mol_true = T_peptide[:, :, 4:].reshape(-1, 3)
             angles_mol_true = molecule['torsion_angles_sin_cos'].reshape(-1, 14)
             h_mol_true = molecule['h'].reshape(-1, molecule['h'].shape[-1])
-            xh_mol_true = torch.cat([rot_mol_true, trans_mol_true, angles_mol_true, h_mol_true], dim=-1)
+            xh_mol_true = torch.cat([quat_mol_true, trans_mol_true, angles_mol_true, h_mol_true], dim=-1)
 
             _, _, _, ba_hat = self.neural_net(
                 z_final_mol, z_final_pro, t_final, 
